@@ -1,0 +1,10 @@
+a small bot living in a box in the corner of the screen with extendable arms to help guide
+the user, stares at the mouse or the screen(on phone) with shining eyes when ur shoping,
+gives suggestions in a board that he carries, and when poked while having shiny eyes he hides
+in the box, double clicking gives you options
+
+other ideas:
+use cloud to store 3d models/ images for performance then use links in mysql.
+
+end game stuff:
+-use cdn to help users download from closest server to them.
