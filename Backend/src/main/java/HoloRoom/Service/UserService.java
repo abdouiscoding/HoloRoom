@@ -1,16 +1,18 @@
 package HoloRoom.Service;
 
-import HoloRoom.Model.User;
-import HoloRoom.Repository.UserRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
+
+import HoloRoom.Model.User;
+import HoloRoom.Repository.UserRepository;
 
 @Service
 public class UserService {
     
     @Autowired
-    private UserRepository studentRepository;
+    private UserRepository UserRepository;
     
     // Retrieve all users from database
     public List<User> getAllUsers() {

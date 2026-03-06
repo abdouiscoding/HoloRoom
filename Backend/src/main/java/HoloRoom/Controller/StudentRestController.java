@@ -1,13 +1,21 @@
 package HoloRoom.Controller;
 
-import HoloRoom.Model.User;
-import HoloRoom.Service.UserService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import HoloRoom.Model.User;
+import HoloRoom.Service.UserService;
 
 @RestController
 @RequestMapping("/api/Users")
@@ -46,9 +54,10 @@ public class StudentRestController {
                                                 @RequestBody User userDetails) {
         User user = UserService.getUserById(id);
         if (user != null) {
-            user.setName(userDetails.getName());
-            user.setEmail(userDetails.getEmail());
-            user.setAge(userDetails.getAge());
+            user.setUsername(userDetails.getUsername());
+            user.setUserEmail(userDetails.getUserEmail());
+            user.setPassword(userDetails.getPassword());
+            user.setRole(userDetails.getRole());
             UserService.saveUser(user);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }
