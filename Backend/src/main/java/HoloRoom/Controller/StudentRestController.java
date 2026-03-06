@@ -54,10 +54,10 @@ public class StudentRestController {
                                                 @RequestBody User userDetails) {
         User user = UserService.getUserById(id);
         if (user != null) {
-            user.setUsername(userDetails.getUsername());
+            user.setUserName(userDetails.getUserName());
             user.setUserEmail(userDetails.getUserEmail());
-            user.setPassword(userDetails.getPassword());
-            user.setRole(userDetails.getRole());
+            user.setUserPassword(userDetails.getUserPassword());
+            user.setUserRole(userDetails.getUserRole());
             UserService.saveUser(user);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }

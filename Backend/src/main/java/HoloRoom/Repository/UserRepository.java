@@ -11,8 +11,8 @@ import HoloRoom.Model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
-    // Find user by username for authentication
-    Optional<User> findByUsername(String username);
-} 
+
+    Optional<User> findByUserName(String userName);
+
+}
     

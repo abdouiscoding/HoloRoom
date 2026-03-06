@@ -7,68 +7,67 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long UserId;
-    
-    private String UserName;
+    private Long userId;
 
-    private String UserEmail;
-    
-    private String UserPassword;
-    
-    private String UserRole;  
-    
-    public User() {
+    private String userName;
+
+    private String userEmail;
+
+    private String userPassword;
+
+    private String userRole;
+
+    public User() {}
+
+    public User(String userName, String userEmail, String userPassword, String userRole) {
+        this.userName = userName;
+        this.userEmail = userEmail;
+        this.userPassword = userPassword;
+        this.userRole = userRole;
     }
-    
-    public User(String userName, String userEmail, String userPassword, String role) {
-        this.UserName = userName;
-        this.UserEmail = userEmail;
-        this.UserPassword = userPassword;
-        this.UserRole = role;
-    }
-    
+
     public Long getUserId() {
-        return UserId;
+        return userId;
     }
-    
+
     public void setUserId(Long userId) {
-        this.UserId = userId;
+        this.userId = userId;
     }
-    
-    public String getUsername() {
-        return UserName;
+
+    public String getUserName() {
+        return userName;
     }
-    
-    public void setUsername(String userName) {
-        this.UserName = userName;
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
-    
+
     public String getUserEmail() {
-        return UserEmail;
+        return userEmail;
     }
 
     public void setUserEmail(String userEmail) {
-        this.UserEmail = userEmail;
+        this.userEmail = userEmail;
     }
-    
-    public String getPassword() {
-        return UserPassword;
+
+    public String getUserPassword() {
+        return userPassword;
     }
-    
-    public void setPassword(String userPassword) {
-        this.UserPassword = userPassword;
+
+    public void setUserPassword(String userPassword) {
+        this.userPassword = userPassword;
     }
-    
-    public String getRole() {
-        return UserRole;
+
+    public String getUserRole() {
+        return userRole;
     }
-    
-    public void setRole(String role) {
-        this.UserRole = role;
+
+    public void setUserRole(String userRole) {
+        this.userRole = userRole;
     }
 }
