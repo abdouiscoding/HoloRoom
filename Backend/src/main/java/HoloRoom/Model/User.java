@@ -12,7 +12,7 @@ public class User {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long UserId;
     
     private String UserName;
 
@@ -32,12 +32,12 @@ public class User {
         this.UserRole = role;
     }
     
-    public Long getId() {
-        return id;
+    public Long getUserId() {
+        return UserId;
     }
     
-    public void setId(Long id) {
-        this.id = id;
+    public void setUserId(Long userId) {
+        this.UserId = userId;
     }
     
     public String getUsername() {
