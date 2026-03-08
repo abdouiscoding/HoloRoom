@@ -66,7 +66,7 @@ public class UserController {
     
     // DELETE: Delete a student by ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         User user = UserService.getUserById(id);
         if (user != null) {
             UserService.deleteUser(id);

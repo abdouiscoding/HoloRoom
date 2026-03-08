@@ -5,12 +5,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import HoloRoom.Model.Products;
 import HoloRoom.Model.PImages;
-import HoloRoom.Model.PSizeColor;
-import HoloRoom.Repository.ProductsRepository;
+import HoloRoom.Model.PSizeColors;
+import HoloRoom.Model.Products;
+import HoloRoom.Repository.PCategoriesRepository;
 import HoloRoom.Repository.PImagesRepository;
 import HoloRoom.Repository.PSizeColorRepository;
+import HoloRoom.Repository.ProductsRepository;
 
 @Service
 public class ProductsService {
@@ -21,6 +22,8 @@ public class ProductsService {
     private PImagesRepository PImagesRepository;
     @Autowired
     private PSizeColorRepository PSizeColorRepository;
+    @Autowired
+    private PCategoriesRepository PCatigoriesRepository;
     
     // Retrieve all products from database
     public List<Products> getAllProducts() {
@@ -40,7 +43,7 @@ public class ProductsService {
    }
 
     // Retrieve all product's sizes and colors
-    public List<PImages> getProductImages(Long productId) {
+    public List<PSizeColors> getProductSizes(Long productId) {
 
     Products product = ProductsRepository.findById(productId).orElse(null);
 
@@ -48,12 +51,13 @@ public class ProductsService {
         return null;
     }
 
-    return product.getImages();
+    return product.getSizeColors();
    }
 
     // Save a new product or update existing one
-    public void saveProduct(Products product) {
+    public Products saveProduct(Products product) {
         ProductsRepository.save(product);
+        return product;
     }
     
     // Get a single product by ID
