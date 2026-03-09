@@ -41,14 +41,14 @@ public class ProductsController {
     private PCategoriesRepository categoriesRepository;
 
     // GET all products
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<List<Products>> getAllProducts() {
         List<Products> products = productsService.getAllProducts();
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
     // GET product by ID
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<Products> getProductById(@PathVariable Long id) {
         Products product = productsService.getProductById(id);
         return product != null
@@ -56,7 +56,7 @@ public class ProductsController {
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping(consumes = "application/json")
+    @PostMapping("/create")
     public ResponseEntity<Products> createProduct(@RequestBody Products product) {
     
     // 1. Link OneToMany (Images)
@@ -91,7 +91,7 @@ public class ProductsController {
 }
 
     // PUT update product
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Products> updateProduct(@PathVariable Long id,
                                                   @RequestBody Products productDetails) {
         Products product = productsService.getProductById(id);
@@ -140,7 +140,7 @@ public class ProductsController {
     }
 
     // DELETE product
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         Products product = productsService.getProductById(id);
         if (product != null) {

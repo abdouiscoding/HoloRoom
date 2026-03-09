@@ -25,14 +25,14 @@ public class UserController {
     private UserService UserService;
     
     // GET: Retrieve all Users
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = UserService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
     
     // GET: Retrieve a single User by ID
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = UserService.getUserById(id);
         if (user != null) {
@@ -42,14 +42,14 @@ public class UserController {
     }
     
     // POST: Create a new user
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<User> createUser(@RequestBody User user) {
         UserService.saveUser(user);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
     
     // PUT: Update an existing user
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, 
                                                 @RequestBody User userDetails) {
         User user = UserService.getUserById(id);
@@ -65,7 +65,7 @@ public class UserController {
     }
     
     // DELETE: Delete a student by ID
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         User user = UserService.getUserById(id);
         if (user != null) {
