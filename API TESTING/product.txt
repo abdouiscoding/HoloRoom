@@ -1,4 +1,4 @@
-create/post:
+create:
 {
   "pName": "Nike Hoodie",
   "pPrice": 49.99,
@@ -24,6 +24,4 @@ create/post:
     { "pSize": "L", "pColor": "WHITE" ,"pStock" : "10"}
   ]
 }
-
-put/edit:
-put id in link and send the new json.
+edit/put:
