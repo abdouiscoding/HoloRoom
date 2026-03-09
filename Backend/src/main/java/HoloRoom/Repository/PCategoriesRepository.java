@@ -9,5 +9,5 @@ import HoloRoom.Model.PCategories;
 
 @Repository
 public interface PCategoriesRepository extends JpaRepository<PCategories, Long> {
-    Optional<PCategories> findByPCategory(String pCategory);
+    Optional<PCategories> findBypCategory(String pCategory);
 }

@@ -1,5 +1,6 @@
 package HoloRoom.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import HoloRoom.Model.PCategories;
 import HoloRoom.Model.PImages;
-import HoloRoom.Model.PSizeColors;
+import HoloRoom.Model.PSizeColorStock;
 import HoloRoom.Model.Products;
 import HoloRoom.Repository.PCategoriesRepository;
 import HoloRoom.Repository.PImagesRepository;
-import HoloRoom.Repository.PSizeColorRepository;
+import HoloRoom.Repository.PSizeColorStockRepository;
 import HoloRoom.Service.ProductsService;
 
 @RestController
@@ -34,7 +35,7 @@ public class ProductsController {
     private PImagesRepository imagesRepository;
 
     @Autowired
-    private PSizeColorRepository sizeColorRepository;
+    private PSizeColorStockRepository sizeColorRepository;
 
     @Autowired
     private PCategoriesRepository categoriesRepository;
@@ -55,43 +56,39 @@ public class ProductsController {
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    // POST create product
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<Products> createProduct(@RequestBody Products product) {
-
-        // Save product first to generate ID
-        Products savedProduct = productsService.saveProduct(product);
-
-        // Link OneToMany children
-        if (product.getImages() != null) {
-            for (PImages img : product.getImages()) {
-                img.setProduct(savedProduct);
-                imagesRepository.save(img);
-            }
-            savedProduct.setImages(product.getImages());
+    
+    // 1. Link OneToMany (Images)
+    if (product.getImages() != null) {
+        for (PImages img : product.getImages()) {
+            img.setProduct(product);
         }
-
-        if (product.getSizeColors() != null) {
-            for (PSizeColors sc : product.getSizeColors()) {
-                sc.setProduct(savedProduct);
-                sizeColorRepository.save(sc);
-            }
-            savedProduct.setSizeColors(product.getSizeColors());
-        }
-
-        // Link ManyToMany categories
-        /*if (product.getCategories() != null) {
-            for (PCategories cat : product.getCategories()) {
-                PCategories existing = categoriesRepository
-                        .findByPCategory(cat.getProductCategory())
-                        .orElseGet(() -> categoriesRepository.save(cat));
-                savedProduct.getCategories().add(existing);
-            }
-            productsService.saveProduct(savedProduct);
-        }*/
-
-        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
+
+    // 2. Link OneToMany (SizeColors)
+    if (product.getSizeColorStock() != null) {
+        for (PSizeColorStock scs : product.getSizeColorStock()) {
+            scs.setProduct(product);
+        }
+    }
+
+    // 3. Handle ManyToMany (Categories)
+    if (product.getCategories() != null) {
+        List<PCategories> persistedCategories = new ArrayList<>();
+        for (PCategories cat : product.getCategories()) {
+            // Find existing category by name so we don't duplicate "Hoodie"
+            PCategories existing = categoriesRepository
+                    .findBypCategory(cat.getProductCategory()) 
+                    .orElseGet(() -> categoriesRepository.save(cat));
+            persistedCategories.add(existing);
+        }
+        product.setCategories(persistedCategories);
+    }
+
+    Products savedProduct = productsService.saveProduct(product);
+    return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+}
 
     // PUT update product
     @PutMapping("/{id}")
@@ -105,7 +102,6 @@ public class ProductsController {
         product.setProductPrice(productDetails.getProductPrice());
         product.setProductBrand(productDetails.getProductBrand());
         product.setProduct3DModel(productDetails.getProduct3DModel());
-        product.setProductStock(productDetails.getProductStock());
         product.setProductDescription(productDetails.getProductDescription());
         product.setProductStatus(productDetails.getProductStatus());
 
@@ -119,25 +115,25 @@ public class ProductsController {
             product.setImages(productDetails.getImages());
         }
 
-        if (productDetails.getSizeColors() != null) {
-            sizeColorRepository.deleteAll(product.getSizeColors());
-            for (PSizeColors sc : productDetails.getSizeColors()) {
-                sc.setProduct(product);
-                sizeColorRepository.save(sc);
+        if (productDetails.getSizeColorStock() != null) {
+            sizeColorRepository.deleteAll(product.getSizeColorStock());
+            for (PSizeColorStock scs : productDetails.getSizeColorStock()) {
+                scs.setProduct(product);
+                sizeColorRepository.save(scs);
             }
-            product.setSizeColors(productDetails.getSizeColors());
+            product.setSizeColorStock(productDetails.getSizeColorStock());
         }
 
-        /*// Update ManyToMany categories
+        // Update ManyToMany categories
         if (productDetails.getCategories() != null) {
             product.getCategories().clear();
             for (PCategories cat : productDetails.getCategories()) {
                 PCategories existing = categoriesRepository
-                        .findByPCategory(cat.getProductCategory())
+                        .findBypCategory(cat.getProductCategory())
                         .orElseGet(() -> categoriesRepository.save(cat));
                 product.getCategories().add(existing);
             }
-        }*/
+        }
 
         Products updatedProduct = productsService.saveProduct(product);
         return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
@@ -149,7 +145,7 @@ public class ProductsController {
         Products product = productsService.getProductById(id);
         if (product != null) {
             imagesRepository.deleteAll(product.getImages());
-            sizeColorRepository.deleteAll(product.getSizeColors());
+            sizeColorRepository.deleteAll(product.getSizeColorStock());
             productsService.deleteProduct(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }

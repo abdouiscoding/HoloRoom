@@ -1,0 +1,29 @@
+create/post:
+{
+  "pName": "Nike Hoodie",
+  "pPrice": 49.99,
+  "pBrand": "Nike",
+  "p3DModel": "None",
+  "pStatus": "normal",
+  "pDescription": "Nike Hoodie with comfortable fit and cotton fabric.",
+
+  "categories": [
+    { "pCategory": "Hoodie" },
+    { "pCategory": "Male" }
+  ],
+
+  "images": [
+    { "pImageUrl": "nike1.png" },
+    { "pImageUrl": "nike2.png" }
+  ],
+
+  "sizecolorstock": [
+    { "pSize": "M", "pColor": "BLACK" ,"pStock" : "5" },
+    { "pSize": "L", "pColor": "BLACK" ,"pStock" : "2"},
+    { "pSize": "M", "pColor": "WHITE" ,"pStock" : "0"},
+    { "pSize": "L", "pColor": "WHITE" ,"pStock" : "10"}
+  ]
+}
+
+put/edit:
+put id in link and send the new json.

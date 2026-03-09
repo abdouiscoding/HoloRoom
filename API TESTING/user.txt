@@ -1,6 +1,10 @@
+create/put:
 {
         "userName": "user1",
         "userEmail": "user1@gmail.com",
         "userPassword": "user1",
         "userRole": "user"
     }
+
+put/edit:
+put id in link and send the new json.

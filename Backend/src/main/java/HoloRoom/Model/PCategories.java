@@ -2,7 +2,7 @@ package HoloRoom.Model;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Entity;
@@ -12,11 +12,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
-//@Entity
-//@Table(name = "categories")
+@Entity
+@Table(name = "categories")
 public class PCategories {
 
-    /*@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty("pcaId")
     private Long pcaId;
@@ -25,8 +25,7 @@ public class PCategories {
     private String pCategory;
 
     @ManyToMany(mappedBy = "categories")
-    @JsonBackReference
-    @JsonProperty("products")
+    @JsonIgnore
     private List<Products> products;
 
     public PCategories() {}
@@ -45,5 +44,5 @@ public class PCategories {
 
     @JsonProperty("products")
     public List<Products> getProducts() { return products; }
-    public void setProducts(List<Products> products) { this.products = products; }*/
+    public void setProducts(List<Products> products) { this.products = products; }
 }

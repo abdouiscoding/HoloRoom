@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,23 +41,17 @@ public class Products {
     @JsonProperty("p3DModel")
     private String p3DModel;
 
-    @JsonProperty("pStock")
-    private Integer pStock;
-
-    /*@ManyToMany
+    @ManyToMany
     @JoinTable(
         name = "product_categories",
         joinColumns = @JoinColumn(name = "product_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    @JsonManagedReference
     @JsonProperty("categories")
-    private List<PCategories> categories = new ArrayList<>();*/
-
-    private String pCategories;
+    private List<PCategories> categories = new ArrayList<>();
 
     @JsonProperty("pStatus")
-    private Boolean pStatus;
+    private String pStatus;
 
     @JsonProperty("pDescription")
     private String pDescription;
@@ -65,28 +59,26 @@ public class Products {
     @JsonProperty("pAddDate")
     private LocalDateTime pAddDate;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     @JsonProperty("images")
     private List<PImages> images = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    @JsonProperty("sizeColors")
-    private List<PSizeColors> sizeColors = new ArrayList<>();
+    @JsonProperty("sizecolorstock")
+    private List<PSizeColorStock> sizecolorstock = new ArrayList<>();
 
     public Products() {}
 
     public Products(String pName, BigDecimal pPrice, String pBrand, String p3DModel,
-                    Integer pStock, Boolean pStatus, String pDescription, String pCategories) {
+                    String pStatus, String pDescription) {
         this.pName = pName;
         this.pPrice = pPrice;
         this.pBrand = pBrand;
         this.p3DModel = p3DModel;
-        this.pStock = pStock;
         this.pStatus = pStatus;
         this.pDescription = pDescription;
-        this.pCategories = pCategories;
     }
 
     @PrePersist
@@ -116,13 +108,9 @@ public class Products {
     public String getProduct3DModel() { return p3DModel; }
     public void setProduct3DModel(String p3DModel) { this.p3DModel = p3DModel; }
 
-    @JsonProperty("pStock")
-    public Integer getProductStock() { return pStock; }
-    public void setProductStock(Integer pStock) { this.pStock = pStock; }
-
     @JsonProperty("pStatus")
-    public Boolean getProductStatus() { return pStatus; }
-    public void setProductStatus(Boolean pStatus) { this.pStatus = pStatus; }
+    public String getProductStatus() { return pStatus; }
+    public void setProductStatus(String pStatus) { this.pStatus = pStatus; }
 
     @JsonProperty("pDescription")
     public String getProductDescription() { return pDescription; }
@@ -131,20 +119,17 @@ public class Products {
     @JsonProperty("pAddDate")
     public LocalDateTime getProductAddDate() { return pAddDate; }
 
-    public String getProductCategories() { return pCategories; }
-    public void setProductCategories(String pCategories) { this.pCategories = pCategories; }
-
-    /*@JsonProperty("categories")
+    @JsonProperty("categories")
     public List<PCategories> getCategories() { return categories; }
-    public void setCategories(List<PCategories> categories) { this.categories = categories; }*/
+    public void setCategories(List<PCategories> categories) { this.categories = categories; }
 
     @JsonProperty("images")
     public List<PImages> getImages() { return images; }
     public void setImages(List<PImages> images) { this.images = images; }
 
-    @JsonProperty("sizeColors")
-    public List<PSizeColors> getSizeColors() { return sizeColors; }
-    public void setSizeColors(List<PSizeColors> sizeColors) { this.sizeColors = sizeColors; }
+    @JsonProperty("sizecolorstock")
+    public List<PSizeColorStock> getSizeColorStock() { return sizecolorstock; }
+    public void setSizeColorStock(List<PSizeColorStock> sizeColorstock) { this.sizecolorstock = sizeColorstock; }
 
     // --- Helper methods ---
     public void addImage(PImages img) { 
@@ -153,14 +138,14 @@ public class Products {
         img.setProduct(this);
     }
 
-    public void addSizeColor(PSizeColors sc) { 
-        if (sizeColors == null) sizeColors = new ArrayList<>();
-        sizeColors.add(sc);
-        sc.setProduct(this);
+    public void addSizeColorStock(PSizeColorStock scs) { 
+        if (sizecolorstock == null) sizecolorstock = new ArrayList<>();
+        sizecolorstock.add(scs);
+        scs.setProduct(this);
     }
 
-    /*public void addCategory(PCategories cat) { 
+    public void addCategory(PCategories cat) { 
         if (categories == null) categories = new ArrayList<>();
         categories.add(cat);
-    }*/
+    }
 }

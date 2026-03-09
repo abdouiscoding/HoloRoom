@@ -23,7 +23,6 @@ public class PImages {
     @ManyToOne
     @JoinColumn(name = "product_id")
     @JsonBackReference
-    @JsonProperty("product")
     private Products product;
 
     @JsonProperty("pImageUrl")

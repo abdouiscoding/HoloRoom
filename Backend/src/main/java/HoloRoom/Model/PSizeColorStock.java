@@ -12,18 +12,17 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "productsizecolor")
-public class PSizeColors {
+@Table(name = "productsizecolorstock")
+public class PSizeColorStock {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonProperty("pscId")
-    private Long pscId;
+    @JsonProperty("pscsId")
+    private Long pscsId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
     @JsonBackReference
-    @JsonProperty("product")
     private Products product;
 
     @JsonProperty("pSize")
@@ -32,17 +31,21 @@ public class PSizeColors {
     @JsonProperty("pColor")
     private String pColor;
 
-    public PSizeColors() {}
+    @JsonProperty("pStock")
+    private int pStock;
 
-    public PSizeColors(Products product, String pSize, String pColor) {
+    public PSizeColorStock() {}
+
+    public PSizeColorStock(Products product, String pSize, String pColor, int pStock) {
         this.product = product;
         this.pSize = pSize;
         this.pColor = pColor;
+        this.pStock = pStock;
     }
 
     @JsonProperty("pscId")
-    public Long getPscId() { return pscId; }
-    public void setPscId(Long pscId) { this.pscId = pscId; }
+    public Long getPscId() { return pscsId; }
+    public void setPscId(Long pscId) { this.pscsId = pscId; }
 
     @JsonProperty("product")
     public Products getProduct() { return product; }
@@ -55,4 +58,8 @@ public class PSizeColors {
     @JsonProperty("pColor")
     public String getProductColor() { return pColor; }
     public void setProductColor(String pColor) { this.pColor = pColor; }
+
+    @JsonProperty("pStock")
+    public int getProductStock() { return pStock; }
+    public void setProductStock(int pStock) { this.pStock = pStock; }
 }
