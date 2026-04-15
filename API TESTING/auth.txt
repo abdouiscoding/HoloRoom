@@ -1,0 +1,15 @@
+register:
+{
+    "userName": "abder",
+    "userEmail": "abder@example.com",
+    "userPassword": "password123"
+
+}
+
+login:
+
+{
+    "info": "abder", or "userEmail": "user@example.com",
+    "password": "password123"
+
+}

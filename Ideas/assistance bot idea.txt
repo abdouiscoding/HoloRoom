@@ -8,3 +8,4 @@ use cloud to store 3d models/ images for performance then use links in mysql.
 
 end game stuff:
 -use cdn to help users download from closest server to them.
+-jwt reset timer by requesting another token on need.

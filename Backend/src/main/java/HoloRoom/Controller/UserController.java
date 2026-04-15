@@ -18,7 +18,7 @@ import HoloRoom.Model.User;
 import HoloRoom.Service.UserService;
 
 @RestController
-@RequestMapping("/api/Users")
+@RequestMapping("/api/users")
 public class UserController {
     
     @Autowired
