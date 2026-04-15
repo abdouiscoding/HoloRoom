@@ -42,7 +42,6 @@ public class PCategories {
     public String getProductCategory() { return pCategory; }
     public void setProductCategory(String pCategory) { this.pCategory = pCategory; }
 
-    @JsonProperty("products")
     public List<Products> getProducts() { return products; }
     public void setProducts(List<Products> products) { this.products = products; }
 }
