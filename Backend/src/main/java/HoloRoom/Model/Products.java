@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,6 +17,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -68,6 +73,11 @@ public class Products {
     @JsonManagedReference
     @JsonProperty("sizecolorstock")
     private List<PSizeColorStock> sizecolorstock = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    @JsonBackReference
+    private PCart cart;
 
     public Products() {}
 
@@ -130,6 +140,9 @@ public class Products {
     @JsonProperty("sizecolorstock")
     public List<PSizeColorStock> getSizeColorStock() { return sizecolorstock; }
     public void setSizeColorStock(List<PSizeColorStock> sizeColorstock) { this.sizecolorstock = sizeColorstock; }
+
+    public PCart getCart() { return cart; }
+    public void setCart(PCart cart) { this.cart = cart; }
 
     // --- Helper methods ---
     public void addImage(PImages img) { 

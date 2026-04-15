@@ -13,6 +13,7 @@ import HoloRoom.Model.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUserName(String userName);
-
+    Optional<User> findByUserEmail(String userEmail);
+    
 }
     
