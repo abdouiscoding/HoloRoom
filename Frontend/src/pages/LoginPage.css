@@ -1,0 +1,253 @@
+.card {
+    position: relative;
+    overflow: hidden;
+    width: 900px;
+    height: 540px;
+    border-radius: 20px;
+    background: #141317;
+    box-shadow: 0 20px 50px -10px rgba(141, 0, 255, 0.2), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.card-bg {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 50%;
+    background: linear-gradient(135deg, #8d00ff 0%, #b533ff 100%);
+    box-shadow: 0 0 30px rgba(141, 0, 255, 0.3);
+    translate: 0 0;
+    transition: 0.65s;
+}
+
+.card-bg.signin {
+    translate: 100% 0;
+}
+
+.hero,
+.form {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    transition: 0.65s;
+}
+
+.form.signup {
+    left: 50%;
+}
+
+.hero.signin {
+    left: 50%;
+    translate: 100% 0;
+}
+
+.hero.signin.active {
+    translate: 0;
+}
+
+.hero.signup {
+    translate: -100% 0;
+}
+
+.hero.signup.active {
+    translate: 0;
+}
+
+.hero {
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 50%;
+    color: #f9f9f9;
+    padding: 0 24px;
+}
+
+h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 2.4rem;
+    letter-spacing: -0.04em;
+    line-height: 1.2;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.form.signin {
+    translate: -100% 0;
+}
+
+.form.signin.active {
+    translate: 0;
+}
+
+.form.signup {
+    translate: 100% 0;
+}
+
+.form.signup.active {
+    translate: 0;
+}
+
+.form {
+    background: inherit;
+    z-index: 1;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px;
+}
+
+.form p {
+    color: #a19cad;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+.form input {
+    border-radius: 10px;
+    border: 0;
+    background: #1e1b29;
+    padding: 15px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 400;
+}
+
+.form button {
+    border: 0;
+    padding: 14px 0;
+    border-radius: 32px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8d00ff 0%, #b533ff 100%);
+    box-shadow: 0 4px 15px rgba(141, 0, 255, 0.4);
+}
+
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    background: radial-gradient(circle at top, #1a1525 0%, #0a0a0f 100%);
+    font-family: 'Outfit', sans-serif;
+}
+
+.login-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(141,0,255,0.05) 0%, transparent 70%);
+    top: -200px;
+    left: -200px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.sso {
+    display: flex;
+    gap: 16px;
+}
+
+.sso a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #ffffff;
+    border: 1px solid rgba(255, 254, 254, 0.4);
+    text-decoration: none;
+    font-size: 20px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.sso a:hover {
+    background: #f9f9f9;
+    border-color: #8d00ff;
+}
+
+.hero button {
+    background: transparent;
+    border: 1px solid #f9f9f9;
+    color: #f9f9f9;
+    padding: 10px 40px;
+    border-radius: 32px;
+    cursor: pointer;
+    transition: 0.6s;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.hero button:hover {
+    background: linear-gradient(135deg, #7c00e6 0%, #9f1be6 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(141, 0, 255, 0.4);
+    transform: translateY(-3px);
+}
+
+.form input {
+    color: #f9f9f9;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.form input:focus {
+    border: 1px solid #b533ff;
+    padding: 13px 15px;
+    box-shadow: 0 0 10px rgba(141, 0, 255, 0.2);
+    background: #252033;
+}
+
+.form input::placeholder {
+    color: #8d889d;
+}
+
+.form a {
+    color: #8d889d;
+    font-size: 12px;
+    text-decoration: none;
+    align-self: flex-start;
+    cursor: pointer;
+}
+
+.form a:hover {
+    color: #8d00ff;
+}
+
+.form h2 {
+    color: #f9f9f9;
+}
+
+.form button {
+    width: 100%;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+.form button:hover {
+    background: linear-gradient(135deg, #7c00e6 0%, #9f1be6 100%);
+    box-shadow: 0 6px 20px rgba(141, 0, 255, 0.6);
+    transform: translateY(-2px);
+}

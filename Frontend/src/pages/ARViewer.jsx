@@ -13,9 +13,9 @@ const ARViewer = () => {
     <div className={styles.arViewerContainer}>
       {/* Fake Camera Background */}
       <div className={styles.cameraBackground}>
-        <img 
-          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200" 
-          alt="Room Background" 
+        <img
+          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200"
+          alt="Room Background"
           className={styles.camImage}
         />
         <div className={styles.scanOverlay}>
@@ -27,12 +27,12 @@ const ARViewer = () => {
       {/* AR Product Simulation */}
       <div className={styles.modelContainer}>
         <div className={styles.modelPlaceholder} style={{ backgroundColor: colors[activeColor] }}>
-           {/* In a real app, this would be a <model-viewer> or Three.js canvas */}
-           <img 
-             src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400" 
-             alt="3D Model" 
-             className={styles.simulatedModel}
-           />
+
+          <img
+            src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400"
+            alt="3D Model"
+            className={styles.simulatedModel}
+          />
         </div>
       </div>
 
@@ -66,8 +66,8 @@ const ARViewer = () => {
           <div className={styles.colorPicker}>
             <span className={styles.toolLabel}>Colors:</span>
             {colors.map((color, idx) => (
-              <button 
-                key={idx} 
+              <button
+                key={idx}
                 className={`${styles.colorSwatch} ${activeColor === idx ? styles.activeSwatch : ''}`}
                 style={{ backgroundColor: color }}
                 onClick={() => setActiveColor(idx)}
