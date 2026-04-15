@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, User, Box } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,13 +36,13 @@ const Navbar = () => {
   return (
     <header className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
       <div className={`container ${styles.navContainer}`}>
-        
+
         {/* Logo */}
         <Link to="/" className={styles.logo}>
           <Box className={styles.logoIcon} />
           <span className="text-gradient">HoloRoom</span>
         </Link>
-        
+
         {/* Desktop Nav */}
         <nav className={styles.desktopNav}>
           <Link to="/" className={`${styles.navLink} ${location.pathname === '/' ? styles.active : ''}`}>Home</Link>
@@ -41,18 +53,40 @@ const Navbar = () => {
 
         {/* Action Icons */}
         <div className={styles.actionIcons}>
-          <button className={styles.iconBtn} aria-label="Search">
-            <Search size={20} />
-          </button>
-          <button className={styles.iconBtn} aria-label="Profile">
+          <div className={styles.searchContainer}>
+            {searchOpen ? (
+              <form className={styles.searchForm} onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                <button type="button" className={styles.closeSearchBtn} onClick={() => setSearchOpen(false)}>
+                  <X size={16} />
+                </button>
+              </form>
+            ) : (
+              <button
+                className={styles.iconBtn}
+                aria-label="Search"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search size={20} />
+              </button>
+            )}
+          </div>
+          <button className={styles.iconBtn} aria-label="Profile" onClick={() => navigate('/login')}>
             <User size={20} />
           </button>
           <button className={styles.iconBtn} aria-label="Cart">
             <ShoppingBag size={20} />
             <span className={styles.cartBadge}>2</span>
           </button>
-          
-          <button 
+
+          <button
             className={styles.mobileMenuToggle}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >

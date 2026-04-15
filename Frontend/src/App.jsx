@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
+import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -19,6 +20,7 @@ function App() {
 
         <Route path="/*" element={
           <div className="app-container">
+            <Sidebar />
             <Navbar />
             <main className="main-content">
               <Routes>

@@ -6,5 +6,12 @@
 
 .main-content {
   flex: 1;
-  padding-top: 80px; /* Offset for fixed navbar */
+  padding-top: 80px;
+  transition: padding-left var(--transition-normal, 0.3s ease);
+}
+
+@media (min-width: 992px) {
+  .main-content {
+    padding-left: 80px; /* Space for the collapsed sidebar */
+  }
 }
