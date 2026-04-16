@@ -1,6 +1,7 @@
 package HoloRoom.Model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Entity;
@@ -43,13 +44,18 @@ public class PSizeColorStock {
         this.pStock = pStock;
     }
 
-    @JsonProperty("pscId")
-    public Long getPscId() { return pscsId; }
-    public void setPscId(Long pscId) { this.pscsId = pscId; }
+    @JsonProperty("pscsId")
+    public Long getPscsId() { return pscsId; }
+    public void setPscsId(Long pscsId) { this.pscsId = pscsId; }
 
-    @JsonProperty("product")
+    @JsonIgnore
     public Products getProduct() { return product; }
     public void setProduct(Products product) { this.product = product; }
+
+    @JsonProperty("productId")
+    public Long getProductId() {
+        return product != null ? product.getProductId() : null;
+    }
 
     @JsonProperty("pSize")
     public String getProductSize() { return pSize; }

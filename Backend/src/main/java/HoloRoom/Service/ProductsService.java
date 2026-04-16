@@ -71,4 +71,29 @@ public class ProductsService {
     public void deleteProduct(Long id) {
         ProductsRepository.deleteById(id);
     }
+
+    // New finder methods based on updated repository
+    public List<Products> getProductByName(String pName) {
+        return ProductsRepository.findByPName(pName);
+    }
+
+    public List<Products> getProductByBrand(String pBrand) {
+        return ProductsRepository.findByPBrand(pBrand);
+    }
+
+    public List<Products> getProductByStatus(String pStatus) {
+        return ProductsRepository.findByPStatus(pStatus);
+    }
+
+    public List<Products> getProductByCategories(String pCategories) {
+        return ProductsRepository.findByPCategories(pCategories);
+    }
+
+    public List<Products> getProductByPrice(Double pPrice) {
+        return ProductsRepository.findByPPrice(pPrice);
+    }
+
+    public List<Products> getProductByRating(Double pRating) {
+        return ProductsRepository.findByPRating(pRating);
+    }
 }

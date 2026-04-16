@@ -2,6 +2,7 @@ package HoloRoom.Controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -150,5 +151,33 @@ public class ProductsController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    // GET products by brand
+    @GetMapping("/brand/{brand}")
+    public ResponseEntity<List<Products>> getProductsByBrand(@PathVariable String brand) {
+        List<Products> products = productsService.getProductByBrand(brand);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+    // GET products by status
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<Products>> getProductsByStatus(@PathVariable String status) {
+        List<Products> products = productsService.getProductByStatus(status);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+    // GET products by rating
+    @GetMapping("/rating/{rating}")
+    public ResponseEntity<List<Products>> getProductsByRating(@PathVariable double rating) {
+        List<Products> products = productsService.getProductByRating(rating);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+    // GET products by category
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<Products>> getProductsByCategory(@PathVariable String category) {
+        List<Products> products = productsService.getProductByCategories(category);
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
 }

@@ -1,0 +1,13 @@
+get:
+api/cart/{cartid}
+
+post:
+api/cart/additem/{cartid}
+{
+  "productId": 123,
+  "quantity": 2
+}
+
+delete:
+api/cart/delete/{cartid}
+api/cart/delete/{cartid}/{cartitemid}

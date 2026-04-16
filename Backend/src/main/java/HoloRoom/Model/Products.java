@@ -22,9 +22,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "products")
@@ -62,6 +59,9 @@ public class Products {
     @JsonProperty("pDescription")
     private String pDescription;
 
+    @JsonProperty("pRating")
+    private Double pRating;
+
     @JsonProperty("pAddDate")
     private LocalDateTime pAddDate;
 
@@ -83,13 +83,14 @@ public class Products {
     public Products() {}
 
     public Products(String pName, BigDecimal pPrice, String pBrand, String p3DModel,
-                    String pStatus, String pDescription) {
+                    String pStatus, String pDescription, Double pRating) {
         this.pName = pName;
         this.pPrice = pPrice;
         this.pBrand = pBrand;
         this.p3DModel = p3DModel;
         this.pStatus = pStatus;
         this.pDescription = pDescription;
+        this.pRating = pRating;
     }
 
     @PrePersist
@@ -126,6 +127,10 @@ public class Products {
     @JsonProperty("pDescription")
     public String getProductDescription() { return pDescription; }
     public void setProductDescription(String pDescription) { this.pDescription = pDescription; }
+
+    @JsonProperty("pRating")
+    public Double getProductRating() { return pRating; }
+    public void setProductRating(Double pRating) { this.pRating = pRating; }
 
     @JsonProperty("pAddDate")
     public LocalDateTime getProductAddDate() { return pAddDate; }
