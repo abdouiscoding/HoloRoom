@@ -1,5 +1,7 @@
 package HoloRoom.Model;
 
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,13 +31,34 @@ public class PCartItem {
     @JsonBackReference
     private PCart cart;
 
+    @ManyToOne
+    @JoinColumn(name = "pscs_Id")
+    private PSizeColorStock ProductSizeColorStock;
+
+    @JsonProperty("image")
+    private String image;
+
     @JsonProperty("quantity")
     private int quantity;
 
+    @JsonProperty("size")
+    private String size;
+
+    @JsonProperty("color")
+    private String color;
+
+    @JsonProperty("price")
+    private BigDecimal price;
+
     public PCartItem() {}
 
-    public PCartItem(Products product, int quantity) {
+    public PCartItem(Products product, PSizeColorStock pscs, String image, String size, String color, BigDecimal price, int quantity) {
         this.product = product;
+        this.ProductSizeColorStock = pscs;
+        this.image = image;
+        this.size = size;
+        this.color = color;
+        this.price = price;
         this.quantity = quantity;
     }
 
@@ -47,10 +70,22 @@ public class PCartItem {
     public Products getProduct() { return product; }
     public void setProduct(Products product) { this.product = product; }
 
-    @JsonProperty("productId")
-    public Long getProductId() {
-        return product != null ? product.getProductId() : null;
+    @JsonIgnore
+    public PSizeColorStock getPscs() {
+        return ProductSizeColorStock;
     }
+
+    public String getImage() { return image; }
+    public void setImage(String pImageId) { this.image = pImageId; }
+
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
+
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
     public PCart getCart() { return cart; }
     public void setCart(PCart cart) { this.cart = cart; }

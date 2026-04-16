@@ -17,83 +17,58 @@ import HoloRoom.Repository.ProductsRepository;
 public class ProductsService {
     
     @Autowired
-    private ProductsRepository ProductsRepository;
+    private ProductsRepository productsRepository;
+
     @Autowired
-    private PImagesRepository PImagesRepository;
+    private PImagesRepository pImagesRepository;
+
     @Autowired
-    private PSizeColorStockRepository PSizeColorRepository;
+    private PSizeColorStockService pSizeColorRepository;
+
     @Autowired
-    private PCategoriesRepository PCatigoriesRepository;
-    
-    // Retrieve all products from database
+    private PCategoriesRepository pCategoriesRepository;
+
+    // Retrieve all products
     public List<Products> getAllProducts() {
-        return ProductsRepository.findAll();
+        return productsRepository.findAll();
     }
 
-    // Retrieve all product's images 
+    // Retrieve product images
     public List<PImages> getProductImages(Long productId) {
 
-    Products product = ProductsRepository.findById(productId).orElse(null);
+        Products product = productsRepository.findById(productId).orElse(null);
 
-    if(product == null){
-        return null;
+        if (product == null) {
+            return null;
+        }
+
+        return product.getImages();
     }
 
-    return product.getImages();
-   }
+    // Retrieve sizes/colors/stock
+    public List<PSizeColorStock> getProductSizeColorStocks(Long productId) {
 
-    // Retrieve all product's sizes and colors and their stock
-    public List<PSizeColorStock> getProductSizes(Long productId) {
+        Products product = productsRepository.findById(productId).orElse(null);
 
-    Products product = ProductsRepository.findById(productId).orElse(null);
+        if (product == null) {
+            return null;
+        }
 
-    if(product == null){
-        return null;
+        return product.getSizeColorStock();
     }
 
-    return product.getSizeColorStock();
-   }
-    
-   
-
-    // Save a new product or update existing one
+    // Save product
     public Products saveProduct(Products product) {
-        ProductsRepository.save(product);
-        return product;
+        return productsRepository.save(product);
     }
-    
-    // Get a single product by ID
+
+    // Get by ID
     public Products getProductById(Long id) {
-        return ProductsRepository.findById(id).orElse(null);
+        return productsRepository.findById(id).orElse(null);
     }
-    
-    // Delete a product by ID
+
+    // Delete
     public void deleteProduct(Long id) {
-        ProductsRepository.deleteById(id);
-    }
-
-    // New finder methods based on updated repository
-    public List<Products> getProductByName(String pName) {
-        return ProductsRepository.findByPName(pName);
-    }
-
-    public List<Products> getProductByBrand(String pBrand) {
-        return ProductsRepository.findByPBrand(pBrand);
-    }
-
-    public List<Products> getProductByStatus(String pStatus) {
-        return ProductsRepository.findByPStatus(pStatus);
-    }
-
-    public List<Products> getProductByCategories(String pCategories) {
-        return ProductsRepository.findByPCategories(pCategories);
-    }
-
-    public List<Products> getProductByPrice(Double pPrice) {
-        return ProductsRepository.findByPPrice(pPrice);
-    }
-
-    public List<Products> getProductByRating(Double pRating) {
-        return ProductsRepository.findByPRating(pRating);
+        productsRepository.deleteById(id);
     }
 }

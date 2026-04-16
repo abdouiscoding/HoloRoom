@@ -8,5 +8,5 @@ import HoloRoom.Model.PWishlistItem;
 
 @Repository
 public interface PWishlistItemRepository extends JpaRepository<PWishlistItem, Long> {
-    List<PWishlistItem> findByProductId(Long productId);
+    List<PWishlistItem> findByPId(Long pId);
 }

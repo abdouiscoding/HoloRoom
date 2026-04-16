@@ -42,7 +42,7 @@ public class PWishlistService {
         }
 
         PWishlistItem existingItem = wishlist.getWishlistItems().stream()
-            .filter(item -> productId.equals(item.getProductId()))
+            .filter(item -> productId.equals(item.getpId()))
             .findFirst()
             .orElse(null);
 
@@ -102,6 +102,6 @@ public class PWishlistService {
     }
 
     public List<PWishlistItem> getWishlistItemsByProductId(Long productId) {
-        return wishlistItemRepository.findByProductId(productId);
+        return wishlistItemRepository.findByPId(productId);
     }
 }

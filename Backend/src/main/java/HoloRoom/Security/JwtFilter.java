@@ -1,49 +1,62 @@
 package HoloRoom.Security;
 
 import java.io.IOException;
+import java.util.List;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
-public class JwtFilter extends GenericFilter {
+public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
 
-        HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
+        String authHeader = request.getHeader("Authorization");
 
-        String authHeader = req.getHeader("Authorization");
-
-        // Only validate token if it's provided
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
             String token = authHeader.substring(7);
 
             try {
                 String userName = jwtUtil.extractName(token);
                 String userRole = jwtUtil.extractRole(token);
 
-                // Attach user info
-                req.setAttribute("userName", userName);
-                req.setAttribute("userRole", userRole);
+                SimpleGrantedAuthority authority =
+                new SimpleGrantedAuthority("ROLE_" + userRole);
+
+                UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    userName,
+                    null,
+                    List.of(authority)
+                );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
-                e.printStackTrace();
-                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                res.getWriter().write("Invalid token");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Invalid token");
                 return;
             }
         }
-        // If no header provided, just continue - let Spring Security decide if auth is required
 
-        chain.doFilter(request, response);
+        filterChain.doFilter(request, response);
     }
 }

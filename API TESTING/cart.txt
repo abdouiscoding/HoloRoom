@@ -1,5 +1,8 @@
-get:
-api/cart/{cartid}
+get by id:
+http://localhost:8080/api/cart/getbyid/{id}
+
+get by user or create if doesnt exist:
+http://localhost:8080/api/cart/getbyuser/{id}
 
 post:
 api/cart/additem/{cartid}

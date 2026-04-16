@@ -1,0 +1,15 @@
+get by id:
+http://localhost:8080/api/cartitem/get/{id}
+
+get name,price,size...:
+http://localhost:8080/api/cartitem/get/name/{id}
+
+
+put:
+http://localhost:8080/api/cartitem/update/{id}
+{
+    "image": "nike1.png",
+    "quantity": 2,
+    "size": "M",
+    "color": "BLACK",
+}

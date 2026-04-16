@@ -19,8 +19,8 @@ public class PWishlistItem {
     @JsonProperty("wItemId")
     private Long wItemId;
 
-    @JsonProperty("productId")
-    private Long productId;
+    @JsonProperty("pId")
+    private Long pId;
 
     @JsonProperty("quantity")
     private int quantity;
@@ -32,8 +32,8 @@ public class PWishlistItem {
 
     public PWishlistItem() {}
 
-    public PWishlistItem(Long productId, int quantity) {
-        this.productId = productId;
+    public PWishlistItem(Long pId, int quantity) {
+        this.pId = pId;
         this.quantity = quantity;
     }
 
@@ -41,13 +41,13 @@ public class PWishlistItem {
     public Long getwItemId() { return wItemId; }
     public void setwItemId(Long wItemId) { this.wItemId = wItemId; }
 
-    @JsonProperty("productId")
-    public Long getProductId() { return productId; }
-    public void setProductId(Long productId) { this.productId = productId; }
-
     @JsonProperty("quantity")
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    @JsonProperty("pId")
+    public Long getpId() { return pId; }
+    public void setpId(Long pId) { this.pId = pId; }
 
     public PWishlist getWishlist() { return wishlist; }
     public void setWishlist(PWishlist wishlist) { this.wishlist = wishlist; }

@@ -1,15 +1,21 @@
 package HoloRoom.Model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -35,6 +41,11 @@ public class PSizeColorStock {
     @JsonProperty("pStock")
     private int pStock;
 
+    @OneToMany(mappedBy = "productSizeColorStock", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    @JsonProperty("images")
+    private List<PImages> images = new ArrayList<>();
+
     public PSizeColorStock() {}
 
     public PSizeColorStock(Products product, String pSize, String pColor, int pStock) {
@@ -52,10 +63,9 @@ public class PSizeColorStock {
     public Products getProduct() { return product; }
     public void setProduct(Products product) { this.product = product; }
 
-    @JsonProperty("productId")
-    public Long getProductId() {
-        return product != null ? product.getProductId() : null;
-    }
+    @JsonIgnore
+    public List<PImages> getImages() { return images; }
+    public void setImages(List<PImages> images) { this.images = images; }
 
     @JsonProperty("pSize")
     public String getProductSize() { return pSize; }

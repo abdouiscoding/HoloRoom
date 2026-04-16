@@ -1,0 +1,21 @@
+get all:
+http://localhost:8080/api/categories/get
+get by id:
+http://localhost:8080/api/categories/get/{id}
+get by name:
+http://localhost:8080/api/categories/get/{name}
+
+add:
+http://localhost:8080/api/categories/create
+{
+    "pCategory": "Female"
+}
+
+update:
+http://localhost:8080/api/categories/update/{id}
+{
+    "pCategory": "Female"
+}
+
+delete:
+http://localhost:8080/api/categories/delete/{id}

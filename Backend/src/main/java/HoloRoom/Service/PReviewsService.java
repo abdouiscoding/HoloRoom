@@ -20,7 +20,7 @@ public class PReviewsService {
     private ProductsRepository productsRepository;
 
     public List<PReviews> getProductReviews(Long productId) {
-        return reviewsRepository.findByProduct_ProductId(productId);
+        return reviewsRepository.findByProduct_PId(productId);
     }
 
     public PReviews addReview(PReviews review) {

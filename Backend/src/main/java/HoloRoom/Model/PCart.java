@@ -2,6 +2,7 @@ package HoloRoom.Model;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,11 +32,11 @@ public class PCart {
     private BigDecimal Total;
 
     @JsonProperty("userId")
-    private String userId;
+    private Long userId;
 
     public PCart() {}
 
-    public PCart(List<PCartItem> items , BigDecimal total, String userId) {
+    public PCart(List<PCartItem> items , BigDecimal total, Long userId) {
         this.items = items;
         this.Total = total;
         this.userId = userId;
@@ -54,7 +55,13 @@ public class PCart {
     public void setTotal(BigDecimal total) { Total = total; }
 
     @JsonProperty("userId")
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public void updateTotal() {
+        this.Total = items.stream()
+                          .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
 }
