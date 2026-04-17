@@ -41,14 +41,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + userRole);
 
-                UsernamePasswordAuthenticationToken authentication =
+                UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
-                    userName,
-                    null,
-                    List.of(authority)
-                );
+                userName,
+                null,
+                List.of(authority)
+            );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
