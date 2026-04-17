@@ -3,6 +3,22 @@ import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, User, Box } from 'lucide-react';
 import styles from './Navbar.module.css';
 
+const handleProfile = () => {
+  if (localStorage.getItem("loggedin") === "true") {
+    window.location.href = '/profile';
+  } else {
+    window.location.href = '/login';
+  }
+};
+
+const handleCart = () => {
+  if (localStorage.getItem("loggedin") === "true") {
+    window.location.href = '/cart';
+  } else {
+    window.location.href = '/login';
+  }
+};
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -44,12 +60,12 @@ const Navbar = () => {
           <button className={styles.iconBtn} aria-label="Search">
             <Search size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Profile">
+          <button className={styles.iconBtn} aria-label="Profile" onClick={handleProfile}>
             <User size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Cart">
+          <button className={styles.iconBtn} aria-label="Cart" onClick={handleCart}>
             <ShoppingBag size={20} />
-            <span className={styles.cartBadge}>2</span>
+            <span className={styles.cartBadge}>67</span>
           </button>
           
           <button 

@@ -1,15 +1,15 @@
 register:
 {
-    "userName": "abder",
-    "userEmail": "abder@example.com",
-    "userPassword": "password123"
+    "userName": "admin",
+    "userEmail": "admin@holoroom.com",
+    "userPassword": "admin123"
 
 }
 
 login:
 
 {
-    "info": "abder", or "userEmail": "user@example.com",
-    "password": "password123"
+    "info": "admin", or "userEmail": "admin@holoroom.com",
+    "userPassword": "admin123"
 
 }
