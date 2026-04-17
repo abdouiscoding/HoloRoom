@@ -1,0 +1,16 @@
+get by id:
+http://localhost:8080/api/cart/getbyid/{id}
+
+get by user or create if doesnt exist:
+http://localhost:8080/api/cart/getbyuser/{id}
+
+post:
+api/cart/additem/{cartid}
+{
+  "productId": 123,
+  "quantity": 2
+}
+
+delete:
+api/cart/delete/{cartid}
+api/cart/delete/{cartid}/{cartitemid}

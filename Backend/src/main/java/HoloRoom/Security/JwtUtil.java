@@ -23,7 +23,6 @@ public class JwtUtil {
 
     private final long EXPIRATION = 1000 * 60 * 60;
 
-    // ✅ KEEP SAME NAME
     public String generateToken(User user) {
 
         Map<String, Object> claims = new HashMap<>();
@@ -31,7 +30,7 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getUserName()) // you wanted name ✔
+                .setSubject(user.getUserName()) 
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(key, SignatureAlgorithm.HS256)

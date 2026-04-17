@@ -1,6 +1,8 @@
 package HoloRoom.Model;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,20 +26,42 @@ public class PCart {
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Products> products;
+    private List<PCartItem> items;
+
+    @JsonProperty("total")
+    private BigDecimal Total;
+
+    @JsonProperty("userId")
+    private Long userId;
 
     public PCart() {}
 
-    public PCart(List<Products> products) {
-        this.products = products;
+    public PCart(List<PCartItem> items , BigDecimal total, Long userId) {
+        this.items = items;
+        this.Total = total;
+        this.userId = userId;
     }
 
     @JsonProperty("pCartId")
     public Long getCartId() { return pCartId; }
     public void setCartId(Long pCartId) { this.pCartId = pCartId; }
 
-    @JsonProperty("products")
-    public List<Products> getProducts() { return products; }
-    public void setProducts(List<Products> products) { this.products = products; }
+    @JsonProperty("items")
+    public List<PCartItem> getItems() { return items; }
+    public void setItems(List<PCartItem> items) { this.items = items; }
+
+    @JsonProperty("total")
+    public BigDecimal getTotal() { return Total; }  
+    public void setTotal(BigDecimal total) { Total = total; }
+
+    @JsonProperty("userId")
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public void updateTotal() {
+        this.Total = items.stream()
+                          .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
 }

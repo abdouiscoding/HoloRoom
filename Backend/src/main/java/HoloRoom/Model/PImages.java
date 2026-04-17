@@ -25,6 +25,11 @@ public class PImages {
     @JsonBackReference
     private Products product;
 
+    @ManyToOne
+    @JoinColumn(name = "pscs_Id")
+    @JsonBackReference
+    private PSizeColorStock productSizeColorStock;
+
     @JsonProperty("pImageUrl")
     private String pImageUrl;
 
@@ -42,6 +47,10 @@ public class PImages {
     @JsonProperty("product")
     public Products getProduct() { return product; }
     public void setProduct(Products product) { this.product = product; }
+
+    @JsonProperty("productSizeColorStock")
+    public PSizeColorStock getProductSizeColorStock() { return productSizeColorStock; }
+    public void setProductSizeColorStock(PSizeColorStock productSizeColorStock) { this.productSizeColorStock = productSizeColorStock; }
 
     @JsonProperty("pImageUrl")
     public String getProductImage() { return pImageUrl; }

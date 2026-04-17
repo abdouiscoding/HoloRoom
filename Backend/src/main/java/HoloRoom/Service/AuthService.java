@@ -45,21 +45,26 @@ public class AuthService {
     // LOGIN
     public Object login(String info, String password) {
 
-        Optional<User> userOpt1 = userRepository.findByUserEmail(info);
-        Optional<User> userOpt2 = userRepository.findByUserName(info);
+    info = info.trim();
+    password = password.trim();
 
-        if (userOpt1.isEmpty() && userOpt2.isEmpty()) {
-            return "Invalid password or email/username";
-        }
+    Optional<User> userOpt =
+        userRepository.findByUserEmail(info);
 
-        User user = userOpt1.orElse(userOpt2.get());
-
-        if (!passwordEncoder.matches(password, user.getUserPassword())) {
-            return "Invalid password or email/username";
-        }
-
-        String token = jwtUtil.generateToken(user);
-
-        return token;
+    if (userOpt.isEmpty()) {
+        userOpt = userRepository.findByUserName(info);
     }
+
+    if (userOpt.isEmpty()) {
+        return "Invalid password or email/username";
+    }
+
+    User user = userOpt.get();
+
+    if (!passwordEncoder.matches(password, user.getUserPassword())) {
+        return "Invalid password or email/username";
+    }
+
+    return jwtUtil.generateToken(user);
+}
 }
