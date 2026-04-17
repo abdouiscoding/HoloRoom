@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SlidersHorizontal, View, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, View, ChevronDown, Heart, Star } from 'lucide-react';
 import styles from './Shop.module.css';
+import { useWishlist } from '../context/WishlistContext';
+import { useReviews } from '../context/ReviewsContext';
+import ReviewModal from '../components/product/ReviewModal';
 
 const MOCK_PRODUCTS = [
   { id: 1, name: 'Velvet Accent Chair', price: '29900 DZD', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
@@ -16,6 +19,9 @@ const CATEGORIES = ['All', 'Furniture', 'Decor', 'Accessories', 'Lighting'];
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { getReviews, getAverageRating } = useReviews();
+  const [reviewProduct, setReviewProduct] = useState(null);
 
   const filteredProducts = activeCategory === 'All' 
     ? MOCK_PRODUCTS 
@@ -82,6 +88,12 @@ const Shop = () => {
               <div key={product.id} className={styles.productCard}>
                 <div className={styles.imageWrapper}>
                   <img src={product.image} alt={product.name} />
+                  <button 
+                    onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
+                    style={{ position: 'absolute', top: '10px', right: '10px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.1)', display: 'flex' }}
+                  >
+                    <Heart size={18} fill={isInWishlist(product.id) ? "var(--accent-primary)" : "none"} color={isInWishlist(product.id) ? "var(--accent-primary)" : "var(--text-primary)"} />
+                  </button>
                   <div className={styles.arBadge}>
                     <View size={14} /> 3D/AR
                   </div>
@@ -95,12 +107,20 @@ const Shop = () => {
                   <span className={styles.category}>{product.category}</span>
                   <h3><Link to={`/product/${product.id}`}>{product.name}</Link></h3>
                   <p className={styles.price}>{product.price}</p>
+                  <div 
+                    style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }} 
+                    onClick={() => setReviewProduct(product)}
+                  >
+                     <Star size={12} fill="var(--accent-secondary)" color="var(--accent-secondary)" />
+                     <span>{getReviews(product.id).length} Reviews</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </main>
       </div>
+      <ReviewModal isOpen={!!reviewProduct} onClose={() => setReviewProduct(null)} product={reviewProduct} />
     </div>
   );
 };

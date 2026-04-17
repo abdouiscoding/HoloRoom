@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { View, ShoppingBag, ArrowLeft, Star, Heart, Share2, Check } from 'lucide-react';
 import styles from './ProductDetail.module.css';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import { useReviews } from '../context/ReviewsContext';
+import ReviewModal from '../components/product/ReviewModal';
 
 const MOCK_PRODUCT = {
   id: 1, 
@@ -27,8 +30,15 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { getReviews, getAverageRating } = useReviews();
   const [activeImage, setActiveImage] = useState(0);
   const [activeColor, setActiveColor] = useState(0);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  const reviews = getReviews(MOCK_PRODUCT.id);
+  const avgRating = parseFloat(getAverageRating(MOCK_PRODUCT.id));
+  const displayStars = isNaN(avgRating) || avgRating === 0 ? 0 : avgRating;
 
   return (
     <div className={`container ${styles.productContainer}`}>
@@ -63,7 +73,9 @@ const ProductDetail = () => {
           <div className={styles.headerRow}>
             <span className={styles.category}>{MOCK_PRODUCT.category}</span>
             <div className={styles.actions}>
-              <button className={styles.iconBtn}><Heart size={20}/></button>
+              <button className={styles.iconBtn} onClick={() => toggleWishlist(MOCK_PRODUCT)}>
+                <Heart size={20} fill={isInWishlist(MOCK_PRODUCT.id) ? "var(--accent-primary)" : "none"} color={isInWishlist(MOCK_PRODUCT.id) ? "var(--accent-primary)" : "var(--text-primary)"} />
+              </button>
               <button className={styles.iconBtn}><Share2 size={20}/></button>
             </div>
           </div>
@@ -72,13 +84,18 @@ const ProductDetail = () => {
           
           <div className={styles.reviews}>
             <div className={styles.stars}>
-              <Star size={16} fill="var(--accent-secondary)" color="var(--accent-secondary)" />
-              <Star size={16} fill="var(--accent-secondary)" color="var(--accent-secondary)" />
-              <Star size={16} fill="var(--accent-secondary)" color="var(--accent-secondary)" />
-              <Star size={16} fill="var(--accent-secondary)" color="var(--accent-secondary)" />
-              <Star size={16} color="var(--text-muted)" />
+              {[1, 2, 3, 4, 5].map(star => (
+                <Star 
+                  key={star} 
+                  size={16} 
+                  fill={star <= displayStars ? "var(--accent-secondary)" : "none"} 
+                  color={star <= displayStars ? "var(--accent-secondary)" : "var(--text-muted)"} 
+                />
+              ))}
             </div>
-            <span>(128 Reviews)</span>
+            <span style={{cursor: 'pointer', textDecoration: 'underline'}} onClick={() => setIsReviewOpen(true)}>
+              ({reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'})
+            </span>
           </div>
 
           <div className={styles.price}>{MOCK_PRODUCT.price}</div>
@@ -123,6 +140,7 @@ const ProductDetail = () => {
 
         </div>
       </div>
+      <ReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} product={MOCK_PRODUCT} />
     </div>
   );
 };

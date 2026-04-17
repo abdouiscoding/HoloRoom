@@ -58,7 +58,7 @@ export const LoginPage = () => {
                 <Hero
                     type="signin"
                     active={!isSignup}
-                    title="Welcom Back!"
+                    title="Welcome Back!"
                     text="Sign in for an amazing shopping experience!"
                     buttonText="Sign Up"
                     onClick={toggleView} />

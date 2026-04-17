@@ -10,6 +10,7 @@ import ARViewer from './pages/ARViewer';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
 import { LoginPage } from './pages/LoginPage';
 import Cart from './pages/Cart';
+import ProfilePage from './pages/ProfilePage';
 import './App.css';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/ar/:id" element={<ARViewer />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Routes>
             </main>
             <Footer />
