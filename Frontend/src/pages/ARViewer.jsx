@@ -2,12 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { X, Maximize, RotateCcw, Palette, ArrowLeft, Camera } from 'lucide-react';
 import styles from './ARViewer.module.css';
+import { useCart } from '../context/CartContext';
 
 const ARViewer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addToCart } = useCart();
   const [activeColor, setActiveColor] = useState(0);
   const colors = ['#2E3A4B', '#9D4B55', '#E6C687'];
+
+  const handleAddToCart = () => {
+    const mockProduct = {
+      id: id || 'ar-demo',
+      name: 'AR Preview Product',
+      price: '29900 DZD',
+      images: ['https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400'],
+      color: colors[activeColor]
+    };
+    addToCart(mockProduct, 1, colors[activeColor]);
+  };
 
   return (
     <div className={styles.arViewerContainer}>
@@ -75,8 +88,8 @@ const ARViewer = () => {
             ))}
           </div>
 
-          <button className="btn-primary" onClick={() => alert('Added to cart directly from AR!')}>
-            Add to Cart - $299
+          <button className="btn-primary" onClick={handleAddToCart}>
+            Add to Cart - 29900 DZD
           </button>
         </div>
       </div>

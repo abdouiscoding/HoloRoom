@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, View, Sparkles } from 'lucide-react';
+import { ArrowRight, View, Sparkles, ShoppingBag } from 'lucide-react';
 import styles from './Home.module.css';
 
 const MOCK_FEATURED = [
-  { id: 1, name: 'Velvet Accent Chair', price: '$299', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
-  { id: 2, name: 'Minimalist Floor Lamp', price: '$129', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
-  { id: 3, name: 'Modern Oak Desk', price: '$499', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' }
+  { id: 1, name: 'Velvet Accent Chair', price: '29900 DZD', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 2, name: 'Minimalist Floor Lamp', price: '12900 DZD', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
+  { id: 3, name: 'Modern Oak Desk', price: '49900 DZD', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' }
 ];
 
 const Home = () => {
@@ -17,33 +17,21 @@ const Home = () => {
         <div className={styles.heroGlow}></div>
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroText}>
-            <div className={styles.badge}>
-              <Sparkles size={16} className={styles.badgeIcon} />
-              <span>Next-Gen AR Shopping</span>
-            </div>
             <h1 className={styles.title}>
-              Transform Your Space With <span className="text-gradient">Augmented Reality</span>
+              Corby<br />sofas
             </h1>
             <p className={styles.subtitle}>
-              Don't just imagine it. See it. Try furniture and decor in your own room before you buy with our cutting-edge AR technology.
+              Price starting from <span style={{ fontWeight: 'bold', textDecoration: 'underline' }}>19900 DZD</span>
             </p>
             <div className={styles.heroActions}>
-              <Link to="/shop" className="btn-primary flex-center gap-2">
-                Shop Collection <ArrowRight size={20} />
-              </Link>
-              <Link to="/about" className="btn-secondary">
-                Learn How It Works
+              <Link to="/shop" className={`${styles.shopNowBtn}`}>
+                <ShoppingBag size={18} /> SHOP NOW
               </Link>
             </div>
           </div>
-          <div className={styles.heroVisual}>
-            <div className={`${styles.visualCard} glass-panel`}>
-              <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=600" alt="Room Setup" className={styles.heroImage} />
-              <div className={styles.arOverlayTag}>
-                <View size={18} /> AR View Active
-              </div>
-            </div>
-          </div>
+        </div>
+        <div className={styles.heroVisual}>
+          <img src="/landingpage.png" alt="Corby Blue Sofa" className={styles.heroImage} />
         </div>
       </section>
 

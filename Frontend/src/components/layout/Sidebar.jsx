@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, Grid, Info, Settings, HelpCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Home, ShoppingBag, Grid, Info, Settings, HelpCircle } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(true);
+const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const menuItems = [
     { name: 'Home', path: '/', icon: Home },
@@ -19,22 +18,15 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
-      <button
-        className={styles.toggleBtn}
-        onClick={() => setCollapsed(!collapsed)}
-        aria-label="Toggle Sidebar"
-      >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-      </button>
-
-      <div className={styles.navGroup}>
+    <aside className={`${styles.sidebar} ${!isOpen ? styles.collapsed : ''}`}>
+      <div className={styles.navGroup} style={{ marginTop: 'var(--spacing-xl)' }}>
         {menuItems.map((item) => (
           <NavLink
             key={item.name}
             to={item.path}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
-            title={collapsed ? item.name : ''}
+            title={!isOpen ? item.name : ''}
+            onClick={() => setIsOpen(false)}
           >
             <item.icon className={styles.icon} size={22} />
             <span className={styles.label}>{item.name}</span>
@@ -48,7 +40,8 @@ const Sidebar = () => {
             key={item.name}
             to={item.path}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
-            title={collapsed ? item.name : ''}
+            title={!isOpen ? item.name : ''}
+            onClick={() => setIsOpen(false)}
           >
             <item.icon className={styles.icon} size={22} />
             <span className={styles.label}>{item.name}</span>

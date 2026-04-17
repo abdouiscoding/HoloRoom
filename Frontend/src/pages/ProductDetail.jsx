@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { View, ShoppingBag, ArrowLeft, Star, Heart, Share2, Check } from 'lucide-react';
 import styles from './ProductDetail.module.css';
+import { useCart } from '../context/CartContext';
 
 const MOCK_PRODUCT = {
   id: 1, 
   name: 'Velvet Accent Chair', 
-  price: '$299', 
+  price: '29900 DZD', 
   images: [
     'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=800',
     'https://images.unsplash.com/photo-1567538096621-789a80373ab9?auto=format&fit=crop&q=80&w=800'
@@ -25,6 +26,7 @@ const MOCK_PRODUCT = {
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [activeImage, setActiveImage] = useState(0);
   const [activeColor, setActiveColor] = useState(0);
 
@@ -98,7 +100,11 @@ const ProductDetail = () => {
           </div>
 
           <div className={styles.ctaGroup}>
-            <button className="btn-primary flex-center gap-2" style={{flex: 1}}>
+            <button 
+              className="btn-primary flex-center gap-2" 
+              style={{flex: 1}}
+              onClick={() => addToCart(MOCK_PRODUCT, 1, MOCK_PRODUCT.colors[activeColor])}
+            >
               <ShoppingBag size={20} /> Add to Cart
             </button>
             <button className="btn-secondary flex-center gap-2" style={{flex: 1}} onClick={() => navigate(`/ar/${id}`)}>

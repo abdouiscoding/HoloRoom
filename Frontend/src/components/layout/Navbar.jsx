@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, User, Box } from 'lucide-react';
 import styles from './Navbar.module.css';
+import { useCart } from '../../context/CartContext';
 
-const Navbar = () => {
+const Navbar = ({ onMenuToggle }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
+  const { cartCount } = useCart();
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -37,11 +39,18 @@ const Navbar = () => {
     <header className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
       <div className={`container ${styles.navContainer}`}>
 
-        {/* Logo */}
-        <Link to="/" className={styles.logo}>
-          <Box className={styles.logoIcon} />
-          <span className="text-gradient">HoloRoom</span>
-        </Link>
+        <div className={styles.leftSection}>
+          {/* Sidebar Toggle */ }
+          <button className={styles.sidebarBtn} onClick={onMenuToggle} aria-label="Toggle Sidebar">
+            <Menu size={24} />
+          </button>
+
+          {/* Logo */}
+          <Link to="/" className={styles.logo}>
+            <Box className={styles.logoIcon} />
+            <span className="text-gradient">HoloRoom</span>
+          </Link>
+        </div>
 
         {/* Desktop Nav */}
         <nav className={styles.desktopNav}>
@@ -81,16 +90,9 @@ const Navbar = () => {
           <button className={styles.iconBtn} aria-label="Profile" onClick={() => navigate('/login')}>
             <User size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Cart">
+          <button className={styles.iconBtn} aria-label="Cart" onClick={() => navigate('/cart')}>
             <ShoppingBag size={20} />
-            <span className={styles.cartBadge}>2</span>
-          </button>
-
-          <button
-            className={styles.mobileMenuToggle}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
           </button>
         </div>
       </div>

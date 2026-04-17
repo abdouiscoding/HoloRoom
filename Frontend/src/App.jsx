@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -8,9 +9,12 @@ import ProductDetail from './pages/ProductDetail';
 import ARViewer from './pages/ARViewer';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
 import { LoginPage } from './pages/LoginPage';
+import Cart from './pages/Cart';
 import './App.css';
 
 function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <Router>
       <Routes>
@@ -20,14 +24,15 @@ function App() {
 
         <Route path="/*" element={
           <div className="app-container">
-            <Sidebar />
-            <Navbar />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+            <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
             <main className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/ar/:id" element={<ARViewer />} />
+                <Route path="/cart" element={<Cart />} />
               </Routes>
             </main>
             <Footer />
