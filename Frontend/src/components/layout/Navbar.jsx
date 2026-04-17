@@ -1,28 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, User, Box } from 'lucide-react';
 import styles from './Navbar.module.css';
 
-const handleProfile = () => {
-  if (localStorage.getItem("loggedin") === "true") {
-    window.location.href = '/profile';
-  } else {
-    window.location.href = '/login';
-  }
-};
-
-const handleCart = () => {
-  if (localStorage.getItem("loggedin") === "true") {
-    window.location.href = '/cart';
-  } else {
-    window.location.href = '/login';
-  }
-};
-
-const Navbar = () => {
+const Navbar = ({ onMenuToggle }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
+  const { cartCount } = useCart();
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,13 +37,20 @@ const Navbar = () => {
   return (
     <header className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
       <div className={`container ${styles.navContainer}`}>
-        
-        {/* Logo */}
-        <Link to="/" className={styles.logo}>
-          <Box className={styles.logoIcon} />
-          <span className="text-gradient">HoloRoom</span>
-        </Link>
-        
+
+        <div className={styles.leftSection}>
+          {/* Sidebar Toggle */ }
+          <button className={styles.sidebarBtn} onClick={onMenuToggle} aria-label="Toggle Sidebar">
+            <Menu size={24} />
+          </button>
+
+          {/* Logo */}
+          <Link to="/" className={styles.logo}>
+            <Box className={styles.logoIcon} />
+            <span className="text-gradient">HoloRoom</span>
+          </Link>
+        </div>
+
         {/* Desktop Nav */}
         <nav className={styles.desktopNav}>
           <Link to="/" className={`${styles.navLink} ${location.pathname === '/' ? styles.active : ''}`}>Home</Link>
@@ -60,12 +64,12 @@ const Navbar = () => {
           <button className={styles.iconBtn} aria-label="Search">
             <Search size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Profile" onClick={handleProfile}>
+          <button className={styles.iconBtn} aria-label="Profile">
             <User size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Cart" onClick={handleCart}>
+          <button className={styles.iconBtn} aria-label="Cart">
             <ShoppingBag size={20} />
-            <span className={styles.cartBadge}>67</span>
+            <span className={styles.cartBadge}>2</span>
           </button>
           
           <button 

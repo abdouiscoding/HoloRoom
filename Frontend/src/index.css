@@ -2,20 +2,21 @@
 
 :root {
   /* Colors */
-  --bg-primary: #0a0a0c;
-  --bg-secondary: #131316;
-  --bg-glass: rgba(20, 20, 25, 0.65);
-  --bg-glass-hover: rgba(30, 30, 38, 0.75);
+  --bg-primary: #f4f5f7;
+  --bg-secondary: #ffffff;
+  --bg-dark-accent: #244568; /* The deep blue for Right Hero side */
+  --bg-glass: rgba(255, 255, 255, 0.65);
+  --bg-glass-hover: rgba(255, 255, 255, 0.85);
   
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0ab;
-  --text-muted: #6b6b75;
+  --text-primary: #244568; 
+  --text-secondary: #566c85; 
+  --text-muted: #94a3b8;
   
-  --accent-primary: #7c3aed; /* Vibrant Purple */
-  --accent-secondary: #ec4899; /* Vibrant Pink */
-  --accent-glow: rgba(124, 58, 237, 0.5);
+  --accent-primary: #f89d00;
+  --accent-secondary: #e69100;
+  --accent-glow: rgba(248, 157, 0, 0.4);
   
-  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glass: rgba(36, 69, 104, 0.1);
 
   /* Typography */
   --font-heading: 'Outfit', sans-serif;

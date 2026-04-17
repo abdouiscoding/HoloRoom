@@ -4,12 +4,12 @@ import { SlidersHorizontal, View, ChevronDown } from 'lucide-react';
 import styles from './Shop.module.css';
 
 const MOCK_PRODUCTS = [
-  { id: 1, name: 'Velvet Accent Chair', price: '$299', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
-  { id: 2, name: 'Minimalist Floor Lamp', price: '$129', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
-  { id: 3, name: 'Modern Oak Desk', price: '$499', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
-  { id: 4, name: 'Ceramic Vase Set', price: '$89', image: 'https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&q=80&w=400', category: 'Accessories' },
-  { id: 5, name: 'Lounge Sofa', price: '$899', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
-  { id: 6, name: 'Abstract Wall Art', price: '$150', image: 'https://images.unsplash.com/photo-1549887552-cb1071d3e5ca?auto=format&fit=crop&q=80&w=400', category: 'Decor' }
+  { id: 1, name: 'Velvet Accent Chair', price: '29900 DZD', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 2, name: 'Minimalist Floor Lamp', price: '12900 DZD', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
+  { id: 3, name: 'Modern Oak Desk', price: '49900 DZD', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 4, name: 'Ceramic Vase Set', price: '8900 DZD', image: 'https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&q=80&w=400', category: 'Accessories' },
+  { id: 5, name: 'Lounge Sofa', price: '89900 DZD', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 6, name: 'Abstract Wall Art', price: '15000 DZD', image: 'https://images.unsplash.com/photo-1549887552-cb1071d3e5ca?auto=format&fit=crop&q=80&w=400', category: 'Decor' }
 ];
 
 const CATEGORIES = ['All', 'Furniture', 'Decor', 'Accessories', 'Lighting'];

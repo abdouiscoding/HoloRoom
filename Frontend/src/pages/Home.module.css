@@ -6,36 +6,46 @@
 
 .hero {
   position: relative;
-  min-height: 80vh;
+  min-height: 90vh;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   padding: var(--spacing-2xl) 0;
+  background: var(--bg-primary);
 }
 
-.heroGlow {
+.hero::before {
+  content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80vw;
-  height: 80vw;
-  max-width: 800px;
-  max-height: 800px;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, rgba(10, 10, 12, 0) 70%);
-  z-index: -1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 55%;
+  background: #aebdd0;
+  border-top-left-radius: 400px;
+  border-bottom-left-radius: 400px;
+  z-index: 0;
 }
 
 .heroContent {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1.5fr;
   gap: var(--spacing-2xl);
   align-items: center;
+  z-index: 1;
+  position: relative;
+  width: 100%;
 }
 
-@media (min-width: 992px) {
+@media (max-width: 992px) {
   .heroContent {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1fr;
+  }
+
+  .hero::before {
+    border-radius: 0;
+    width: 100%;
+    top: 50%;
   }
 }
 
@@ -44,6 +54,7 @@
   flex-direction: column;
   gap: var(--spacing-lg);
   z-index: 1;
+  padding-left: var(--spacing-2xl);
 }
 
 .badge {
@@ -65,28 +76,36 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .title {
-  font-size: 3.5rem;
-  line-height: 1.1;
-  letter-spacing: -1px;
+  font-size: 5rem;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--text-primary);
+  font-weight: 800;
 }
 
 @media (max-width: 768px) {
   .title {
-    font-size: 2.5rem;
+    font-size: 3.5rem;
   }
 }
 
 .subtitle {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   color: var(--text-secondary);
-  max-width: 500px;
-  line-height: 1.8;
 }
 
 .heroActions {
@@ -95,36 +114,43 @@
   margin-top: var(--spacing-sm);
 }
 
-@media (max-width: 480px) {
-  .heroActions {
-    flex-direction: column;
-  }
+.shopNowBtn {
+  background: var(--text-primary);
+  /* Dark navy */
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: var(--transition-fast);
+}
+
+.shopNowBtn:hover {
+  background: var(--accent-primary);
+  /* Orange */
+  transform: translateY(-2px);
 }
 
 .heroVisual {
-  position: relative;
-  perspective: 1000px;
-}
-
-.visualCard {
-  position: relative;
-  border-radius: var(--radius-lg);
-  padding: 10px;
-  transform: rotateY(-10deg) rotateX(5deg);
-  transition: transform 0.5s ease;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.visualCard:hover {
-  transform: rotateY(-5deg) rotateX(2deg);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .heroImage {
-  width: 100%;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 70vw;
   height: auto;
-  border-radius: var(--radius-md);
-  object-fit: cover;
+  max-height: 95vh;
+  object-fit: contain;
+  object-position: right center;
   display: block;
+  z-index: 2;
 }
 
 .arOverlayTag {
@@ -140,14 +166,22 @@
   align-items: center;
   gap: var(--spacing-sm);
   font-weight: 600;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
   animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* Featured Section */
@@ -195,9 +229,9 @@
 }
 
 .productCard:hover {
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .imageWrapper {
@@ -223,7 +257,7 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   color: white;
   padding: 4px 10px;
@@ -256,7 +290,7 @@
   width: 100%;
   background: var(--bg-glass);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   padding: 10px;
   border-radius: var(--radius-md);

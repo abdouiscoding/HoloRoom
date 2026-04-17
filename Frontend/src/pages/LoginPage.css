@@ -4,8 +4,8 @@
     width: 900px;
     height: 540px;
     border-radius: 20px;
-    background: #141317;
-    box-shadow: 0 20px 50px -10px rgba(141, 0, 255, 0.2), 0 0 0 1px rgba(255,255,255,0.05);
+    background: #ffffff;
+    box-shadow: 0 20px 50px -10px rgba(36, 69, 104, 0.2), 0 0 0 1px rgba(36, 69, 104, 0.05);
 }
 
 .card-bg {
@@ -13,8 +13,8 @@
     z-index: 2;
     inset: 0;
     width: 50%;
-    background: linear-gradient(135deg, #8d00ff 0%, #b533ff 100%);
-    box-shadow: 0 0 30px rgba(141, 0, 255, 0.3);
+    background: linear-gradient(135deg, #244568 0%, #1e3a5a 100%);
+    box-shadow: 0 0 30px rgba(36, 69, 104, 0.3);
     translate: 0 0;
     transition: 0.65s;
 }
@@ -60,7 +60,7 @@
     justify-content: center;
     gap: 16px;
     width: 50%;
-    color: #f9f9f9;
+    color: #ffffff;
     padding: 0 24px;
 }
 
@@ -108,7 +108,7 @@ form {
 }
 
 .form p {
-    color: #a19cad;
+    color: #566c85;
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.01em;
@@ -117,7 +117,8 @@ form {
 .form input {
     border-radius: 10px;
     border: 0;
-    background: #1e1b29;
+    background: #f4f5f7;
+    color: #244568;
     padding: 15px 16px;
     font-size: 15px;
     font-family: inherit;
@@ -129,8 +130,8 @@ form {
     padding: 14px 0;
     border-radius: 32px;
     color: #ffffff;
-    background: linear-gradient(135deg, #8d00ff 0%, #b533ff 100%);
-    box-shadow: 0 4px 15px rgba(141, 0, 255, 0.4);
+    background: linear-gradient(135deg, #f89d00 0%, #e69100 100%);
+    box-shadow: 0 4px 15px rgba(248, 157, 0, 0.4);
 }
 
 .login-wrapper {
@@ -139,7 +140,7 @@ form {
     justify-content: center;
     min-height: 100vh;
     width: 100%;
-    background: radial-gradient(circle at top, #1a1525 0%, #0a0a0f 100%);
+    background: #f4f5f7;
     font-family: 'Outfit', sans-serif;
 }
 
@@ -148,7 +149,7 @@ form {
     position: absolute;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(141,0,255,0.05) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(248,157,0,0.05) 0%, transparent 70%);
     top: -200px;
     left: -200px;
     border-radius: 50%;
@@ -167,8 +168,8 @@ form {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    color: #ffffff;
-    border: 1px solid rgba(255, 254, 254, 0.4);
+    color: #244568;
+    border: 1px solid rgba(36, 69, 104, 0.2);
     text-decoration: none;
     font-size: 20px;
     transition: 0.3s;
@@ -176,14 +177,15 @@ form {
 }
 
 .sso a:hover {
-    background: #f9f9f9;
-    border-color: #8d00ff;
+    background: #244568;
+    color: #ffffff;
+    border-color: #244568;
 }
 
 .hero button {
     background: transparent;
-    border: 1px solid #f9f9f9;
-    color: #f9f9f9;
+    border: 1px solid #ffffff;
+    color: #ffffff;
     padding: 10px 40px;
     border-radius: 32px;
     cursor: pointer;
@@ -196,32 +198,33 @@ form {
 }
 
 .hero button:hover {
-    background: linear-gradient(135deg, #7c00e6 0%, #9f1be6 100%);
+    background: #f89d00;
     color: white;
-    box-shadow: 0 4px 15px rgba(141, 0, 255, 0.4);
+    border-color: #f89d00;
+    box-shadow: 0 4px 15px rgba(248, 157, 0, 0.4);
     transform: translateY(-3px);
 }
 
 .form input {
-    color: #f9f9f9;
+    color: #244568;
     width: 100%;
     box-sizing: border-box;
     outline: none;
 }
 
 .form input:focus {
-    border: 1px solid #b533ff;
+    border: 1px solid #f89d00;
     padding: 13px 15px;
-    box-shadow: 0 0 10px rgba(141, 0, 255, 0.2);
-    background: #252033;
+    box-shadow: 0 0 10px rgba(248, 157, 0, 0.2);
+    background: #ffffff;
 }
 
 .form input::placeholder {
-    color: #8d889d;
+    color: #94a3b8;
 }
 
 .form a {
-    color: #8d889d;
+    color: #566c85;
     font-size: 12px;
     text-decoration: none;
     align-self: flex-start;
@@ -229,11 +232,11 @@ form {
 }
 
 .form a:hover {
-    color: #8d00ff;
+    color: #f89d00;
 }
 
 .form h2 {
-    color: #f9f9f9;
+    color: #244568;
 }
 
 .form button {
@@ -247,7 +250,7 @@ form {
 }
 
 .form button:hover {
-    background: linear-gradient(135deg, #7c00e6 0%, #9f1be6 100%);
-    box-shadow: 0 6px 20px rgba(141, 0, 255, 0.6);
+    background: linear-gradient(135deg, #e69100 0%, #cc8200 100%);
+    box-shadow: 0 6px 20px rgba(248, 157, 0, 0.6);
     transform: translateY(-2px);
 }

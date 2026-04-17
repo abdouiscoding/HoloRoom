@@ -10,10 +10,10 @@
 }
 
 .navbar.scrolled {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-glass);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
   height: 70px;
 }
 
@@ -32,6 +32,28 @@
   font-weight: 800;
   font-size: 1.5rem;
   letter-spacing: -0.5px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sidebarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: var(--transition-fast);
+}
+
+.sidebarBtn:hover {
+  background: rgba(36, 69, 104, 0.1);
+  color: var(--accent-primary);
 }
 
 .logoIcon {
@@ -73,6 +95,73 @@
   height: 2px;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
   border-radius: 2px;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.searchForm {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 0 12px;
+  height: 40px;
+  animation: expandSearch 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary, #fff);
+  outline: none;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary, #aaa);
+}
+
+.closeSearchBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #aaa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  transition: 0.2s;
+  margin-left: 4px;
+}
+
+.closeSearchBtn:hover {
+  color: var(--text-primary, #fff);
+  transform: scale(1.1);
+}
+
+@keyframes expandSearch {
+  from {
+    width: 40px;
+    opacity: 0;
+  }
+
+  to {
+    width: 220px;
+    opacity: 1;
+  }
 }
 
 .actionIcons {
@@ -149,10 +238,17 @@
   font-weight: 600;
   color: var(--text-primary);
   padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
