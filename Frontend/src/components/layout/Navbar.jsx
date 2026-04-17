@@ -4,6 +4,25 @@ import { ShoppingBag, Search, Menu, X, User, Box } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { useCart } from '../../context/CartContext';
 
+const handleProfile = () => {
+  if (localStorage.getItem('token')) {
+    // User is logged in, navigate to profile
+    window.location.href = '/profile';
+  } else {
+    // User is not logged in, navigate to login page
+    window.location.href = '/login';
+  }
+};
+
+const handleCart = () => {
+  if (localStorage.getItem('token')) {
+    // User is logged in, navigate to cart
+    window.location.href = '/cart';
+  } else {
+    // User is not logged in, navigate to login page
+    window.location.href = '/login';
+  }
+};
 const Navbar = ({ onMenuToggle }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -87,10 +106,10 @@ const Navbar = ({ onMenuToggle }) => {
               </button>
             )}
           </div>
-          <button className={styles.iconBtn} aria-label="Profile" onClick={() => navigate('/login')}>
+          <button className={styles.iconBtn} aria-label="Profile" onClick={handleProfile}>
             <User size={20} />
           </button>
-          <button className={styles.iconBtn} aria-label="Cart" onClick={() => navigate('/cart')}>
+          <button className={styles.iconBtn} aria-label="Cart" onClick={handleCart}>
             <ShoppingBag size={20} />
             {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
           </button>

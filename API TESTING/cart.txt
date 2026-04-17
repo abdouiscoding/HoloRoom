@@ -13,4 +13,4 @@ api/cart/additem/{cartid}
 
 delete:
 api/cart/delete/{cartid}
-api/cart/delete/{cartid}/{cartitemid}
+api/cart/removeitem/{cartid}/{cartitemid}
