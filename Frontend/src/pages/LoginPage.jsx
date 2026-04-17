@@ -42,34 +42,34 @@ export const LoginPage = () => {
                 <div className={`card-bg ${isSignup ? "signup" : "signin"}`} />
                 <Hero
                     type="signup"
-                active={isSignup}
-                title="Welcome Back!"
-                text="Sign in for an amazing shopping experience!"
-                buttonText="Sign In"
-                onClick={toggleView}
-            />
-            <AuthForm
-                type="signup" active={isSignup}>
-                <input type="text" placeholder="Username" />
-                <input type="email" placeholder="Email" />
-                <input type="password" placeholder="Password" />
-                <button type="submit">Sign Up</button>
-            </AuthForm>
-            <Hero
-                type="signin"
-                active={!isSignup}
-                title="Welcome To HoloRoom!"
-                text="Start your shopping journey with us!"
-                buttonText="Sign Up"
-                onClick={toggleView} />
-            <AuthForm
-                type="signin" active={!isSignup} title="Sign in">
-                <input type="email" placeholder="Email" />
-                <input type="password" placeholder="Password" />
-                <a>Forgot password?</a>
-                <button type="submit">Sign In</button>
-            </AuthForm>
-        </div>
+                    active={isSignup}
+                    title="Welcome To HoloRoom!"
+                    text="Start your shopping journey with us!"
+                    buttonText="Sign In"
+                    onClick={toggleView}
+                />
+                <AuthForm
+                    type="signup" active={isSignup}>
+                    <input type="text" placeholder="Username" />
+                    <input type="email" placeholder="Email" />
+                    <input type="password" placeholder="Password" />
+                    <button type="submit">Sign Up</button>
+                </AuthForm>
+                <Hero
+                    type="signin"
+                    active={!isSignup}
+                    title="Welcom Back!"
+                    text="Sign in for an amazing shopping experience!"
+                    buttonText="Sign Up"
+                    onClick={toggleView} />
+                <AuthForm
+                    type="signin" active={!isSignup} title="Sign in">
+                    <input type="email" placeholder="Email" />
+                    <input type="password" placeholder="Password" />
+                    <a>Forgot password?</a>
+                    <button type="submit">Sign In</button>
+                </AuthForm>
+            </div>
         </div>
 
     )
