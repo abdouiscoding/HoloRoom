@@ -7,7 +7,8 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState([
+  ]);
 
   // Calculate totals
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);

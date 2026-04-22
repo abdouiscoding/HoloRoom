@@ -239,6 +239,73 @@
   color: var(--text-primary);
 }
 
+.orderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.removeOrderBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeOrderBtn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.qtyControls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--spacing-xs);
+  width: fit-content;
+}
+
+.qtyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(36, 69, 104, 0.04);
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.qtyBtn:hover {
+  background: rgba(36, 69, 104, 0.1);
+}
+
+.qtyValue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  border-left: 1px solid var(--border-glass);
+  border-right: 1px solid var(--border-glass);
+}
+
 .orderFooter {
   padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--border-glass);

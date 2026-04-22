@@ -54,7 +54,6 @@
   flex-direction: column;
   gap: var(--spacing-lg);
   z-index: 1;
-  padding-left: var(--spacing-2xl);
 }
 
 .badge {
@@ -214,10 +213,51 @@
   transform: translateX(4px);
 }
 
-.productGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+/* Slider */
+.sliderWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sliderArrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 3;
+}
+
+.sliderArrow:hover {
+  background: var(--text-primary);
+  color: white;
+  border-color: var(--text-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.sliderTrack {
+  display: flex;
   gap: var(--spacing-lg);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: var(--spacing-sm) 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sliderTrack::-webkit-scrollbar {
+  display: none;
 }
 
 .productCard {
@@ -226,6 +266,10 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-sm);
   transition: var(--transition-normal);
+  min-width: 280px;
+  max-width: 300px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
 }
 
 .productCard:hover {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Trash2, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProfilePage.module.css';
 import { useWishlist } from '../context/WishlistContext';
@@ -12,6 +13,7 @@ const Logout = () => {
 
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('orders');
+    const [orderQty, setOrderQty] = useState(1);
     const navigate = useNavigate();
     const { wishlistItems, removeFromWishlist } = useWishlist();
 
@@ -56,10 +58,34 @@ const ProfilePage = () => {
                     {activeTab === 'orders' && (
                         <div className={styles.tabPanel}>
                             <h2>Recent Orders</h2>
-                            <div className={styles.emptyState}>
-                                <i className="fas fa-box-open"></i>
-                                <p>You have no recent orders.</p>
-                                <button className="btn-primary" onClick={() => navigate('/shop')}>Start Shopping</button>
+                            <div className={styles.orderCard}>
+                                <div className={styles.orderDetails}>
+                                    <div className={styles.orderItem}>
+                                        <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=80" alt="Velvet Armchair" />
+                                        <div>
+                                            <h4>HoloRoom Velvet Armchair</h4>
+                                            <p>Living Room · Qty: {orderQty}</p>
+                                            <div className={styles.qtyControls}>
+                                                <button className={styles.qtyBtn} onClick={() => setOrderQty(q => Math.max(1, q - 1))}>
+                                                    <Minus size={14} />
+                                                </button>
+                                                <span className={styles.qtyValue}>{orderQty}</span>
+                                                <button className={styles.qtyBtn} onClick={() => setOrderQty(q => q + 1)}>
+                                                    <Plus size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.orderActions}>
+                                        <button className={styles.removeOrderBtn} title="Remove order">
+                                            <Trash2 size={18} />
+                                        </button>
+                                        <span className={styles.orderPrice}>{(34500 * orderQty).toLocaleString()} DZD</span>
+                                    </div>
+                                </div>
+                                <div className={styles.orderFooter}>
+                                    <button className={styles.trackBtn}>Track Order</button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -80,7 +106,7 @@ const ProfilePage = () => {
                                             <img src={item.image || item.images?.[0]} alt={item.name} />
                                             <div>
                                                 <h4>{item.name}</h4>
-                                                <p className={styles.orderPrice} style={{fontSize: '1rem', marginTop: '5px'}}>{item.price}</p>
+                                                <p className={styles.orderPrice} style={{ fontSize: '1rem', marginTop: '5px' }}>{item.price}</p>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center' }}>
                                                 <button className="btn-primary" onClick={() => navigate(`/product/${item.id}`)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>View</button>

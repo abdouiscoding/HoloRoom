@@ -21,7 +21,7 @@ const Cart = () => {
             <ShoppingBag size={48} />
           </div>
           <h2>Your cart is empty</h2>
-          <p>Looks like you haven't added anything to your cart yet. Discover our latest AR-ready products!</p>
+          <p>Looks like you haven't added anything to your cart yet.</p>
           <Link to="/shop" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center' }}>
             Continue Shopping <ArrowRight size={18} style={{ marginLeft: '8px' }} />
           </Link>
@@ -33,7 +33,7 @@ const Cart = () => {
             {cartItems.map((item, idx) => (
               <div key={`${item.id}-${idx}`} className={`glass-panel ${styles.cartItem}`}>
                 <img src={item.images && item.images[0]} alt={item.name} className={styles.itemImage} />
-                
+
                 <div className={styles.itemDetails}>
                   <h3>{item.name}</h3>
                   <div className={styles.itemMeta}>
@@ -45,9 +45,9 @@ const Cart = () => {
 
                 <div className={styles.itemActions}>
                   <div className={styles.quantityControls}>
-                    <button className={styles.qtyBtn} onClick={() => updateQuantity(item.id, item.color, -1)}><Minus size={14}/></button>
+                    <button className={styles.qtyBtn} onClick={() => updateQuantity(item.id, item.color, -1)}><Minus size={14} /></button>
                     <span className={styles.qtyValue}>{item.quantity}</span>
-                    <button className={styles.qtyBtn} onClick={() => updateQuantity(item.id, item.color, 1)}><Plus size={14}/></button>
+                    <button className={styles.qtyBtn} onClick={() => updateQuantity(item.id, item.color, 1)}><Plus size={14} /></button>
                   </div>
                   <div className={styles.itemPriceTotal}>
                     {(parseFloat(item.price.replace(/[^0-9.]/g, '')) * item.quantity).toFixed(2)} DZD
@@ -66,7 +66,7 @@ const Cart = () => {
           {/* Order Summary */}
           <div className={`glass-panel ${styles.summaryPanel}`}>
             <h2>Order Summary</h2>
-            
+
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
               <span>{cartSubtotal.toFixed(2)} DZD</span>
@@ -75,7 +75,7 @@ const Cart = () => {
               <span>Estimated Shipping</span>
               <span>{shipping.toFixed(2)} DZD</span>
             </div>
-            
+
             <div className={styles.promoCode}>
               <input type="text" placeholder="Have a Promo Code?" className={styles.promoInput} />
               <button className="btn-secondary">Apply</button>
@@ -96,7 +96,7 @@ const Cart = () => {
             <button className={`btn-primary ${styles.checkoutBtn}`}>
               Proceed to Checkout
             </button>
-            
+
             <div className={styles.secureText}>
               <Lock size={14} /> Secure Checkout
             </div>

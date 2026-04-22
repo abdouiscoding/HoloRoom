@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, View, Sparkles, ShoppingBag } from 'lucide-react';
+import { ArrowRight, View, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './Home.module.css';
 
 const MOCK_FEATURED = [
-  { id: 1, name: 'Velvet Accent Chair', price: '29900 DZD', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
-  { id: 2, name: 'Minimalist Floor Lamp', price: '12900 DZD', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
-  { id: 3, name: 'Modern Oak Desk', price: '49900 DZD', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' }
+  { id: 1, name: 'Velvet Accent Chair', price: '29,900 DZD', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 2, name: 'Minimalist Floor Lamp', price: '12,900 DZD', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
+  { id: 3, name: 'Modern Oak Desk', price: '49,900 DZD', image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 4, name: 'Ceramic Table Vase', price: '4,500 DZD', image: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?auto=format&fit=crop&q=80&w=400', category: 'Decor' },
+  { id: 5, name: 'Woven Rattan Armchair', price: '34,500 DZD', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
+  { id: 6, name: 'Industrial Bookshelf', price: '38,900 DZD', image: 'https://images.unsplash.com/photo-1594620302200-9a762244a156?auto=format&fit=crop&q=80&w=400', category: 'Furniture' },
 ];
 
 const Home = () => {
+  const sliderRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (sliderRef.current) {
+      const scrollAmount = 320;
+      sliderRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className={styles.homeContainer}>
       {/* Hero Section */}
@@ -39,31 +54,41 @@ const Home = () => {
       <section className={styles.featuredSection}>
         <div className="container">
           <div className={styles.sectionHeader}>
-            <h2>Featured in <span className="text-gradient">3D & AR</span></h2>
+            <h2>Featured <span className="text-gradient">Products</span></h2>
             <Link to="/shop" className={styles.viewAllBtn}>View All <ArrowRight size={16} /></Link>
           </div>
 
-          <div className={styles.productGrid}>
-            {MOCK_FEATURED.map(product => (
-              <div key={product.id} className={styles.productCard}>
-                <div className={styles.imageWrapper}>
-                  <img src={product.image} alt={product.name} />
-                  <div className={styles.arBadge}>
-                    <View size={14} /> 3D/AR
+          <div className={styles.sliderWrapper}>
+            <button className={`${styles.sliderArrow} ${styles.sliderArrowLeft}`} onClick={() => scroll('left')}>
+              <ChevronLeft size={22} />
+            </button>
+
+            <div className={styles.sliderTrack} ref={sliderRef}>
+              {MOCK_FEATURED.map(product => (
+                <div key={product.id} className={styles.productCard}>
+                  <div className={styles.imageWrapper}>
+                    <img src={product.image} alt={product.name} />
+                    <div className={styles.arBadge}>
+                      <View size={14} /> 3D/AR
+                    </div>
+                    <div className={styles.cardActions}>
+                      <Link to={`/product/${product.id}`} className={styles.quickViewBtn}>
+                        View Details
+                      </Link>
+                    </div>
                   </div>
-                  <div className={styles.cardActions}>
-                    <Link to={`/product/${product.id}`} className={styles.quickViewBtn}>
-                      View Details
-                    </Link>
+                  <div className={styles.productInfo}>
+                    <span className={styles.category}>{product.category}</span>
+                    <h3>{product.name}</h3>
+                    <p className={styles.price}>{product.price}</p>
                   </div>
                 </div>
-                <div className={styles.productInfo}>
-                  <span className={styles.category}>{product.category}</span>
-                  <h3>{product.name}</h3>
-                  <p className={styles.price}>{product.price}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <button className={`${styles.sliderArrow} ${styles.sliderArrowRight}`} onClick={() => scroll('right')}>
+              <ChevronRight size={22} />
+            </button>
           </div>
         </div>
       </section>

@@ -136,9 +136,9 @@ button {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1536px;
   margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--spacing-xl);
 }
 
 /* Page Transitions */
