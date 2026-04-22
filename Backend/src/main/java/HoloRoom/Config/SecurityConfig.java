@@ -51,9 +51,7 @@ public class SecurityConfig {
 
     // admin only
         .requestMatchers("/api/users/**").hasRole("ADMIN")
-        .requestMatchers("/api/products/create/**").hasRole("ADMIN")
-        .requestMatchers("/api/products/edit/**").hasRole("ADMIN")
-        .requestMatchers("/api/products/delete/**").hasRole("ADMIN")
+        .requestMatchers("/api/products/**").hasRole("ADMIN")
         .requestMatchers("/api/cart/getbyuser/**").hasRole("ADMIN")
         .requestMatchers("/api/cart/delete/**").hasRole("ADMIN")
         .requestMatchers("/api/categories/**").hasRole("ADMIN")
@@ -62,6 +60,9 @@ public class SecurityConfig {
         .requestMatchers("/api/products/get/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cart/getbyuser/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cartitem/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/reviews/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/wishlist/**").hasAnyRole("USER", "ADMIN")
 
     // user only
         .requestMatchers("/api/cart/additem/**").hasRole("USER")

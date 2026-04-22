@@ -1,0 +1,12 @@
+get all:
+http://localhost:8080/api/reviews/all
+
+get by id:
+http://localhost:8080/api/reviews/{id}
+
+add:
+http://localhost:8080/api/reviews/add/{id}
+{
+    "pRating" : 4,
+    "pComment" : "Great product, highly recommend!"
+}

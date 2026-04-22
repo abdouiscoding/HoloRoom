@@ -59,11 +59,6 @@ const Navbar = ({ onMenuToggle }) => {
       <div className={`container ${styles.navContainer}`}>
 
         <div className={styles.leftSection}>
-          {/* Sidebar Toggle */ }
-          <button className={styles.sidebarBtn} onClick={onMenuToggle} aria-label="Toggle Sidebar">
-            <Menu size={24} />
-          </button>
-
           {/* Logo */}
           <Link to="/" className={styles.logo}>
             <Box className={styles.logoIcon} />

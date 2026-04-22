@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import styles from './ProfilePage.module.css';
 import { useWishlist } from '../context/WishlistContext';
 
+const Logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("loggedin");
+    localStorage.removeItem("userName");
+    window.location.href = "/login";
+};
+
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('orders');
     const navigate = useNavigate();
@@ -23,8 +30,9 @@ const ProfilePage = () => {
                         <p className={styles.userEmail}>Email</p>
                     </div>
                     <div className={styles.profileActions}>
-                        <button className="btn-primary">Edit Profile</button>
-                        <button className="btn-secondary">Log Out</button>
+                        <button className="btn-secondary" onClick={Logout}>
+                            Log Out
+                        </button>
                     </div>
                 </div>
             </div>

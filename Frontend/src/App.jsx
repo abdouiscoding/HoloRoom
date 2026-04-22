@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
-import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -14,7 +13,6 @@ import ProfilePage from './pages/ProfilePage';
 import './App.css';
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <Router>
@@ -25,7 +23,6 @@ function App() {
 
         <Route path="/*" element={
           <div className="app-container">
-            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
             <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
             <main className="main-content">
               <Routes>

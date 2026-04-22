@@ -25,34 +25,24 @@ public class PWishlistService {
         return wishlistRepository.findByUserId(userId);
     }
 
-    public PWishlist getOrCreateWishlist(Long userId, String wName) {
+    public PWishlist getOrCreateWishlist(Long userId) {
         return wishlistRepository.findByUserId(userId).orElseGet(() -> {
             PWishlist wishlist = new PWishlist();
-            wishlist.setwName(wName != null ? wName : "Default Wishlist");
             wishlist.setUserId(userId);
+            wishlist.setwName("Wishlist");
             wishlist.setWishlistItems(new ArrayList<>());
             return wishlistRepository.save(wishlist);
         });
     }
 
-    public void addItemToWishlist(Long userId, Long productId, int quantity) {
-        PWishlist wishlist = getOrCreateWishlist(userId, null);
+    public void addItemToWishlist(Long userId, Long productId) {
+        PWishlist wishlist = getOrCreateWishlist(userId);
         if (wishlist.getWishlistItems() == null) {
             wishlist.setWishlistItems(new ArrayList<>());
         }
-
-        PWishlistItem existingItem = wishlist.getWishlistItems().stream()
-            .filter(item -> productId.equals(item.getpId()))
-            .findFirst()
-            .orElse(null);
-
-        if (existingItem != null) {
-            existingItem.setQuantity(existingItem.getQuantity() + quantity);
-        } else {
-            PWishlistItem newItem = new PWishlistItem(productId, quantity);
+            PWishlistItem newItem = new PWishlistItem(productId);
             newItem.setWishlist(wishlist);
             wishlist.getWishlistItems().add(newItem);
-        }
 
         wishlistRepository.save(wishlist);
     }
@@ -65,26 +55,6 @@ public class PWishlistService {
             }
             wishlist.getWishlistItems().removeIf(item -> wItemId.equals(item.getwItemId()));
             wishlistRepository.save(wishlist);
-        });
-    }
-
-    public void updateItemQuantity(Long userId, Long wItemId, int quantity) {
-        Optional<PWishlist> wishlistOpt = wishlistRepository.findByUserId(userId);
-        wishlistOpt.ifPresent(wishlist -> {
-            if (wishlist.getWishlistItems() == null) {
-                return;
-            }
-            wishlist.getWishlistItems().stream()
-                .filter(item -> wItemId.equals(item.getwItemId()))
-                .findFirst()
-                .ifPresent(item -> {
-                    if (quantity == 0) {
-                        wishlist.getWishlistItems().remove(item);
-                    } else {
-                        item.setQuantity(quantity);
-                    }
-                    wishlistRepository.save(wishlist);
-                });
         });
     }
 

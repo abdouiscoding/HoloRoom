@@ -41,11 +41,6 @@ public class PSizeColorStock {
     @JsonProperty("pStock")
     private int pStock;
 
-    @OneToMany(mappedBy = "productSizeColorStock", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    @JsonProperty("images")
-    private List<PImages> images = new ArrayList<>();
-
     public PSizeColorStock() {}
 
     public PSizeColorStock(Products product, String pSize, String pColor, int pStock) {
@@ -62,10 +57,6 @@ public class PSizeColorStock {
     @JsonIgnore
     public Products getProduct() { return product; }
     public void setProduct(Products product) { this.product = product; }
-
-    @JsonIgnore
-    public List<PImages> getImages() { return images; }
-    public void setImages(List<PImages> images) { this.images = images; }
 
     @JsonProperty("pSize")
     public String getProductSize() { return pSize; }

@@ -25,10 +25,10 @@ public class PReviewsController {
     private PReviewsService reviewsService;
 
     // POST add review
-    @PostMapping("/add")
-    public ResponseEntity<PReviews> addReview(@RequestBody PReviews review) {
+    @PostMapping("/add/{productId}")
+    public ResponseEntity<PReviews> addReview(@PathVariable Long productId, @RequestBody PReviews review) {
         try {
-            PReviews savedReview = reviewsService.addReview(review);
+            PReviews savedReview = reviewsService.addReview(review, productId);
             return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -36,14 +36,29 @@ public class PReviewsController {
     }
 
     // GET reviews by product ID
-    @GetMapping("/product/{productId}")
+    @GetMapping("/{productId}")
     public ResponseEntity<List<PReviews>> getReviewsByProductId(@PathVariable Long productId) {
         List<PReviews> reviews = reviewsService.getReviewsByProductId(productId);
         return new ResponseEntity<>(reviews, HttpStatus.OK);
     }
 
+    //GET ALL reviews
+    @GetMapping("/all")
+    public ResponseEntity<List<PReviews>> getAllReviews() {
+        List<PReviews> reviews = reviewsService.getAllReviews();
+        return new ResponseEntity<>(reviews, HttpStatus.OK);
+    }
+
+
+    // GET average rating for a product
+    @GetMapping("/average/{productId}")
+    public ResponseEntity<Double> getAverageRating(@PathVariable Long productId) {
+        double averageRating = reviewsService.getAverageRating(productId);
+        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+    }
+
     // PUT update review
-    @PutMapping("/update/{reviewId}")
+    @PutMapping("/edit/{reviewId}")
     public ResponseEntity<PReviews> updateReview(@PathVariable Long reviewId, @RequestBody PReviews reviewDetails) {
         try {
             PReviews updatedReview = reviewsService.updateReview(reviewId, reviewDetails);

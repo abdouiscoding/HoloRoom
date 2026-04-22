@@ -23,18 +23,30 @@ public class PReviewsService {
         return reviewsRepository.findByProduct_PId(productId);
     }
 
-    public PReviews addReview(PReviews review) {
-        if (review.getProduct() == null || review.getProduct().getProductId() == null) {
-            return null;
+    public List<PReviews> getAllReviews() {
+        return reviewsRepository.findAll();
+    }
+
+    public double getAverageRating(Long productId) {
+        List<PReviews> reviews = getProductReviews(productId);
+        if (reviews == null || reviews.isEmpty()) {
+            return 0.0;
         }
-        Products product = productsRepository.findById(review.getProduct().getProductId()).orElse(null);
+        return reviews.stream()
+                .mapToInt(PReviews::getpRating)
+                .average()
+                .orElse(0.0);
+    }   
+
+    public PReviews addReview(PReviews review, Long productId) {
+        Products product = productsRepository.findById(productId).orElse(null);
         if (product == null) {
-            return null;
+            throw new IllegalArgumentException("Product not found with ID: " + productId);
         }
         review.setProduct(product);
         PReviews savedReview = reviewsRepository.save(review);
-        // Update product rating
-        updateProductRating(review.getProduct().getProductId());
+        // Update product rating after adding new review
+        updateProductRating(productId);
         return savedReview;
     }
 

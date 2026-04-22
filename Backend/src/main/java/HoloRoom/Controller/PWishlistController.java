@@ -26,38 +26,26 @@ public class PWishlistController {
     @Autowired
     private PWishlistService wishlistService;
 
-    // GET wishlist by user ID
+    // GET wishlist by user ID or create if not exists
     @GetMapping("/{userId}")
     public ResponseEntity<PWishlist> getWishlistByUserId(@PathVariable Long userId) {
-        Optional<PWishlist> wishlist = wishlistService.getWishlistByUserId(userId);
-        return wishlist.map(w -> new ResponseEntity<>(w, HttpStatus.OK))
-                       .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        PWishlist wishlistOpt = wishlistService.getOrCreateWishlist(userId);
+            return new ResponseEntity<>(wishlistOpt, HttpStatus.OK);
+        
     }
 
     // POST add item to wishlist
-    @PostMapping("/{userId}/add")
+    @PostMapping("/add/{userId}/{pId}")
     public ResponseEntity<Void> addItemToWishlist(@PathVariable Long userId,
-                                                  @RequestBody AddWishlistItemRequest request) {
-        try {
-            wishlistService.addItemToWishlist(userId, request.getProductId(), request.getQuantity());
-            return new ResponseEntity<>(HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+                                              @PathVariable Long pId) { // Use the DTO here
+    try { 
+        wishlistService.addItemToWishlist(userId, pId);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    } catch (Exception e) {
+        e.printStackTrace(); // This will show you the REAL error in the console
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
-
-    // PUT update item quantity
-    @PutMapping("/{userId}/update/{wItemId}")
-    public ResponseEntity<Void> updateItemQuantity(@PathVariable Long userId,
-                                                   @PathVariable Long wItemId,
-                                                   @RequestBody UpdateQuantityRequest request) {
-        try {
-            wishlistService.updateItemQuantity(userId, wItemId, request.getQuantity());
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
+}
 
     // DELETE remove item from wishlist
     @DeleteMapping("/{userId}/remove/{wItemId}")
@@ -88,22 +76,13 @@ public class PWishlistController {
         List<PWishlistItem> items = wishlistService.getWishlistItemsByProductId(productId);
         return new ResponseEntity<>(items, HttpStatus.OK);
     }
+}
 
-    // Request DTOs
-    public static class AddWishlistItemRequest {
-        private Long productId;
-        private int quantity;
 
-        public Long getProductId() { return productId; }
-        public void setProductId(Long productId) { this.productId = productId; }
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
-    }
+class WishlistRequest {
+    private Long pId;
 
-    public static class UpdateQuantityRequest {
-        private int quantity;
-
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
-    }
+    // Getters and Setters are required for Jackson to work
+    public Long getpId() { return pId; }
+    public void setpId(Long pId) { this.pId = pId; }
 }

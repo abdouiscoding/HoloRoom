@@ -22,9 +22,6 @@ public class PWishlistItem {
     @JsonProperty("pId")
     private Long pId;
 
-    @JsonProperty("quantity")
-    private int quantity;
-
     @ManyToOne
     @JoinColumn(name = "wishlist_id")
     @JsonBackReference
@@ -32,18 +29,13 @@ public class PWishlistItem {
 
     public PWishlistItem() {}
 
-    public PWishlistItem(Long pId, int quantity) {
+    public PWishlistItem(Long pId) {
         this.pId = pId;
-        this.quantity = quantity;
     }
 
     @JsonProperty("wItemId")
     public Long getwItemId() { return wItemId; }
     public void setwItemId(Long wItemId) { this.wItemId = wItemId; }
-
-    @JsonProperty("quantity")
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
 
     @JsonProperty("pId")
     public Long getpId() { return pId; }

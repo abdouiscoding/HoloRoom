@@ -83,12 +83,7 @@ export const LoginPage = () => {
     localStorage.setItem("userName", userName);
     localStorage.setItem("loggedin", "true");
 
-
-    console.log("Received token:", data.token);
-    console.log("Received userName:", userName);
-    alert("Login successful!");
-
-    navigate("/home"); // ✅ or "/home"
+    navigate("/home"); 
 };
 
    //handles signup

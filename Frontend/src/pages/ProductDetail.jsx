@@ -34,6 +34,7 @@ const ProductDetail = () => {
   const { getReviews, getAverageRating } = useReviews();
   const [activeImage, setActiveImage] = useState(0);
   const [activeColor, setActiveColor] = useState(0);
+  const [activeStock, setActiveStock] = useState(0);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   const reviews = getReviews(MOCK_PRODUCT.id);
