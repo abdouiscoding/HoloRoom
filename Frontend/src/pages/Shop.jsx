@@ -14,6 +14,7 @@ const Shop = () => {
   const [loading, setLoading] = useState(true);
   const [roomDropdownOpen, setRoomDropdownOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState('All Rooms');
+  const [hoveredHeart, setHoveredHeart] = useState(null);
 
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { getReviews } = useReviews();
@@ -41,15 +42,15 @@ const Shop = () => {
       );
 
       if (!response.ok) {
-        setProducts([]);
+        setProducts([FAKE_PRODUCT]);
         return;
       }
 
       const data = await response.json();
-      setProducts(data || []);
+      setProducts([FAKE_PRODUCT, ...(data || [])]);
 
     } catch (error) {
-      setProducts([]);
+      setProducts([FAKE_PRODUCT]);
     } finally {
       setLoading(false);
     }
@@ -227,19 +228,25 @@ const Shop = () => {
                             e.preventDefault();
                             toggleWishlist(product);
                           }}
+                          onMouseEnter={() => setHoveredHeart(product.pId)}
+                          onMouseLeave={() => setHoveredHeart(null)}
                           className={styles.wishlistBtn}
                         >
                           <Heart
                             size={18}
                             fill={
-                              isInWishlist(product.pId)
-                                ? "var(--accent-primary)"
-                                : "none"
+                              hoveredHeart === product.pId
+                                ? '#e69100'
+                                : isInWishlist(product.pId)
+                                  ? 'var(--accent-primary)'
+                                  : 'none'
                             }
                             color={
-                              isInWishlist(product.pId)
-                                ? "var(--accent-primary)"
-                                : "black"
+                              hoveredHeart === product.pId
+                                ? '#e69100'
+                                : isInWishlist(product.pId)
+                                  ? 'var(--accent-primary)'
+                                  : 'black'
                             }
                           />
                         </button>
