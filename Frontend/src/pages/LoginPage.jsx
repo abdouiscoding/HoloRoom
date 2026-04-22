@@ -61,31 +61,60 @@ export const LoginPage = () => {
     const handleLogin = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            info,
-            userPassword
-        })
-    });
+    try {
+        // 1. Authenticate and get Token
+        const response = await fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                info, // Assuming this is the username/email field
+                userPassword
+            })
+        });
 
-    if (!response.ok) {
-        alert("Invalid login");
-        return;
+        if (!response.ok) {
+            alert("Invalid login");
+            return;
+        }
+
+        const data = await response.json();
+        const token = data.token;
+
+        // 2. Fetch full User details using the token we just got
+        // Using 'info' here assuming 'info' holds the userName used to login
+        const userDetailsResponse = await fetch(`http://localhost:8080/api/users/getbyuserbyinfo/${info}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (userDetailsResponse.ok) {
+            const userData = await userDetailsResponse.json();
+            
+            // 3. Store everything in localStorage
+            localStorage.setItem("token", token);
+            localStorage.setItem("userId", userData.id); // Storing ID for your Cart fetch
+            localStorage.setItem("userEmail", userData.userEmail);
+            localStorage.setItem("userName", userData.userName);
+            localStorage.setItem("loggedin", "true");
+
+            console.log("User data synced:", userData);
+            navigate("/"); 
+        } else {
+            console.error("Login successful but failed to fetch user profile.");
+            // Optional: even if profile fetch fails, you have the token
+            localStorage.setItem("token", token);
+            navigate("/");
+        }
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        alert("An error occurred during login.");
     }
-
-    const data = await response.json();
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("userName", userName);
-    localStorage.setItem("loggedin", "true");
-
-    navigate("/home"); 
 };
-
    //handles signup
    const handleSignup = async (e) => {
    e.preventDefault();
@@ -120,8 +149,8 @@ export const LoginPage = () => {
                 <Hero
                     type="signup"
                 active={isSignup}
-                title="Welcome Back!"
-                text="Sign in for an amazing shopping experience!"
+                title="Welcome to HoloRoom!"
+                text="Already have an account? sign up!"
                 buttonText="Sign In"
                 onClick={toggleView}
             />
@@ -135,8 +164,8 @@ export const LoginPage = () => {
             <Hero
                 type="signin"
                 active={!isSignup}
-                title="Welcome To HoloRoom!"
-                text="Start your shopping journey with us!"
+                title="Welcome Back!"
+                text="Don't have an account? Sign up!"
                 buttonText="Sign Up"
                 onClick={toggleView} />
             <AuthFormForLogin

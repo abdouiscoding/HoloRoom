@@ -39,7 +39,6 @@ const Shop = () => {
       );
 
       if (!response.ok) {
-        console.log("Failed to fetch products");
         setProducts([]);
         return;
       }
@@ -48,7 +47,6 @@ const Shop = () => {
       setProducts(data || []);
 
     } catch (error) {
-      console.log("Error:", error);
       setProducts([]);
     } finally {
       setLoading(false);

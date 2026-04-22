@@ -5,7 +5,7 @@ get by user or create if doesnt exist:
 http://localhost:8080/api/cart/getbyuser/{id}
 
 post:
-api/cart/additem/{cartid}
+http://localhost:8080/api/cart/additem/{cartid}
 {
   "productId": 123,
   "quantity": 2

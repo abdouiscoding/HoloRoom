@@ -63,10 +63,13 @@ public class SecurityConfig {
         .requestMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/reviews/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/wishlist/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/cart/additem/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/cart/additembyuserid/**").hasAnyRole("USER" ,"ADMIN")
+        .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("api/chat/**").hasAnyRole("USER", "ADMIN")
 
     // user only
-        .requestMatchers("/api/cart/additem/**").hasRole("USER")
-        .requestMatchers("/api/cart/removeitem/**").hasRole("USER")
 
     // everything else locked
         .anyRequest().authenticated()

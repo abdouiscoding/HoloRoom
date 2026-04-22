@@ -52,6 +52,19 @@ public class PCartController {
         }
     }
 
+    @PostMapping("/additembyuserid/{userId}")
+    public ResponseEntity<PCart> addItemToCartByUserId(@PathVariable Long userId,
+                                               @RequestBody AddItemRequest request) {
+        try {
+            Long cartId = cartService.getOrCreateCart(userId).getCartId();
+            cartService.addItemToCart(cartId, request.pId, request.pscsId, request.pImageId , request.quantity);
+            return cartService.getCartById(cartId)
+                    .map(cart -> new ResponseEntity<>(cart, HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
     @DeleteMapping("removeitem/{cartId}/{cartItemId}")
     public ResponseEntity<PCart> removeItemFromCart(@PathVariable Long cartId,
                                                    @PathVariable Long cartItemId) {

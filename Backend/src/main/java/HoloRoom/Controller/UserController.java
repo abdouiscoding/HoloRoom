@@ -40,6 +40,15 @@ public class UserController {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    @GetMapping("/getbyuserbyinfo/{info}")
+    public ResponseEntity<User> getUserById(@PathVariable String info) {
+        User user = UserService.getUserByNameOrEmail(info);
+        if (user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
     
     // POST: Create a new user
     @PostMapping("/create")

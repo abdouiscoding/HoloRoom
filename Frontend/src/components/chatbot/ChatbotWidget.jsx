@@ -43,7 +43,7 @@ const ChatbotWidget = () => {
     }
   }, [isARMode]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
 
@@ -51,22 +51,66 @@ const ChatbotWidget = () => {
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
 
-    // Mock bot response
-    setTimeout(() => {
+    // Build Gemini-format conversation history
+    const history = [...messages, userMsg]
+      .filter(m => m.text)
+      .map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+
+    try {
+      const res = await fetch('http://localhost:8080/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history })
+      });
+      const data = await res.json();
       setMessages(prev => [...prev, {
         id: Date.now(),
         sender: 'bot',
-        text: `I understand you said: "${userMsg.text}". In a full implementation, I would process this with AI to help you find the perfect product!`
+        text: data.reply
       }]);
-    }, 1000);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender: 'bot',
+        text: 'Sorry, I encountered an error. Please try again.'
+      }]);
+    }
   };
 
-  const handleSuggestionClick = (text) => {
-    setInputText(text);
-    // automatically send
-    setTimeout(() => {
-      handleSend({ preventDefault: () => {} });
-    }, 100);
+  const handleSuggestionClick = async (text) => {
+    const userMsg = { id: Date.now(), sender: 'user', text };
+    setMessages(prev => [...prev, userMsg]);
+
+    // Build Gemini-format conversation history
+    const history = [...messages, userMsg]
+      .filter(m => m.text)
+      .map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+
+    try {
+      const res = await fetch('http://localhost:8080/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history })
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender: 'bot',
+        text: data.reply
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender: 'bot',
+        text: 'Sorry, I encountered an error. Please try again.'
+      }]);
+    }
   };
 
   return (
@@ -103,8 +147,8 @@ const ChatbotWidget = () => {
 
           <div className={styles.suggestions}>
             {currentSuggestions.map((sug, idx) => (
-              <button 
-                key={idx} 
+              <button
+                key={idx}
                 className={styles.sugBtn}
                 onClick={() => handleSuggestionClick(sug)}
               >
@@ -114,9 +158,9 @@ const ChatbotWidget = () => {
           </div>
 
           <form className={styles.inputArea} onSubmit={handleSend}>
-            <input 
-              type="text" 
-              placeholder="Type your message..." 
+            <input
+              type="text"
+              placeholder="Type your message..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               className={styles.input}
@@ -130,8 +174,8 @@ const ChatbotWidget = () => {
 
       {/* Floating Button */}
       {!isOpen && (
-        <button 
-          className={styles.floatingBtn} 
+        <button
+          className={styles.floatingBtn}
           onClick={() => setIsOpen(true)}
         >
           <MessageSquare size={24} />

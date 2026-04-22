@@ -28,6 +28,14 @@ public class UserService {
     public User getUserById(Long id) {
         return UserRepository.findById(id).orElse(null);
     }
+
+    public User getUserByNameOrEmail(String info) {
+        User user = UserRepository.findByUserName(info).orElse(null);
+        if (user != null){
+            return user;
+        }
+        return UserRepository.findByUserEmail(info).orElse(null);
+    }
     
     // Delete a user by ID
     public void deleteUser(Long id) {

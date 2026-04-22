@@ -222,3 +222,46 @@
 .checkIcon {
   color: var(--accent-primary);
 }
+
+/* Color Swatches */
+.variantOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.colorSwatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border-glass);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.1);
+}
+
+.activeSwatch {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--bg-main), 0 0 0 4px var(--accent-primary);
+}
+
+.stockInfo {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.outOfStock {
+  color: #ff4d4d;
+  font-weight: bold;
+}
