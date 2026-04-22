@@ -12,6 +12,8 @@ const Shop = () => {
   const [search, setSearch] = useState('');
   const [reviewProduct, setReviewProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [roomDropdownOpen, setRoomDropdownOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState('All Rooms');
 
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { getReviews } = useReviews();
@@ -69,11 +71,11 @@ const Shop = () => {
     activeCategory === 'All'
       ? products
       : products.filter(product =>
-          (product.categories || []).some(
-            cat => cat?.pCategory === activeCategory
-          )
-        );
-  
+        (product.categories || []).some(
+          cat => cat?.pCategory === activeCategory
+        )
+      );
+
   const Search = (value) => {
     setSearch(value);
 
@@ -81,12 +83,12 @@ const Shop = () => {
       fetchProducts();
       return;
     }
-    
+
     const filtered = products.filter(product =>
       product.pName.toLowerCase().includes(value.toLowerCase())
     );
     setProducts(filtered);
-  };      
+  };
 
   const toproductpage = (name, id) => {
     localStorage.setItem("selectedProductId", id);
@@ -94,11 +96,11 @@ const Shop = () => {
   };
 
   const rating = (product) => {
-  const val = Number(product.pRating);
-  if (!val || val <= 0) {
-    return "Unrated";
-  }
-  return val.toFixed(1);
+    const val = Number(product.pRating);
+    if (!val || val <= 0) {
+      return "Unrated";
+    }
+    return val.toFixed(1);
   };
 
   return (
@@ -125,9 +127,8 @@ const Shop = () => {
               {CATEGORIES.map(cat => (
                 <li key={cat}>
                   <button
-                    className={`${styles.categoryBtn} ${
-                      activeCategory === cat ? styles.active : ''
-                    }`}
+                    className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ''
+                      }`}
                     onClick={() => setActiveCategory(cat)}
                   >
                     {cat}
@@ -159,9 +160,29 @@ const Shop = () => {
 
             <div className={styles.sortDropdown}>
               <span>Sort by:</span>
-              <button className={styles.sortBtn}>
-                Recommended <ChevronDown size={16} />
+              <button
+                className={styles.sortBtn}
+                onClick={() => setRoomDropdownOpen(!roomDropdownOpen)}
+              >
+                {selectedRoom} <ChevronDown size={16} className={roomDropdownOpen ? styles.chevronOpen : ''} />
               </button>
+
+              {roomDropdownOpen && (
+                <div className={styles.sortMenu}>
+                  {['All Rooms', 'Bedroom', 'Living Room', 'Office'].map(room => (
+                    <button
+                      key={room}
+                      className={`${styles.sortMenuItem} ${selectedRoom === room ? styles.sortMenuItemActive : ''}`}
+                      onClick={() => {
+                        setSelectedRoom(room);
+                        setRoomDropdownOpen(false);
+                      }}
+                    >
+                      {room}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>
@@ -201,27 +222,27 @@ const Shop = () => {
 
                       {/* Wishlist */}
                       <div className={styles.wishlistContainer}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toggleWishlist(product);
-                        }}
-                        className={styles.wishlistBtn}
-                      >
-                        <Heart
-                          size={18}
-                          fill={
-                            isInWishlist(product.pId)
-                              ? "var(--accent-primary)"
-                              : "none"
-                          }
-                          color={
-                            isInWishlist(product.pId)
-                              ? "var(--accent-primary)"
-                              : "black"
-                          }
-                        />
-                      </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(product);
+                          }}
+                          className={styles.wishlistBtn}
+                        >
+                          <Heart
+                            size={18}
+                            fill={
+                              isInWishlist(product.pId)
+                                ? "var(--accent-primary)"
+                                : "none"
+                            }
+                            color={
+                              isInWishlist(product.pId)
+                                ? "var(--accent-primary)"
+                                : "black"
+                            }
+                          />
+                        </button>
                       </div>
                       <div className={styles.arBadge}>
                         <View size={14} /> 3D/AR

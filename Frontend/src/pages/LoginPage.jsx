@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
@@ -44,6 +44,32 @@ const AuthFormForSignup = ({ type, active, title, children, onSubmit }) => (
         </form>
     </div>
 );
+// Login notification
+const Toast = ({ message, type, visible, onClose }) => (
+    <div className={`toast-notification ${type} ${visible ? "toast-visible" : "toast-hidden"}`}>
+        <div className="toast-icon">
+            {type === "success" ? (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                </svg>
+            ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+            )}
+        </div>
+        <span className="toast-message">{message}</span>
+        <button className="toast-close" onClick={onClose} aria-label="Close notification">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+    </div>
+);
+
 export const LoginPage = () => {
     const navigate = useNavigate();
     const [view, setView] = useState("signup");
@@ -51,6 +77,33 @@ export const LoginPage = () => {
     const toggleView = () => setView(isSignup ? "signin" : "signup");
 
     const [info, setInfo] = useState("");
+
+    const [toasts, setToasts] = useState([]);
+
+    const showToast = useCallback((message, type = "success") => {
+        const id = Date.now();
+        setToasts((prev) => [...prev, { id, message, type, visible: true }]);
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => {
+            setToasts((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, visible: false } : t))
+            );
+            
+            setTimeout(() => {
+                setToasts((prev) => prev.filter((t) => t.id !== id));
+            }, 400);
+        }, 4000);
+    }, []);
+
+    const dismissToast = useCallback((id) => {
+        setToasts((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, visible: false } : t))
+        );
+        setTimeout(() => {
+            setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, 400);
+    }, []);
 
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
@@ -75,7 +128,7 @@ export const LoginPage = () => {
         });
 
         if (!response.ok) {
-            alert("Invalid login");
+            showToast("Login unsuccessful", "error");
             return;
         }
 
@@ -102,17 +155,19 @@ export const LoginPage = () => {
             localStorage.setItem("loggedin", "true");
 
             console.log("User data synced:", userData);
-            navigate("/"); 
+            showToast("Login successful", "success");
+            setTimeout(() => navigate("/"), 1500);
         } else {
             console.error("Login successful but failed to fetch user profile.");
             // Optional: even if profile fetch fails, you have the token
             localStorage.setItem("token", token);
-            navigate("/");
+            showToast("Login successful", "success");
+            setTimeout(() => navigate("/"), 1500);
         }
 
     } catch (error) {
         console.error("Login Error:", error);
-        alert("An error occurred during login.");
+        showToast("Login unsuccessful", "error");
     }
 };
    //handles signup
@@ -131,19 +186,29 @@ export const LoginPage = () => {
       })
    });
 
-   if (!response.ok) {
-       alert("Invalid signup");
-       return;
+    if (!response.ok) {
+        return;
    }
 
    const data = await response.json();
    console.log(data);
-   alert("Signup successful! Please log in.");
+    showToast("Account created successfully! Please sign in.", "success");
    console.log("http status: " + response.status);
 };
 
     return (
         <div className="login-wrapper">
+            <div className="toast-container">
+                {toasts.map((toast) => (
+                    <Toast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        visible={toast.visible}
+                        onClose={() => dismissToast(toast.id)}
+                    />
+                ))}
+            </div>
             <div className="card">
                 <div className={`card-bg ${isSignup ? "signup" : "signin"}`} />
                 <Hero

@@ -193,7 +193,7 @@
 
 .sugBtn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: black;
   border-color: var(--accent-primary);
 }
 
@@ -204,7 +204,7 @@
   align-items: center;
   padding: var(--spacing-md);
   border-top: 1px solid var(--border-glass);
-  background: rgba(0, 0, 0, 0.2);
+  background: white;
   gap: 10px;
 }
 
@@ -213,7 +213,7 @@
   min-width: 0;
   background: transparent;
   border: none;
-  color: white;
+  color: black;
   outline: none;
   font-size: 0.95rem;
   font-family: inherit;
