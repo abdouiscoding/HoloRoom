@@ -14,8 +14,23 @@ const Logout = () => {
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('orders');
     const [orderQty, setOrderQty] = useState(1);
+    const [selectedTrackOrder, setSelectedTrackOrder] = useState(null);
     const navigate = useNavigate();
     const { wishlistItems, removeFromWishlist } = useWishlist();
+
+    const getStatusClass = (step) => {
+        if (!selectedTrackOrder) return '';
+        const statusOrder = ['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+
+        const currentStatus = selectedTrackOrder.status || 'PLACED';
+        const currentIdx = statusOrder.indexOf(currentStatus.toUpperCase());
+        const stepIdx = statusOrder.indexOf(step);
+
+        if (stepIdx < currentIdx) return styles.completed;
+        if (stepIdx === currentIdx && step === 'DELIVERED') return styles.completed;
+        if (stepIdx === currentIdx) return styles.active;
+        return '';
+    };
 
     return (
         <div className={styles.profileContainer}>
@@ -84,7 +99,8 @@ const ProfilePage = () => {
                                     </div>
                                 </div>
                                 <div className={styles.orderFooter}>
-                                    <button className={styles.trackBtn}>Track Order</button>
+                                    {/* Set a mock order object with a status when testing */}
+                                    <button className={styles.trackBtn} onClick={() => setSelectedTrackOrder({ id: 1, status: 'SHIPPED' })}>Track Order</button>
                                 </div>
                             </div>
                         </div>
@@ -147,6 +163,50 @@ const ProfilePage = () => {
                     )}
                 </main>
             </div>
+
+            {selectedTrackOrder && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedTrackOrder(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Order Status</h3>
+                            <button className={styles.closeBtn} onClick={() => setSelectedTrackOrder(null)}>×</button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.statusStep}>
+                                <div className={`${styles.statusDot} ${getStatusClass('PLACED')}`}></div>
+                                <div className={styles.statusText}>
+                                    <p className={styles.statusTitle}>Order Placed</p>
+                                    <p className={styles.statusDate}>Awaiting Confirmation</p>
+                                </div>
+                            </div>
+                            <div className={styles.statusStep}>
+                                <div className={`${styles.statusDot} ${getStatusClass('PROCESSING')}`}></div>
+                                <div className={styles.statusText}>
+                                    <p className={styles.statusTitle}>Processing</p>
+                                    <p className={styles.statusDate}>Preparing your order</p>
+                                </div>
+                            </div>
+                            <div className={styles.statusStep}>
+                                <div className={`${styles.statusDot} ${getStatusClass('SHIPPED')}`}></div>
+                                <div className={styles.statusText}>
+                                    <p className={styles.statusTitle}>Shipped</p>
+                                    <p className={styles.statusDate}>In Transit</p>
+                                </div>
+                            </div>
+                            <div className={styles.statusStep}>
+                                <div className={`${styles.statusDot} ${getStatusClass('DELIVERED')}`}></div>
+                                <div className={styles.statusText}>
+                                    <p className={styles.statusTitle}>Delivered</p>
+                                    <p className={styles.statusDate}>Pending Arrival</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => setSelectedTrackOrder(null)}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
