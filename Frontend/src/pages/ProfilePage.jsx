@@ -13,8 +13,9 @@ const Logout = () => {
 
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('orders');
-    const [orderQty, setOrderQty] = useState(1);
     const [selectedTrackOrder, setSelectedTrackOrder] = useState(null);
+    const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const navigate = useNavigate();
     const { wishlistItems, removeFromWishlist } = useWishlist();
 
@@ -73,35 +74,10 @@ const ProfilePage = () => {
                     {activeTab === 'orders' && (
                         <div className={styles.tabPanel}>
                             <h2>Recent Orders</h2>
-                            <div className={styles.orderCard}>
-                                <div className={styles.orderDetails}>
-                                    <div className={styles.orderItem}>
-                                        <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=80" alt="Velvet Armchair" />
-                                        <div>
-                                            <h4>HoloRoom Velvet Armchair</h4>
-                                            <p>Living Room · Qty: {orderQty}</p>
-                                            <div className={styles.qtyControls}>
-                                                <button className={styles.qtyBtn} onClick={() => setOrderQty(q => Math.max(1, q - 1))}>
-                                                    <Minus size={14} />
-                                                </button>
-                                                <span className={styles.qtyValue}>{orderQty}</span>
-                                                <button className={styles.qtyBtn} onClick={() => setOrderQty(q => q + 1)}>
-                                                    <Plus size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.orderActions}>
-                                        <button className={styles.removeOrderBtn} title="Remove order">
-                                            <Trash2 size={18} />
-                                        </button>
-                                        <span className={styles.orderPrice}>{(34500 * orderQty).toLocaleString()} DZD</span>
-                                    </div>
-                                </div>
-                                <div className={styles.orderFooter}>
-                                    {/* Set a mock order object with a status when testing */}
-                                    <button className={styles.trackBtn} onClick={() => setSelectedTrackOrder({ id: 1, status: 'SHIPPED' })}>Track Order</button>
-                                </div>
+                            <div className={styles.emptyState}>
+                                <i className="fas fa-box-open"></i>
+                                <p>You haven't placed any orders yet.</p>
+                                <button className="btn-primary" onClick={() => navigate('/shop')}>Start Shopping</button>
                             </div>
                         </div>
                     )}
@@ -142,20 +118,16 @@ const ProfilePage = () => {
                             <h2>Account Settings</h2>
                             <form className={styles.settingsForm}>
                                 <div className={styles.formGroup}>
-                                    <label>Full Name</label>
-                                    <input type="text" placeholder="Your full name" />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Email Address</label>
-                                    <input type="email" placeholder="Your email address" />
+                                    <label>Username</label>
+                                    <input type="text" placeholder="Your username" />
                                 </div>
                                 <div className={styles.formGroup}>
                                     <label>Phone Number</label>
-                                    <input type="tel" placeholder="+213 555 555 555" />
+                                    <button type="button" className="btn-secondary" style={{ width: 'max-content' }} onClick={() => setIsPhoneModalOpen(true)}>Add Phone Number</button>
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label>New Password</label>
-                                    <input type="password" placeholder="Put your password here" />
+                                    <label>Password</label>
+                                    <button type="button" className="btn-secondary" style={{ width: 'max-content' }} onClick={() => setIsPasswordModalOpen(true)}>Change Password</button>
                                 </div>
                                 <button type="button" className="btn-primary" style={{ alignSelf: 'flex-start' }}>Save Changes</button>
                             </form>
@@ -204,6 +176,60 @@ const ProfilePage = () => {
                         <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => setSelectedTrackOrder(null)}>
                             Close
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {isPhoneModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsPhoneModalOpen(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Add Phone Number</h3>
+                            <button className={styles.closeBtn} onClick={() => setIsPhoneModalOpen(false)}>×</button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); setIsPhoneModalOpen(false); }}>
+                            <div className={styles.modalBody}>
+                                <div className={styles.formGroup}>
+                                    <label>Phone Number</label>
+                                    <input type="tel" placeholder="+213 555 555 555" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-secondary" onClick={() => setIsPhoneModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isPasswordModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsPasswordModalOpen(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Change Password</h3>
+                            <button className={styles.closeBtn} onClick={() => setIsPasswordModalOpen(false)}>×</button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); setIsPasswordModalOpen(false); }}>
+                            <div className={styles.modalBody}>
+                                <div className={styles.formGroup}>
+                                    <label>Current Password</label>
+                                    <input type="password" placeholder="Enter old password" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>New Password</label>
+                                    <input type="password" placeholder="Enter new password" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Confirm New Password</label>
+                                    <input type="password" placeholder="Confirm new password" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-secondary" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Update Password</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

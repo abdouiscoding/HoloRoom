@@ -1,0 +1,25 @@
+.dashboardContainer {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background-color: var(--bg-primary); /* Using the light gray body bg */
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.pageContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+}
+
+@media (max-width: 992px) {
+  .dashboardContainer {
+    grid-template-columns: 1fr;
+  }
+}

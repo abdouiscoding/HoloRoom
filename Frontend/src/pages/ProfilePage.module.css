@@ -368,12 +368,16 @@
   flex-direction: column;
   gap: var(--spacing-md);
   max-width: 500px;
+  text-align: left;
+  align-items: stretch;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  align-items: flex-start;
+  width: 100%;
 }
 
 .formGroup label {
@@ -390,6 +394,8 @@
   font-size: 1rem;
   color: var(--text-primary);
   transition: border-color var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .formGroup input:focus {

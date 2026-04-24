@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, View, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, View, ShoppingBag, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import styles from './Home.module.css';
 
 const MOCK_FEATURED = [
@@ -14,6 +14,7 @@ const MOCK_FEATURED = [
 
 const Home = () => {
   const sliderRef = useRef(null);
+  const [hoveredHeart, setHoveredHeart] = useState(null);
 
   const scroll = (direction) => {
     if (sliderRef.current) {
@@ -70,6 +71,24 @@ const Home = () => {
                     <img src={product.image} alt={product.name} />
                     <div className={styles.arBadge}>
                       <View size={14} /> 3D/AR
+                    </div>
+                    <div className={styles.wishlistContainer}>
+                        <button 
+                            className={styles.wishlistBtn}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                            onMouseEnter={() => setHoveredHeart(product.id)}
+                            onMouseLeave={() => setHoveredHeart(null)}
+                            title="Add to wishlist"
+                        >
+                            <Heart 
+                                size={18} 
+                                fill={hoveredHeart === product.id ? '#e69100' : 'none'}
+                                color={hoveredHeart === product.id ? '#e69100' : 'black'}
+                            />
+                        </button>
                     </div>
                     <div className={styles.cardActions}>
                       <Link to={`/product/${product.id}`} className={styles.quickViewBtn}>

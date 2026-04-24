@@ -10,6 +10,7 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget';
 import { LoginPage } from './pages/LoginPage';
 import Cart from './pages/Cart';
 import ProfilePage from './pages/ProfilePage';
+import DashboardLayout from './pages/dashboard/DashboardLayout';
 import './App.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
 
         <Route path="/login" element={<LoginPage />} />
 
+        <Route path="/dashboard/*" element={<DashboardLayout />} />
 
         <Route path="/*" element={
           <div className="app-container">

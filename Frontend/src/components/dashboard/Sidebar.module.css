@@ -1,0 +1,97 @@
+.sidebarContainer {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border-glass);
+  padding: var(--spacing-xl) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-2xl);
+  padding: 0 var(--spacing-sm);
+}
+
+.logoIcon {
+  color: var(--accent-primary);
+}
+
+.logoText {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.navIcon {
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.navItem:hover {
+  background: rgba(36, 69, 104, 0.04);
+  color: var(--text-primary);
+}
+
+.navItem:hover .navIcon {
+  color: var(--accent-primary);
+}
+
+.navItem.active {
+  background: white;
+  color: var(--text-primary);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.navItem.active .navIcon {
+  color: var(--accent-primary);
+}
+
+.helpCenter {
+  margin-top: auto;
+  padding: var(--spacing-md);
+  background: rgba(248, 157, 0, 0.05);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.helpCenter p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.helpCenter button {
+  width: 100%;
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}

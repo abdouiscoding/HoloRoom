@@ -1,0 +1,393 @@
+.viewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.viewHeader h2 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.viewHeader p {
+  color: var(--text-secondary);
+}
+
+.viewHeaderWithAction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viewHeaderWithAction h2 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.viewHeaderWithAction p {
+  color: var(--text-secondary);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.sectionHeader h3 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+/* Status Badges */
+.statusLive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.statusDraft {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.actionBtnEdit, .actionBtnDelete {
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.actionBtnEdit {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+.actionBtnEdit:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.actionBtnDelete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+.actionBtnDelete:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* Buttons */
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 157, 0, 0.3);
+}
+
+.secondaryBtn {
+  background: white;
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  width: 100%;
+  transition: background 0.2s;
+}
+.secondaryBtn:hover {
+  background: var(--bg-primary);
+}
+
+/* Mock Chart Area */
+.chartCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+}
+
+.chartHeader h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.chartHeader select {
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  outline: none;
+}
+
+.chartMockArea {
+  height: 250px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 49px,
+    var(--border-glass) 50px
+  );
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mockChartLine {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="M0,80 Q25,20 50,50 T100,10" fill="none" stroke="%23f89d00" stroke-width="2" opacity="0.8"/></svg>') no-repeat center;
+  background-size: 100% 100%;
+}
+
+.chartPlaceholderText {
+  color: var(--text-muted);
+  font-style: italic;
+  background: rgba(255,255,255,0.8);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  z-index: 1;
+}
+
+/* Marketing Cards */
+.marketingActionCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--spacing-md);
+}
+
+.iconCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(248, 157, 0, 0.1);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketingActionCard h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.marketingActionCard p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalContent {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  animation: slideUp 0.3s ease;
+  text-align: left;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: var(--spacing-sm);
+}
+
+.modalHeader h3 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  align-items: stretch;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  align-items: stretch;
+  text-align: left;
+}
+
+.formGroup label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="email"],
+.formGroup input[type="number"],
+.formGroup select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  outline: none;
+  background: var(--bg-primary);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formGroup input[type="text"]:focus,
+.formGroup input[type="email"]:focus,
+.formGroup input[type="number"]:focus,
+.formGroup select:focus {
+  border-color: var(--accent-primary);
+}
+
+.formGroup input[type="file"] {
+  width: 100%;
+  font-family: inherit;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  box-sizing: border-box;
+  border: 1px dashed var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.formGroup input[type="file"]:hover {
+  border-color: var(--accent-primary);
+}
+
+.formGroup input[type="file"]::file-selector-button {
+  background: white;
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.formGroup input[type="file"]::file-selector-button:hover {
+  background: rgba(248, 157, 0, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.checkboxGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  width: 100%;
+}
+
+.modalActions button {
+  width: auto;
+  white-space: nowrap;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
