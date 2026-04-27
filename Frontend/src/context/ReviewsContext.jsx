@@ -1,57 +1,146 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// ReviewsContext.jsx
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback
+} from 'react';
+import { Navigate } from 'react-router-dom';
 
 const ReviewsContext = createContext();
 
-export const useReviews = () => {
-    return useContext(ReviewsContext);
-};
+export const useReviews = () => useContext(ReviewsContext);
 
 export const ReviewsProvider = ({ children }) => {
-    const [reviews, setReviews] = useState(() => {
-        const saved = localStorage.getItem('holoroom_reviews');
-        return saved ? JSON.parse(saved) : {};
-    });
+  const [reviews, setReviews] = useState({});
+  const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        localStorage.setItem('holoroom_reviews', JSON.stringify(reviews));
-    }, [reviews]);
+  const fetchAllReviews = useCallback(async () => {
+    try {
+      setLoading(true);
 
-    const addReview = (productId, reviewText, rating) => {
-        setReviews(prev => {
-            const productReviews = prev[productId] || [];
-            const newReview = {
-                id: Date.now(),
-                text: reviewText,
-                rating: rating,
-                date: new Date().toISOString(),
-                authorName: "Current User" // Simple hardcoded since no real auth
-            };
-            return {
-                ...prev,
-                [productId]: [newReview, ...productReviews]
-            };
-        });
-    };
+      const token = localStorage.getItem('token');
 
-    const getReviews = (productId) => {
-        return reviews[productId] || [];
-    };
+      const response = await fetch(
+        'http://localhost:8080/api/reviews/all',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-    const getAverageRating = (productId) => {
-        const productReviews = reviews[productId] || [];
-        if (productReviews.length === 0) return 0;
-        const total = productReviews.reduce((sum, review) => sum + review.rating, 0);
-        return (total / productReviews.length).toFixed(1);
-    };
+      if (response.ok) {
+        const data = await response.json();
+
+        const grouped = data.reduce((acc, review) => {
+          const id = review.productId;
+
+          if (id !== undefined && id !== null) {
+            if (!acc[id]) acc[id] = [];
+
+            acc[id].push(review);
+          }
+
+          return acc;
+        }, {});
+
+        setReviews(grouped);
+      } else {
+        console.error(
+          `Failed to fetch reviews: ${response.status}`
+        );
+      }
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAllReviews();
+  }, [fetchAllReviews]);
+
+  const addReview = async (
+    productId,
+    reviewText,
+    rating
+  ) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(
+        `http://localhost:8080/api/reviews/add/${productId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token
+              ? `Bearer ${token}`
+              : ''
+          },
+          body: JSON.stringify({
+            userName: localStorage.userName,
+            pRating: parseInt(rating),
+            pComment: reviewText
+          })
+        }
+      );
+
+      if (response.ok) {
+        await fetchAllReviews();
+
+        return { success: true };
+      }
+
+      return {
+        success: false,
+        error: 'Failed to add review'
+      };
+    } catch (error) {
+      console.error('Error adding review:', error);
+
+      return {
+        success: false,
+        error
+      };
+    }};
+
+  const getReviews = (productId) => {
+    return reviews[productId] || [];
+  };
+
+  const getAverageRating = (productId) => {
+    const productReviews = reviews[productId] || [];
+
+    if (productReviews.length === 0) return 0;
+
+    const total = productReviews.reduce(
+      (sum, r) => sum + (r.pRating || 0),
+      0
+    );
 
     return (
-        <ReviewsContext.Provider value={{
-            reviews,
-            addReview,
-            getReviews,
-            getAverageRating
-        }}>
-            {children}
-        </ReviewsContext.Provider>
-    );
+      total / productReviews.length
+    ).toFixed(1);
+  };
+
+  return (
+    <ReviewsContext.Provider
+      value={{
+        reviews,
+        loading,
+        addReview,
+        getReviews,
+        getAverageRating,
+        refreshReviews: fetchAllReviews
+      }}
+    >
+      {children}
+    </ReviewsContext.Provider>
+  );
 };

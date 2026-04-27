@@ -261,3 +261,151 @@
     align-items: center;
   }
 }
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popupTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.popupText {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.popupActionsSingle {
+  display: flex;
+  justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn,
+.okBtn {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: var(--bg-primary, #f4f5f7);
+  border: 1px solid var(--text-secondary, #94a3b8);
+  color: var(--text-primary);
+}
+
+.cancelBtn:hover {
+  background: #e2e8f0;
+}
+
+.confirmBtn,
+.okBtn {
+  background: var(--text-primary);
+  color: white;
+  border: none;
+}
+
+.confirmBtn:hover,
+.okBtn:hover {
+  background: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.okBtn {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+/* POPUP (same as product page) */
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popupCard {
+  background: var(--bg-secondary, white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: popupSlideIn 0.25s ease;
+}
+
+@keyframes popupSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popupTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.popupText {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.popupActionsSingle {
+  display: flex;
+  justify-content: center;
+}

@@ -25,16 +25,24 @@ public class PReviews {
     @JsonProperty("pComment")
     private String pComment;
 
+    @JsonProperty("userName")
+    private String userName;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Products product;
 
     public PReviews() {}
 
-    public PReviews(int pRating, String pComment) {
+    public PReviews(String userName, int pRating, String pComment) {
+        this.userName = userName;
         this.pRating = pRating;
         this.pComment = pComment;
     }
+
+    @JsonProperty("userName")
+    public String getuserName() { return userName; }
+    public void setuserName(String userName) {this.userName = userName; }
 
     @JsonProperty("pReviewId")
     public Long getpReviewId() { return pReviewId; }

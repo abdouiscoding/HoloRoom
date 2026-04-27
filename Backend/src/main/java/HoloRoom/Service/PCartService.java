@@ -82,6 +82,7 @@ public class PCartService {
         String image = getPImageOrThrow(pImageId).getProductImage();
         String size = pscs.getProductSize();
         String color = pscs.getProductColor();
+        int stock = pscs.getProductStock();
         BigDecimal price = product.getProductPrice().multiply(BigDecimal.valueOf(quantity));
 
         PCart cart = pCartRepository.findById(cartId)
@@ -99,7 +100,7 @@ public class PCartService {
         if (existingItem != null) {
             existingItem.setQuantity(existingItem.getQuantity() + quantity);
         } else {
-            PCartItem newItem = new PCartItem(product, pscs, image, size, color, price, quantity);
+            PCartItem newItem = new PCartItem(product, pscs, image, size, color, stock, price, quantity);
             newItem.setCart(cart);
             cart.getItems().add(newItem);
         }
@@ -182,13 +183,23 @@ public class PCartService {
     /**
      * Empty the cart contents and reset the total.
      */
-    public void clearCartById(Long cartId) {
-        pCartRepository.findById(cartId).ifPresent(cart -> {
-            cart.setItems(new ArrayList<>());
-            cart.setTotal(BigDecimal.ZERO);
-            pCartRepository.save(cart);
-        });
-    }
+    @Transactional
+public void clearCartById(Long cartId) {
+    pCartRepository.findById(cartId).ifPresent(cart -> {
+
+        if (cart.getItems() != null) {
+            // break both sides of relationship
+            for (PCartItem item : cart.getItems()) {
+                item.setCart(null);
+            }
+            cart.getItems().clear();
+        }
+
+        cart.setTotal(BigDecimal.ZERO);
+
+        pCartRepository.save(cart);
+    });
+}
 
     /**
      * Recalculate the cart total from item prices and quantities, then persist.

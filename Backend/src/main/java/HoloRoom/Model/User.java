@@ -20,6 +20,8 @@ public class User {
 
     private String userPassword;
 
+    private String userImage = "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg?semt=ais_hybrid&w=740&q=80";
+
     private String userRole;
 
     public User() {}
@@ -28,7 +30,7 @@ public class User {
         this.userName = userName;
         this.userEmail = userEmail;
         this.userPassword = userPassword;
-        this.userRole = userRole;
+        this.userRole = userRole;  
     }
 
     public Long getUserId() {
@@ -61,6 +63,14 @@ public class User {
 
     public void setUserPassword(String userPassword) {
         this.userPassword = userPassword;
+    }
+
+    public String getUserImage () {
+        return userImage;
+    }
+
+    public void setUserImage (String userImage) {
+        this.userImage = userImage;
     }
 
     public String getUserRole() {

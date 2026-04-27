@@ -41,6 +41,15 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    @GetMapping("/getname/{id}")
+    public ResponseEntity<String> getname(@PathVariable Long id) {
+        User user = UserService.getUserById(id);
+        if (user != null) {
+            return new ResponseEntity<>(user.getUserName(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
     @GetMapping("/getbyuserbyinfo/{info}")
     public ResponseEntity<User> getUserById(@PathVariable String info) {
         User user = UserService.getUserByNameOrEmail(info);
@@ -67,6 +76,7 @@ public class UserController {
             user.setUserEmail(userDetails.getUserEmail());
             user.setUserPassword(userDetails.getUserPassword());
             user.setUserRole(userDetails.getUserRole());
+            user.setUserImage(userDetails.getUserImage());
             UserService.saveUser(user);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }

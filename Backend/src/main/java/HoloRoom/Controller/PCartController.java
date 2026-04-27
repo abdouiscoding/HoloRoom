@@ -65,7 +65,7 @@ public class PCartController {
             return ResponseEntity.badRequest().build();
         }
     }
-    @DeleteMapping("removeitem/{cartId}/{cartItemId}")
+    @DeleteMapping("/removeitem/{cartId}/{cartItemId}")
     public ResponseEntity<PCart> removeItemFromCart(@PathVariable Long cartId,
                                                    @PathVariable Long cartItemId) {
         try {
@@ -78,10 +78,15 @@ public class PCartController {
         }
     }
 
-    @DeleteMapping("delete/{cartId}")
+    @DeleteMapping("/delete/{cartId}")
     public ResponseEntity<Void> clearCart(@PathVariable Long cartId) {
-        cartService.clearCartById(cartId);
-        return ResponseEntity.noContent().build();
+        try {
+            cartService.clearCartById(cartId);
+            return ResponseEntity.noContent().build();
+        }
+        catch(IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     public static class AddItemRequest {

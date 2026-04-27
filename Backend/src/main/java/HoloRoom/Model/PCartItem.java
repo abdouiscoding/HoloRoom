@@ -47,18 +47,22 @@ public class PCartItem {
     @JsonProperty("color")
     private String color;
 
+    @JsonProperty("stock")
+    private int stock;
+
     @JsonProperty("price")
     private BigDecimal price;
 
     public PCartItem() {}
 
-    public PCartItem(Products product, PSizeColorStock pscs, String image, String size, String color, BigDecimal price, int quantity) {
+    public PCartItem(Products product, PSizeColorStock pscs, String image, String size, String color,int stock, BigDecimal price, int quantity) {
         this.product = product;
         this.ProductSizeColorStock = pscs;
         this.image = image;
         this.size = size;
         this.color = color;
         this.price = price;
+        this.stock = stock;
         this.quantity = quantity;
     }
 
@@ -83,6 +87,9 @@ public class PCartItem {
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
+
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
