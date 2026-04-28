@@ -8,6 +8,14 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([
+    {
+      id: "fake-1",
+      name: "Nordic Minimalist Sofa",
+      price: "150000 DZD",
+      images: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
+      color: "#244568",
+      quantity: 1
+    }
   ]);
 
   // Calculate totals

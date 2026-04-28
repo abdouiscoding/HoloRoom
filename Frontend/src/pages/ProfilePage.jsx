@@ -14,10 +14,24 @@ const Logout = () => {
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('orders');
     const [selectedTrackOrder, setSelectedTrackOrder] = useState(null);
-    const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+    const [isCreditCardModalOpen, setIsCreditCardModalOpen] = useState(false);
+    const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
     const navigate = useNavigate();
     const { wishlistItems, removeFromWishlist } = useWishlist();
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const getStatusClass = (step) => {
         if (!selectedTrackOrder) return '';
@@ -38,14 +52,39 @@ const ProfilePage = () => {
             <div className={styles.headerGlass}>
                 <div className={styles.profileHeader}>
                     <div className={styles.avatarSection}>
-                        <div className={styles.avatar} style={{ background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '3rem' }}>
-                            <i className="fas fa-user"></i>
+                        <div className={styles.avatar} style={{ background: profileImage ? 'transparent' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '3rem' }}>
+                            {profileImage ? (
+                                <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <i className="fas fa-user"></i>
+                            )}
                         </div>
-                        <button className={styles.editAvatarBtn}><i className="fas fa-camera"></i></button>
+                        <label htmlFor="avatarUpload" className={styles.editAvatarBtn} style={{ cursor: 'pointer' }}>
+                            <i className="fas fa-camera"></i>
+                        </label>
+                        <input
+                            type="file"
+                            id="avatarUpload"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleImageUpload}
+                        />
                     </div>
                     <div className={styles.userInfo}>
                         <h1 className={styles.userName}>Name</h1>
                         <p className={styles.userEmail}>Email</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                <i className="fas fa-map-marker-alt" style={{ marginRight: '5px' }}></i>
+                                123 Main St, Algiers, Algeria
+                            </p>
+                            <button 
+                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }} 
+                                title="Delete Address"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
                     </div>
                     <div className={styles.profileActions}>
                         <button className="btn-secondary" onClick={Logout}>
@@ -66,6 +105,9 @@ const ProfilePage = () => {
                         </li>
                         <li className={`${styles.tabItem} ${activeTab === 'settings' ? styles.active : ''}`} onClick={() => setActiveTab('settings')}>
                             <i className="fas fa-cog"></i> Settings
+                        </li>
+                        <li className={`${styles.tabItem} ${activeTab === 'cards' ? styles.active : ''}`} onClick={() => setActiveTab('cards')}>
+                            <i className="fas fa-credit-card"></i> Payment Methods
                         </li>
                     </ul>
                 </aside>
@@ -118,19 +160,54 @@ const ProfilePage = () => {
                             <h2>Account Settings</h2>
                             <form className={styles.settingsForm}>
                                 <div className={styles.formGroup}>
-                                    <label>Username</label>
-                                    <input type="text" placeholder="Your username" />
+                                    <label> Add/Update Your Username</label>
+                                    <button type='button' className='btn-secondary' style={{ width: 'max-content' }} onClick={() => setIsUsernameModalOpen(true)}>Add Username</button>
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label>Phone Number</label>
-                                    <button type="button" className="btn-secondary" style={{ width: 'max-content' }} onClick={() => setIsPhoneModalOpen(true)}>Add Phone Number</button>
+                                    <label>Shipping Address</label>
+                                    <button type="button" className="btn-secondary" style={{ width: 'max-content' }} onClick={() => setIsAddressModalOpen(true)}>Add Address</button>
                                 </div>
                                 <div className={styles.formGroup}>
                                     <label>Password</label>
                                     <button type="button" className="btn-secondary" style={{ width: 'max-content' }} onClick={() => setIsPasswordModalOpen(true)}>Change Password</button>
                                 </div>
-                                <button type="button" className="btn-primary" style={{ alignSelf: 'flex-start' }}>Save Changes</button>
+                                <button type="button" className="btn-primary" style={{ alignSelf: 'flex-end' }}>Save Changes</button>
                             </form>
+                        </div>
+                    )}
+
+                    {activeTab === 'cards' && (
+                        <div className={styles.tabPanel}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '0.5rem' }}>
+                                <h2 style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>Payment Methods</h2>
+                                <button className="btn-primary" onClick={() => setIsCreditCardModalOpen(true)}>Add New Card</button>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className={styles.paymentCard}>
+                                    <div className={styles.cardInfo}>
+                                        <i className="fab fa-cc-visa" style={{ fontSize: '2rem' }}></i>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600 }}>Visa ending in 4242</p>
+                                            <p className={styles.cardExpiry} style={{ margin: 0, fontSize: '0.9rem' }}>Expires 12/28</p>
+                                        </div>
+                                    </div>
+                                    <button className={styles.deleteBtn} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Delete Card">
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                                <div className={styles.paymentCard}>
+                                    <div className={styles.cardInfo}>
+                                        <i className="fab fa-cc-mastercard" style={{ color: '#eb001b', fontSize: '2rem' }}></i>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600 }}>Mastercard ending in 8844</p>
+                                            <p className={styles.cardExpiry} style={{ margin: 0, fontSize: '0.9rem' }}>Expires 09/27</p>
+                                        </div>
+                                    </div>
+                                    <button className={styles.deleteBtn} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Delete Card">
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </main>
@@ -180,22 +257,57 @@ const ProfilePage = () => {
                 </div>
             )}
 
-            {isPhoneModalOpen && (
-                <div className={styles.modalOverlay} onClick={() => setIsPhoneModalOpen(false)}>
+            {isUsernameModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsUsernameModalOpen(false)}>
                     <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h3>Add Phone Number</h3>
-                            <button className={styles.closeBtn} onClick={() => setIsPhoneModalOpen(false)}>×</button>
+                            <h3>Add Username</h3>
+                            <button className={styles.closeBtn} onClick={() => setIsUsernameModalOpen(false)}>×</button>
                         </div>
-                        <form onSubmit={(e) => { e.preventDefault(); setIsPhoneModalOpen(false); }}>
+                        <form onSubmit={(e) => { e.preventDefault(); setIsUsernameModalOpen(false); }}>
                             <div className={styles.modalBody}>
                                 <div className={styles.formGroup}>
-                                    <label>Phone Number</label>
-                                    <input type="tel" placeholder="+213 555 555 555" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                    <label>Username</label>
+                                    <input type="text" placeholder="Enter new username" required style={{ width: '100%', boxSizing: 'border-box' }} />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button type="button" className="btn-secondary" onClick={() => setIsPhoneModalOpen(false)}>Cancel</button>
+                                <button type="button" className="btn-secondary" onClick={() => setIsUsernameModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isCreditCardModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsCreditCardModalOpen(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Add Credit Card</h3>
+                            <button className={styles.closeBtn} onClick={() => setIsCreditCardModalOpen(false)}>×</button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); setIsCreditCardModalOpen(false); }}>
+                            <div className={styles.modalBody}>
+                                <div className={styles.formGroup}>
+                                    <label>Card Number</label>
+                                    <input type="text" placeholder="XXXX XXXX XXXX XXXX" required style={{ width: '100%', boxSizing: 'border-box', marginBottom: '1rem' }} />
+                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label>Expiry Date</label>
+                                            <input type="text" placeholder="MM/YY" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <label>CVV</label>
+                                            <input type="text" placeholder="123" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                        </div>
+                                    </div>
+                                    <label>Card Holder Name</label>
+                                    <input type="text" placeholder="Card Holder Name" required style={{ width: '100%', boxSizing: 'border-box', marginBottom: '1rem' }} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-secondary" onClick={() => setIsCreditCardModalOpen(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Save</button>
                             </div>
                         </form>
@@ -228,6 +340,47 @@ const ProfilePage = () => {
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button type="button" className="btn-secondary" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Update Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isAddressModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsAddressModalOpen(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Add Address</h3>
+                            <button className={styles.closeBtn} onClick={() => setIsAddressModalOpen(false)}>×</button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); setIsAddressModalOpen(false); }}>
+                            <div className={styles.modalBody}>
+                                <div className={styles.formGroup}>
+                                    <label>Address</label>
+                                    <input type="text" placeholder="wilaya,street name,apartment" required style={{ width: '100%', boxSizing: 'border-box' }} />
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div className={styles.formGroup} style={{ flex: 1 }}>
+                                        <label for="wilaya">Choose Wilaya:</label>
+
+                                        <select name="wilaya" id="wilaya">
+                                            <option value="">Algiers</option>
+                                            <option value="">Annaba</option>
+                                            <option value="">Oran</option>
+                                            <option value="">Constantine</option>
+                                            <option value="">Setif</option>
+                                            <option value="">Biskra</option>
+                                            <option value="">Blida</option>
+                                            <option value="">Tlemcen</option>
+                                            <option value="">El Bayadh</option>
+                                            <option value="">Jijel</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-secondary" onClick={() => setIsAddressModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Save</button>
                             </div>
                         </form>
                     </div>

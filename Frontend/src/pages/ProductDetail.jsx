@@ -9,15 +9,16 @@ import ReviewModal from '../components/product/ReviewModal';
 const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { getReviews } = useReviews();
-  
+
   const [activeImage, setActiveImage] = useState(0);
   const [activeVariant, setActiveVariant] = useState(0);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [showPopup, setShowPopup] = useState(true);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -44,8 +45,8 @@ const ProductDetail = () => {
     fetchProductData();
   }, [id]);
 
-  if (loading) return <div className="container" style={{padding: '5rem', textAlign: 'center'}}><h2>Loading...</h2></div>;
-  if (!product) return <div className="container" style={{padding: '5rem', textAlign: 'center'}}><h2>Product not found.</h2></div>;
+  if (loading) return <div className="container" style={{ padding: '5rem', textAlign: 'center' }}><h2>Loading...</h2></div>;
+  if (!product) return <div className="container" style={{ padding: '5rem', textAlign: 'center' }}><h2>Product not found.</h2></div>;
 
   // --- DATA PROCESSING ---
 
@@ -56,13 +57,13 @@ const ProductDetail = () => {
   );
 
   const images = (product.images && product.images.length > 0)
-    ? product.images.map(img => img.pImageUrl) 
+    ? product.images.map(img => img.pImageUrl)
     : ["https://via.placeholder.com/800"];
 
   const categoryName = product.categories?.pCategory || "General";
   const reviews = getReviews(product.pId) || [];
-  const avgRating = parseFloat(product.pRating) || 0; 
-  const starTemplate =[];
+  const avgRating = parseFloat(product.pRating) || 0;
+  const starTemplate = [];
 
   const addtocart = async () => {
     if (!product || !variants[activeVariant]) {
@@ -73,7 +74,7 @@ const ProductDetail = () => {
     try {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
-      
+
       const cartRes = await fetch(`http://localhost:8080/api/cart/getbyuserid/${userId}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -114,8 +115,8 @@ const ProductDetail = () => {
           </div>
           <div className={styles.thumbnailList}>
             {images.map((img, idx) => (
-              <button 
-                key={idx} 
+              <button
+                key={idx}
                 className={`${styles.thumbnailWrapper} ${activeImage === idx ? styles.activeThumb : ''}`}
                 onClick={() => setActiveImage(idx)}
               >
@@ -129,17 +130,17 @@ const ProductDetail = () => {
           <div className={styles.headerRow}>
             <span className={styles.category}>{categoryName}</span>
           </div>
-          
+
           <h1 className={styles.title}>{product.pName}</h1>
-          
+
           <div className={styles.reviews}>
             <div className={styles.stars}>
               {starTemplate.map((star) => (
-                <Star 
-                  key={star} 
-                  size={16} 
-                  fill={star <= avgRating ? "var(--accent-secondary)" : "none"} 
-                  color={star <= avgRating ? "var(--accent-secondary)" : "var(--text-muted)"} 
+                <Star
+                  key={star}
+                  size={16}
+                  fill={star <= avgRating ? "var(--accent-secondary)" : "none"}
+                  color={star <= avgRating ? "var(--accent-secondary)" : "var(--text-muted)"}
                 />
               ))}
             </div>
@@ -152,13 +153,13 @@ const ProductDetail = () => {
           {/* COLOR CIRCLES FIX */}
           {variants.length > 0 && (
             <div className={styles.colorSelection}>
-              <h4>Color: <span style={{color: 'var(--text-secondary)'}}>{variants[activeVariant]?.pColor}</span></h4>
+              <h4>Color: <span style={{ color: 'var(--text-secondary)' }}>{variants[activeVariant]?.pColor}</span></h4>
               <div className={styles.variantOptions}>
                 {variants.map((v, idx) => (
-                  <button 
-                    key={idx} 
+                  <button
+                    key={idx}
                     className={`${styles.colorSwatch} ${activeVariant === idx ? styles.activeSwatch : ''}`}
-                    style={{ backgroundColor: v.pColor.toLowerCase() }} 
+                    style={{ backgroundColor: v.pColor.toLowerCase() }}
                     onClick={() => setActiveVariant(idx)}
                   />
                 ))}
@@ -166,21 +167,21 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <div className={styles.stockStatus} style={{marginTop: '10px'}}>
-             <strong>{variants[activeVariant]?.productStock || 0}</strong> items left in this color
+          <div className={styles.stockStatus} style={{ marginTop: '10px' }}>
+            <strong>{variants[activeVariant]?.productStock || 0}</strong> items left in this color
           </div>
 
           <div className={styles.ctaGroup}>
-            <button 
-              className="btn-primary flex-center gap-2" 
-              style={{flex: 1}}
+            <button
+              className="btn-primary flex-center gap-2"
+              style={{ flex: 1 }}
               disabled={variants[activeVariant]?.productStock <= 0}
               onClick={addtocart}
             >
-              <ShoppingBag size={20} /> 
+              <ShoppingBag size={20} />
               {variants[activeVariant]?.productStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
-            <button className="btn-secondary flex-center gap-2" style={{flex: 1}} onClick={() => navigate(`/ar/${id}`)}>
+            <button className="btn-secondary flex-center gap-2" style={{ flex: 1 }} onClick={() => navigate(`/ar/${id}`)}>
               <View size={20} /> Preview in AR
             </button>
           </div>
@@ -188,18 +189,42 @@ const ProductDetail = () => {
           <div className={`${styles.features} glass-panel`}>
             <h4>Product Details</h4>
             <ul>
-                <li><Check size={16} className={styles.checkIcon} /> Brand: {product.pBrand}</li>
-                <li><Check size={16} className={styles.checkIcon} /> Status: {product.pStatus}</li>
+              <li><Check size={16} className={styles.checkIcon} /> Brand: {product.pBrand}</li>
+              <li><Check size={16} className={styles.checkIcon} /> Status: {product.pStatus}</li>
             </ul>
           </div>
         </div>
       </div>
 
-      <ReviewModal 
-        isOpen={isReviewOpen} 
-        onClose={() => setIsReviewOpen(false)} 
-        product={product} 
+      <ReviewModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        product={product}
       />
+
+      {/* pop confirm w cancel */}
+      {showPopup && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popupCard}>
+            <h3 className={styles.popupTitle}>Confirm</h3>
+            <p className={styles.popupText}>Are you sure.</p>
+            <div className={styles.popupActions}>
+              <button
+                className={styles.cancelBtn}
+                onClick={() => setShowPopup(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmBtn}
+                onClick={() => setShowPopup(false)}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
