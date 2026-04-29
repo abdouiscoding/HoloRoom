@@ -2,54 +2,107 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const WishlistContext = createContext();
 
-export const useWishlist = () => {
-    return useContext(WishlistContext);
-};
+export const useWishlist = () => useContext(WishlistContext);
 
 export const WishlistProvider = ({ children }) => {
-    const [wishlistItems, setWishlistItems] = useState(() => {
-        const saved = localStorage.getItem('holoroom_wishlist');
-        return saved ? JSON.parse(saved) : [];
-    });
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        localStorage.setItem('holoroom_wishlist', JSON.stringify(wishlistItems));
-    }, [wishlistItems]);
+  const fetchWishlist = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
 
-    const addToWishlist = (product) => {
-        setWishlistItems(prev => {
-            if (!prev.find(item => item.id === product.id)) {
-                return [...prev, product];
-            }
-            return prev;
-        });
-    };
+      if (!userId || !token) return;
 
-    const removeFromWishlist = (productId) => {
-        setWishlistItems(prev => prev.filter(item => item.id !== productId));
-    };
-    
-    const isInWishlist = (productId) => {
-        return wishlistItems.some(item => item.id === productId);
-    };
-
-    const toggleWishlist = (product) => {
-        if (isInWishlist(product.id)) {
-            removeFromWishlist(product.id);
-        } else {
-            addToWishlist(product);
+      const res = await fetch(
+        `http://localhost:8080/api/wishlist/get/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
-    };
+      );
 
-    return (
-        <WishlistContext.Provider value={{
-            wishlistItems,
-            addToWishlist,
-            removeFromWishlist,
-            isInWishlist,
-            toggleWishlist
-        }}>
-            {children}
-        </WishlistContext.Provider>
-    );
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const baseItems = data.wishlistItems || [];
+
+      // 🔥 FETCH PRODUCT DETAILS FOR EACH ITEM
+      const enriched = await Promise.all(
+        baseItems.map(async (item) => {
+          try {
+            const pRes = await fetch(
+              `http://localhost:8080/api/products/get/${item.pId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` }
+              }
+            );
+
+            if (!pRes.ok) return null;
+
+            const p = await pRes.json();
+
+            return {
+              wItemId: item.wItemId,
+              id: p.pId,
+              name: p.pName,
+              price: p.pPrice,
+              image: p.images?.[0]?.pImageUrl || ''
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      setWishlistItems(enriched.filter(Boolean));
+    } catch (err) {
+      console.error('wishlist fetch error', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  const removeFromWishlist = async (productId) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
+
+      const item = wishlistItems.find(i => i.id === productId);
+      if (!item) return;
+
+      await fetch(
+        `http://localhost:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      setWishlistItems(prev =>
+        prev.filter(i => i.id !== productId)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const isInWishlist = (productId) =>
+    wishlistItems.some(i => i.id === productId);
+
+  return (
+    <WishlistContext.Provider
+      value={{
+        wishlistItems,
+        fetchWishlist,
+        removeFromWishlist,
+        isInWishlist
+      }}
+    >
+      {children}
+    </WishlistContext.Provider>
+  );
 };

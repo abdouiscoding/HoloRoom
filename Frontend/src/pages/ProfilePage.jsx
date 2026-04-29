@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProfilePage.module.css';
@@ -8,6 +8,10 @@ const Logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("loggedin");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userImage");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userId");
+    localStorage.setItem("loggedin", "false");
     window.location.href = "/login";
 };
 
@@ -20,7 +24,21 @@ const ProfilePage = () => {
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [profileImage, setProfileImage] = useState(null);
     const navigate = useNavigate();
-    const { wishlistItems, removeFromWishlist } = useWishlist();
+
+    const [showPopup, setShowPopup] = useState(false);
+    const [popupTargetId, setPopupTargetId] = useState(null);
+    const [popupTitle, setPopupTitle] = useState('');
+    const [popupMessage, setPopupMessage] = useState('');
+    const [popupMode, setPopupMode] = useState('ok'); // ok | login | remove
+    
+    const { wishlistItems, removeFromWishlist, fetchWishlist } = useWishlist();
+    
+    useEffect(() => {
+        fetchWishlist();
+    }, []);
+    
+    const [cart, setCart] = useState(null);
+    const [cartLoading, setCartLoading] = useState(false);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
@@ -52,39 +70,13 @@ const ProfilePage = () => {
             <div className={styles.headerGlass}>
                 <div className={styles.profileHeader}>
                     <div className={styles.avatarSection}>
-                        <div className={styles.avatar} style={{ background: profileImage ? 'transparent' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '3rem' }}>
-                            {profileImage ? (
-                                <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <i className="fas fa-user"></i>
-                            )}
+                        <div className={styles.avatar} style={{ background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '3rem' }}>
+                            <img className={styles.avatar} src={localStorage.getItem("userImage")} alt="failed to load image" />
                         </div>
-                        <label htmlFor="avatarUpload" className={styles.editAvatarBtn} style={{ cursor: 'pointer' }}>
-                            <i className="fas fa-camera"></i>
-                        </label>
-                        <input
-                            type="file"
-                            id="avatarUpload"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={handleImageUpload}
-                        />
                     </div>
                     <div className={styles.userInfo}>
-                        <h1 className={styles.userName}>Name</h1>
-                        <p className={styles.userEmail}>Email</p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                <i className="fas fa-map-marker-alt" style={{ marginRight: '5px' }}></i>
-                                123 Main St, Algiers, Algeria
-                            </p>
-                            <button 
-                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }} 
-                                title="Delete Address"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
+                        <h1 className={styles.userName}>{localStorage.getItem("userName")}</h1>
+                        <p className={styles.userEmail}>{localStorage.getItem("userEmail")}</p>
                     </div>
                     <div className={styles.profileActions}>
                         <button className="btn-secondary" onClick={Logout}>
@@ -127,34 +119,57 @@ const ProfilePage = () => {
                     {activeTab === 'wishlist' && (
                         <div className={styles.tabPanel}>
                             <h2>My Wishlist</h2>
+
                             {wishlistItems.length === 0 ? (
                                 <div className={styles.emptyState}>
                                     <i className="fas fa-heart-broken"></i>
                                     <p>Your wishlist is empty.</p>
-                                    <button className="btn-primary" onClick={() => navigate('/shop')}>Explore Shop</button>
+                                    <button className="btn-primary" onClick={() => navigate('/shop')}>
+                                        Explore Shop
+                                    </button>
                                 </div>
                             ) : (
                                 <div className={styles.wishlistGrid}>
                                     {wishlistItems.map(item => (
-                                        <div key={item.id} className={styles.wishlistCard}>
-                                            <img src={item.image || item.images?.[0]} alt={item.name} />
+                                        <div
+                                            key={item.id}
+                                            className={styles.wishlistCard}
+                                            onClick={() => navigate(`/product/${item.name}`)}
+                                        >
+
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                            />
+
                                             <div>
                                                 <h4>{item.name}</h4>
-                                                <p className={styles.orderPrice} style={{ fontSize: '1rem', marginTop: '5px' }}>{item.price}</p>
+                                                <p className={styles.orderPrice}>
+                                                    {item.price} DZD
+                                                </p>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'center' }}>
-                                                <button className="btn-primary" onClick={() => navigate(`/product/${item.id}`)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>View</button>
-                                                <button className={styles.removeBtn} onClick={() => removeFromWishlist(item.id)}>Remove</button>
-                                            </div>
+
+                                            <button
+                                                className={styles.removeBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPopupTargetId(item.id);
+                                                    setShowPopup(true);
+                                                    setPopupTitle("Remove item?");
+                                                    setPopupMessage("Are you sure you want to remove this item?");
+                                                    setPopupMode("remove");
+                                                }}
+                                            >
+                                                <Trash2 size={16} />
+                                                Remove
+                                            </button>
+
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
                     )}
-
-
-
                     {activeTab === 'settings' && (
                         <div className={styles.tabPanel}>
                             <h2>Account Settings</h2>
@@ -345,47 +360,48 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
+            {showPopup && (
+  <div className={styles.popupOverlay}>
+    <div className={styles.popupCard}>
 
-            {isAddressModalOpen && (
-                <div className={styles.modalOverlay} onClick={() => setIsAddressModalOpen(false)}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3>Add Address</h3>
-                            <button className={styles.closeBtn} onClick={() => setIsAddressModalOpen(false)}>×</button>
-                        </div>
-                        <form onSubmit={(e) => { e.preventDefault(); setIsAddressModalOpen(false); }}>
-                            <div className={styles.modalBody}>
-                                <div className={styles.formGroup}>
-                                    <label>Address</label>
-                                    <input type="text" placeholder="wilaya,street name,apartment" required style={{ width: '100%', boxSizing: 'border-box' }} />
-                                </div>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <div className={styles.formGroup} style={{ flex: 1 }}>
-                                        <label for="wilaya">Choose Wilaya:</label>
+      <h2 className={styles.popupTitle}>{popupTitle}</h2>
+      <p className={styles.popupText}>{popupMessage}</p>
 
-                                        <select name="wilaya" id="wilaya">
-                                            <option value="">Algiers</option>
-                                            <option value="">Annaba</option>
-                                            <option value="">Oran</option>
-                                            <option value="">Constantine</option>
-                                            <option value="">Setif</option>
-                                            <option value="">Biskra</option>
-                                            <option value="">Blida</option>
-                                            <option value="">Tlemcen</option>
-                                            <option value="">El Bayadh</option>
-                                            <option value="">Jijel</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button type="button" className="btn-secondary" onClick={() => setIsAddressModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Save</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+      {popupMode === 'remove' && (
+        <div className={styles.popupActions}>
+          <button
+            className={styles.confirmBtn}
+            onClick={() => {
+              removeFromWishlist(popupTargetId);
+              setShowPopup(false);
+            }}
+          >
+            Remove
+          </button>
+
+          <button
+            className={styles.cancelBtn}
+            onClick={() => setShowPopup(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {popupMode === 'ok' && (
+        <div className={styles.popupActionsSingle}>
+          <button
+            className={styles.okBtn}
+            onClick={() => setShowPopup(false)}
+          >
+            OK
+          </button>
+        </div>
+      )}
+
+    </div>
+  </div>
+)}
         </div>
     );
 };

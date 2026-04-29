@@ -48,26 +48,34 @@ public class SecurityConfig {
 
     // public routes
         .requestMatchers("/api/auth/**").permitAll()
+        .requestMatchers("/api/products/get/**").permitAll()
+        .requestMatchers("/api/reviews/all").permitAll()
 
     // admin only
         .requestMatchers("/api/users/**").hasRole("ADMIN")
         .requestMatchers("/api/products/**").hasRole("ADMIN")
         .requestMatchers("/api/cart/getbyuser/**").hasRole("ADMIN")
-        .requestMatchers("/api/cart/delete/**").hasRole("ADMIN")
+        .requestMatchers("/api/cart/**").hasRole("ADMIN")
         .requestMatchers("/api/categories/**").hasRole("ADMIN")
+        //.requestMatchers("/api/**").hasRole("ADMIN")
 
     // user + admin
+        .requestMatchers("/api/users/getname/**").hasAnyRole("USER","ADMIN")
         .requestMatchers("/api/products/get/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cart/getbyuser/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cartitem/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/reviews/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/wishlist/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/wishlist/add/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/wishlist/get/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/wishlist/remove/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/wishlist/clear/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cart/additem/**").hasAnyRole("USER", "ADMIN")
         .requestMatchers("/api/cart/additembyuserid/**").hasAnyRole("USER" ,"ADMIN")
         .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("api/chat/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/cart/delete/**").hasAnyRole("USER", "ADMIN")
+        .requestMatchers("/api/chat/**").hasAnyRole("USER", "ADMIN")
 
     // user only
 

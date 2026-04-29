@@ -307,154 +307,150 @@
   }
 }
 
-/* Modal Styles */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: modalFadeIn 0.2s ease-out;
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.modalContent {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: modalSlideUp 0.3s ease-out;
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-glass);
-  padding-bottom: var(--spacing-sm);
-}
-
-.modalHeader h3 {
+.popupTitle {
   font-size: 1.5rem;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.closeBtn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.2s;
-  line-height: 1;
-}
-
-.closeBtn:hover {
-  color: var(--text-primary);
-}
-
-.modalBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.checkoutSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.checkoutSection h4 {
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkoutCard {
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  background: var(--bg-secondary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.checkoutCardInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.checkoutCardInfo p {
-  margin: 0;
-}
-
-.checkoutItemRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid rgba(36, 69, 104, 0.05);
-}
-
-.checkoutItemRow:last-child {
-  border-bottom: none;
-}
-
-.checkoutItemInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.checkoutItemTitle {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.checkoutItemMeta {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.checkoutItemPrice {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.checkoutTotal {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border-glass);
-  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
-@keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.popupText {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.5;
 }
 
-@keyframes modalSlideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.popupActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.popupActionsSingle {
+  display: flex;
+  justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn,
+.okBtn {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: var(--bg-primary, #f4f5f7);
+  border: 1px solid var(--text-secondary, #94a3b8);
+  color: var(--text-primary);
+}
+
+.cancelBtn:hover {
+  background: #e2e8f0;
+}
+
+.confirmBtn,
+.okBtn {
+  background: var(--text-primary);
+  color: white;
+  border: none;
+}
+
+.confirmBtn:hover,
+.okBtn:hover {
+  background: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.okBtn {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+/* POPUP (same as product page) */
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popupCard {
+  background: var(--bg-secondary, white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: popupSlideIn 0.25s ease;
+}
+
+@keyframes popupSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popupTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.popupText {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.popupActionsSingle {
+  display: flex;
+  justify-content: center;
 }

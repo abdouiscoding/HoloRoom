@@ -149,14 +149,14 @@ export const LoginPage = () => {
             
             // 3. Store everything in localStorage
             localStorage.setItem("token", token);
-            localStorage.setItem("userId", userData.id); // Storing ID for your Cart fetch
+            localStorage.setItem("userId", userData.userId);
             localStorage.setItem("userEmail", userData.userEmail);
             localStorage.setItem("userName", userData.userName);
+            localStorage.setItem("userImage", userData.userImage);
             localStorage.setItem("loggedin", "true");
 
-            console.log("User data synced:", userData);
             showToast("Login successful", "success");
-            setTimeout(() => navigate("/"), 1500);
+            navigate(-1);
         } else {
             console.error("Login successful but failed to fetch user profile.");
             // Optional: even if profile fetch fails, you have the token

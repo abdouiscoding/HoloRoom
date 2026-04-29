@@ -42,6 +42,10 @@
   overflow: hidden;
 }
 
+.avatarimage {
+  height: 130px;
+}
+
 .editAvatarBtn {
   position: absolute;
   bottom: 5px;
@@ -614,4 +618,237 @@
   0% { box-shadow: 0 0 0 0 rgba(248, 157, 0, 0.4); }
   70% { box-shadow: 0 0 0 6px rgba(248, 157, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(248, 157, 0, 0); }
+}
+
+.wishlistCard {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.wishlistCard:hover {
+  transform: scale(1.04);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.wishlistName {
+  font-weight: 600;
+  margin-top: 10px;
+  transition: 0.2s;
+}
+
+.wishlistName:hover {
+  color: #f8a100;
+  text-shadow: 0 0 8px rgba(248,161,0,0.7);
+  cursor: pointer;
+}
+
+/* ============================= */
+/* PRODUCT-LIKE WISHLIST UI FIX  */
+/* ============================= */
+
+.wishlistGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* CARD like product feel */
+.wishlistCard {
+  background: var(--bg-secondary, white);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* hover like product card */
+.wishlistCard:hover {
+  transform: scale(1.04);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* IMAGE like product gallery style */
+.wishlistCard img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  transition: 0.3s ease;
+}
+
+.wishlistCard img:hover {
+  transform: scale(1.02);
+}
+
+/* NAME like product title */
+.wishlistName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+/* glow like product page hover */
+.wishlistName:hover {
+  color: #f8a100;
+  text-shadow: 0 0 10px rgba(248,161,0,0.7);
+}
+
+/* price style like product page */
+.orderPrice {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* REMOVE BUTTON (same feel as popup buttons) */
+.removeBtn {
+  margin-top: auto;
+  padding: 0.7rem;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.removeBtn:hover {
+  background: #fef2f2;
+  transform: translateY(-2px);
+}
+
+/* POPUP (same as product page) */
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popupCard {
+  background: var(--bg-secondary, white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: popupSlideIn 0.25s ease;
+}
+
+@keyframes popupSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popupTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.popupText {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.popupActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.popupActionsSingle {
+  display: flex;
+  justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn,
+.okBtn {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: var(--bg-primary, #f4f5f7);
+  border: 1px solid var(--text-secondary, #94a3b8);
+  color: var(--text-primary);
+}
+
+.cancelBtn:hover {
+  background: #e2e8f0;
+}
+
+.confirmBtn,
+.okBtn {
+  background: var(--text-primary);
+  color: white;
+  border: none;
+}
+
+.confirmBtn:hover,
+.okBtn:hover {
+  background: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.okBtn {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.wishlistCard {
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.wishlistCard:hover {
+  transform: scale(1.04);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+.wishlistCard h4 {
+  transition: 0.2s ease;
+}
+
+.wishlistCard:hover h4 {
+  color: #f8b400;
+  text-shadow: 0 0 8px rgba(248, 180, 0, 0.5);
 }

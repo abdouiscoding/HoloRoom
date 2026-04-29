@@ -2,78 +2,93 @@ import React, { createContext, useState, useContext } from 'react';
 
 const CartContext = createContext();
 
-export const useCart = () => {
-  return useContext(CartContext);
-};
+export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: "fake-1",
-      name: "Nordic Minimalist Sofa",
-      price: "150000 DZD",
-      images: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
-      color: "#244568",
-      quantity: 1
-    }
-  ]);
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Calculate totals
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const cartSubtotal = cartItems.reduce((total, item) => {
-    // Basic price parsing, assumes price strings like "$299" or "$19.99"
-    const numericPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
-    return total + (numericPrice * item.quantity);
-  }, 0);
+  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
 
-  const addToCart = (product, quantity = 1, color = null) => {
-    setCartItems(prevItems => {
-      // Check if item with same id and color exists
-      const existingItemIndex = prevItems.findIndex(
-        item => item.id === product.id && item.color === color
+  // ---------------- FETCH CART ----------------
+  const fetchCart = async () => {
+    try {
+      if (!userId) return;
+
+      setLoading(true);
+
+      const res = await fetch(
+        `http://localhost:8080/api/cart/getbyuser/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
-      if (existingItemIndex >= 0) {
-        // Update quantity of existing item
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += quantity;
-        return updatedItems;
-      } else {
-        // Add new item
-        return [...prevItems, { ...product, quantity, color }];
+      if (!res.ok) {
+        setCart(null);
+        return;
       }
-    });
+
+      const data = await res.json();
+      setCart(data);
+
+    } catch (err) {
+      console.error("Cart fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeFromCart = (productId, color) => {
-    setCartItems(prevItems => prevItems.filter(
-      item => !(item.id === productId && item.color === color)
-    ));
-  };
+  // ---------------- REMOVE ITEM ----------------
+  const removeItem = async (cartId, cartItemId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/cart/removeitem/${cartId}/${cartItemId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-  const updateQuantity = (productId, color, delta) => {
-    setCartItems(prevItems => prevItems.map(item => {
-      if (item.id === productId && item.color === color) {
-        const newQuantity = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
-  };
+      if (!res.ok) return;
 
-  const clearCart = () => {
-    setCartItems([]);
+      // update UI instantly (no refetch spam)
+      setCart(prev => {
+        if (!prev) return prev;
+
+        const newItems = prev.items.filter(
+          item => item.cartItemId !== cartItemId
+        );
+
+        return {
+          ...prev,
+          items: newItems,
+          total: newItems.reduce(
+            (sum, i) => sum + i.price * i.quantity,
+            0
+          )
+        };
+      });
+
+      return true;
+
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   };
 
   return (
     <CartContext.Provider value={{
-      cartItems,
-      cartCount,
-      cartSubtotal,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart
+      cart,
+      loading,
+      fetchCart,
+      removeItem
     }}>
       {children}
     </CartContext.Provider>
