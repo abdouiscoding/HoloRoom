@@ -24,7 +24,7 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [activeVariant, setActiveVariant] = useState(0);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [showPopup, setShowPopup] = useState(true);
+
 
   const [showPopup, setShowPopup] = useState(false);
   const [popupTitle, setPopupTitle] = useState('');
@@ -319,10 +319,10 @@ const ProductDetail = () => {
 
   const images =
     product.images &&
-    product.images.length > 0
+      product.images.length > 0
       ? product.images.map(
-          (img) => img.pImageUrl
-        )
+        (img) => img.pImageUrl
+      )
       : ['/no-image.png'];
 
   // ---------------- REVIEWS ----------------
@@ -338,118 +338,118 @@ const ProductDetail = () => {
 
   // ---------------- CART ----------------
   const addtocart = async () => {
-  if (!selectedVariant) {
-    openPopup(
-  'Select a color',
-  'Please select a color to continue',
-  'ok'
-  );
-    return;
-}
-
-  try {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-
-    // ---------------- SESSION CHECK ----------------
-    if (!userId || !token) {
+    if (!selectedVariant) {
       openPopup(
-        'Session Expired',
-        'Session expired, log in to continue.',
-        'login'
+        'Select a color',
+        'Please select a color to continue',
+        'ok'
       );
       return;
     }
 
-    // ---------------- GET CART ----------------
-    const cartRes = await fetch(
-      `http://localhost:8080/api/cart/getbyuser/${userId}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+
+      // ---------------- SESSION CHECK ----------------
+      if (!userId || !token) {
+        openPopup(
+          'Session Expired',
+          'Session expired, log in to continue.',
+          'login'
+        );
+        return;
+      }
+
+      // ---------------- GET CART ----------------
+      const cartRes = await fetch(
+        `http://localhost:8080/api/cart/getbyuser/${userId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
+      );
+      if (!cartRes.ok) {
+        openPopup(
+          'Error',
+          'Failed to load cart.',
+          'ok'
+        );
+        return;
       }
-    );
-    if (!cartRes.ok) {
-      openPopup(
-        'Error',
-        'Failed to load cart.',
-        'ok'
-      );
-      return;
-    }
 
-    const cartData = await cartRes.json();
-    const cartId = cartData.pCartId;
+      const cartData = await cartRes.json();
+      const cartId = cartData.pCartId;
 
-    if (!cartId) {
-      openPopup(
-        'Error',
-        'Cart not found.',
-        'ok'
-      );
-      return;
-    }
-
-    // ---------------- ADD ITEM ----------------
-    const requestBody = {
-      pId: product.pId.toString(),
-      pscsId: selectedVariant.pscsId.toString(),
-      pImageId:
-        product.images?.[activeImage]?.pImageId?.toString() || '0',
-      quantity: '1'
-    };
-
-    const response = await fetch(
-      `http://localhost:8080/api/cart/additem/${cartId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(requestBody)
+      if (!cartId) {
+        openPopup(
+          'Error',
+          'Cart not found.',
+          'ok'
+        );
+        return;
       }
-    );
 
-    const text = await response.text();
+      // ---------------- ADD ITEM ----------------
+      const requestBody = {
+        pId: product.pId.toString(),
+        pscsId: selectedVariant.pscsId.toString(),
+        pImageId:
+          product.images?.[activeImage]?.pImageId?.toString() || '0',
+        quantity: '1'
+      };
 
-    // 🔥 SESSION EXPIRED HANDLING (POST)
-    if (response.status === 401 || response.status === 403) {
-      openPopup(
-        'Session Expired',
-        'Session expired, log in to continue.',
-        'login'
+      const response = await fetch(
+        `http://localhost:8080/api/cart/additem/${cartId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(requestBody)
+        }
       );
-      return;
-    }
 
-    // ---------------- SUCCESS ----------------
-    if (response.ok) {
-      openPopup(
-        'Cart',
-        'Item added to cart successfully.',
-        'ok'
-      );
-    } 
-    else {
+      const text = await response.text();
+
+      // 🔥 SESSION EXPIRED HANDLING (POST)
+      if (response.status === 401 || response.status === 403) {
+        openPopup(
+          'Session Expired',
+          'Session expired, log in to continue.',
+          'login'
+        );
+        return;
+      }
+
+      // ---------------- SUCCESS ----------------
+      if (response.ok) {
+        openPopup(
+          'Cart',
+          'Item added to cart successfully.',
+          'ok'
+        );
+      }
+      else {
+        openPopup(
+          'Error',
+          text || 'Failed to add item to cart.',
+          'ok'
+        );
+      }
+
+    } catch (error) {
+      console.error(error);
       openPopup(
         'Error',
-        text || 'Failed to add item to cart.',
+        'Something went wrong.',
         'ok'
       );
     }
-
-  } catch (error) {
-    console.error(error);
-    openPopup(
-      'Error',
-      'Something went wrong.',
-      'ok'
-    );
-  }
-};
+  };
 
   return (
     <div
@@ -489,11 +489,10 @@ const ProductDetail = () => {
               (img, idx) => (
                 <button
                   key={idx}
-                  className={`${styles.thumbnailWrapper} ${
-                    activeImage === idx
+                  className={`${styles.thumbnailWrapper} ${activeImage === idx
                       ? styles.activeThumb
                       : ''
-                  }`}
+                    }`}
                   onClick={() =>
                     setActiveImage(idx)
                   }
@@ -549,13 +548,13 @@ const ProductDetail = () => {
                   size={18}
                   fill={
                     isWishlisted ||
-                    hoveredHeart
+                      hoveredHeart
                       ? '#e69100'
                       : 'none'
                   }
                   color={
                     isWishlisted ||
-                    hoveredHeart
+                      hoveredHeart
                       ? '#e69100'
                       : 'black'
                   }
@@ -650,12 +649,11 @@ const ProductDetail = () => {
                   ) => (
                     <button
                       key={idx}
-                      className={`${styles.colorSwatch} ${
-                        activeVariant ===
-                        idx
+                      className={`${styles.colorSwatch} ${activeVariant ===
+                          idx
                           ? styles.activeSwatch
                           : ''
-                      }`}
+                        }`}
                       style={{
                         backgroundColor:
                           v.pColor.toLowerCase()
@@ -804,67 +802,67 @@ const ProductDetail = () => {
 
             {popupMode ===
               'login' && (
-              <div
-                className={
-                  styles.popupActions
-                }
-              >
-                <button
+                <div
                   className={
-                    styles.confirmBtn
-                  }
-                  onClick={() =>
-                    navigate(
-                      '/login'
-                    )
+                    styles.popupActions
                   }
                 >
-                  Log In
-                </button>
+                  <button
+                    className={
+                      styles.confirmBtn
+                    }
+                    onClick={() =>
+                      navigate(
+                        '/login'
+                      )
+                    }
+                  >
+                    Log In
+                  </button>
 
-                <button
-                  className={
-                    styles.cancelBtn
-                  }
-                  onClick={() =>
-                    setShowPopup(false)
-                  }
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
+                  <button
+                    className={
+                      styles.cancelBtn
+                    }
+                    onClick={() =>
+                      setShowPopup(false)
+                    }
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
 
             {popupMode ===
               'remove' && (
-              <div
-                className={
-                  styles.popupActions
-                }
-              >
-                <button
+                <div
                   className={
-                    styles.confirmBtn
-                  }
-                  onClick={
-                    removeWishlist
+                    styles.popupActions
                   }
                 >
-                  Remove
-                </button>
+                  <button
+                    className={
+                      styles.confirmBtn
+                    }
+                    onClick={
+                      removeWishlist
+                    }
+                  >
+                    Remove
+                  </button>
 
-                <button
-                  className={
-                    styles.cancelBtn
-                  }
-                  onClick={() =>
-                    setShowPopup(false)
-                  }
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
+                  <button
+                    className={
+                      styles.cancelBtn
+                    }
+                    onClick={() =>
+                      setShowPopup(false)
+                    }
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
           </div>
         </div>
       )}

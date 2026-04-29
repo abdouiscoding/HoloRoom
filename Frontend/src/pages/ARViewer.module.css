@@ -9,62 +9,6 @@
   overflow: hidden;
 }
 
-.cameraBackground {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.camImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.7);
-}
-
-.scanOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.3);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.scanOverlay p {
-  color: white;
-  font-weight: 600;
-  letter-spacing: 2px;
-  font-family: var(--font-heading);
-  animation: pulse 2s infinite;
-}
-
-.scanLine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--accent-primary);
-  box-shadow: 0 0 10px var(--accent-primary), 0 0 20px var(--accent-primary);
-  animation: scan 4s linear infinite;
-}
-
-@keyframes scan {
-  0% { top: 10%; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: 90%; opacity: 0; }
-}
-
 .modelContainer {
   position: absolute;
   top: 50%;
@@ -90,7 +34,7 @@
   border-radius: var(--radius-md);
   padding: 10px;
   transition: background-color 0.3s;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
   animation: floatAR 3s ease-in-out infinite;
 }
 
@@ -103,9 +47,17 @@
 }
 
 @keyframes floatAR {
-  0% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-15px) scale(1.02); }
-  100% { transform: translateY(0px) scale(1); }
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+
+  50% {
+    transform: translateY(-15px) scale(1.02);
+  }
+
+  100% {
+    transform: translateY(0px) scale(1);
+  }
 }
 
 .topHud {
@@ -118,26 +70,26 @@
   justify-content: space-between;
   align-items: center;
   z-index: 10;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
 }
 
 .hudBtn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(8px);
-  color: white;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  backdrop-filter: none;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: none;
   transition: var(--transition-fast);
 }
 
 .hudBtn:hover {
-  background: rgba(255,255,255,0.2);
-  transform: scale(1.05);
+  background: transparent;
+  transform: scale(1.1);
 }
 
 .hudTitle {
@@ -160,8 +112,15 @@
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .bottomHud {
@@ -202,7 +161,7 @@
 }
 
 .toolBtn:hover {
-  color: white;
+  color: black;
 }
 
 .colorPicker {
@@ -211,8 +170,8 @@
   justify-content: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) 0;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toolLabel {
@@ -232,4 +191,104 @@
 .colorSwatch.activeSwatch {
   outline-color: white;
   outline-offset: 2px;
+}
+
+.menuContainer {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 200px;
+  z-index: 20;
+  transform-origin: top right;
+  animation: popupScale 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.colorsCorner {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  left: var(--spacing-lg);
+  z-index: 20;
+}
+
+.colorsPopup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: max-content;
+  transform-origin: bottom left;
+  animation: popupScale 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popupScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.arCartBtn {
+  background: var(--text-primary);
+  color: white;
+  padding: 0.85rem 2rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  transition: var(--transition-normal);
+  border: none;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(36, 69, 104, 0.4);
+}
+
+.arCartBtn:hover {
+  background: #1a365d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(36, 69, 104, 0.6);
 }
