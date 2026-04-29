@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { X, Maximize, RotateCcw, Palette, ArrowLeft, Camera } from 'lucide-react';
+import { Maximize, RotateCcw, RotateCw, Palette, ArrowLeft, Menu, LogOut } from 'lucide-react';
 import styles from './ARViewer.module.css';
 import { useCart } from '../context/CartContext';
 
@@ -9,57 +9,42 @@ const ARViewer = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const [activeColor, setActiveColor] = useState(0);
-  const colors = ['#2E3A4B', '#9D4B55', '#E6C687'];
+  const colors = ['#2E3A4B', '#9D4B55', '#E6C687', '#4A5D23', '#800020', '#1C1C1C'];
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isColorsOpen, setIsColorsOpen] = useState(false);
 
   const handleAddToCart = () => {
-    const mockProduct = {
-      id: id || 'ar-demo',
-      name: 'AR Preview Product',
-      price: '29900 DZD',
-      images: ['https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400'],
-      color: colors[activeColor]
-    };
-    addToCart(mockProduct, 1, colors[activeColor]);
+
   };
 
   return (
     <div className={styles.arViewerContainer}>
-      {/* Fake Camera Background */}
-      <div className={styles.cameraBackground}>
-        <img
-          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200"
-          alt="Room Background"
-          className={styles.camImage}
-        />
-        <div className={styles.scanOverlay}>
-          <div className={styles.scanLine}></div>
-          <p>Scanning Room Surfaces...</p>
-        </div>
-      </div>
-
-      {/* AR Product Simulation */}
-      <div className={styles.modelContainer}>
-        <div className={styles.modelPlaceholder} style={{ backgroundColor: colors[activeColor] }}>
-
-          <img
-            src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&q=80&w=400"
-            alt="3D Model"
-            className={styles.simulatedModel}
-          />
-        </div>
-      </div>
 
       {/* Top HUD */}
       <div className={styles.topHud}>
-        <button className={styles.hudBtn} onClick={() => navigate(-1)}>
-          <X size={24} />
+        <button className={styles.hudBtn}>
+          <i className="fas fa-box" style={{ fontSize: '28px' }}></i>
         </button>
         <div className={styles.hudTitle}>
           AR Mode <span className={styles.liveIndicator}></span>
         </div>
-        <button className={styles.hudBtn}>
-          <Camera size={24} />
-        </button>
+        <div className={styles.menuContainer}>
+          <button className={styles.hudBtn} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <Menu size={28} />
+          </button>
+          {isMenuOpen && (
+            <div className={`${styles.dropdownMenu} glass-panel`}>
+              <button className={styles.menuItem}>
+                <Palette size={18} />
+                <span>Appearance</span>
+              </button>
+              <button className={styles.menuItem} onClick={() => navigate(-1)}>
+                <LogOut size={18} />
+                <span>Exit</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bottom Controls HUD */}
@@ -68,16 +53,31 @@ const ARViewer = () => {
           <div className={styles.tools}>
             <button className={styles.toolBtn}>
               <RotateCcw size={20} />
-              <span>Rotate</span>
+              <span>Rotate left</span>
             </button>
             <button className={styles.toolBtn}>
-              <Maximize size={20} />
-              <span>Scale</span>
+              <RotateCw size={20} />
+              <span>Rotate right</span>
             </button>
           </div>
+          <button className={styles.arCartBtn} onClick={handleAddToCart}>
+            Add to Cart
+          </button>
+        </div>
+      </div>
 
-          <div className={styles.colorPicker}>
-            <span className={styles.toolLabel}>Colors:</span>
+      {/* Colors Button Bottom Left */}
+      <div className={styles.colorsCorner}>
+        <button
+          className={styles.hudBtn}
+          style={{ width: 'auto', padding: '0 16px', borderRadius: '22px', gap: '8px' }}
+          onClick={() => setIsColorsOpen(!isColorsOpen)}
+        >
+          <Palette size={24} />
+          <span style={{ fontSize: '16px', fontWeight: '600' }}>Choose a color</span>
+        </button>
+        {isColorsOpen && (
+          <div className={`${styles.colorsPopup} glass-panel`}>
             {colors.map((color, idx) => (
               <button
                 key={idx}
@@ -87,11 +87,7 @@ const ARViewer = () => {
               />
             ))}
           </div>
-
-          <button className="btn-primary" onClick={handleAddToCart}>
-            Add to Cart - 29900 DZD
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

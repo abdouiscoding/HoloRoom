@@ -39,6 +39,7 @@
   object-fit: cover;
   border: 4px solid white;
   box-shadow: 0 8px 20px rgba(36, 69, 104, 0.15);
+  overflow: hidden;
 }
 
 .avatarimage {
@@ -371,7 +372,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  max-width: 500px;
+  width: 100%;
   text-align: left;
   align-items: stretch;
 }
@@ -382,6 +383,7 @@
   gap: var(--spacing-xs);
   align-items: flex-start;
   width: 100%;
+  max-width: 500px;
 }
 
 .formGroup label {
@@ -390,7 +392,8 @@
   color: var(--text-secondary);
 }
 
-.formGroup input {
+.formGroup input,
+.formGroup select {
   padding: 0.75rem 1rem;
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-md);
@@ -402,7 +405,8 @@
   box-sizing: border-box;
 }
 
-.formGroup input:focus {
+.formGroup input:focus,
+.formGroup select:focus {
   outline: none;
   border-color: var(--accent-primary);
 }
