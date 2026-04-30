@@ -1,5 +1,6 @@
 package HoloRoom.Config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,94 +17,90 @@ import HoloRoom.Security.JwtFilter;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtFilter jwtFilter;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Autowired
-    private JwtFilter jwtFilter;
-    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-    http
-        .cors(cors -> {})
-        .csrf(csrf -> csrf.disable())
+        http
+            // ✅ IMPORTANT FIX: explicitly attach CORS config
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-        .sessionManagement(session ->
-            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        )
+            .csrf(csrf -> csrf.disable())
 
-        .formLogin(form -> form.disable())
-        .httpBasic(basic -> basic.disable())
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-        .authorizeHttpRequests(auth -> auth
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
 
-    // public routes
-        .requestMatchers("/api/auth/**").permitAll()
-        .requestMatchers("/api/products/get/**").permitAll()
-        .requestMatchers("/api/reviews/all").permitAll()
+            .authorizeHttpRequests(auth -> auth
 
-    // admin only
-        .requestMatchers("/api/users/**").hasRole("ADMIN")
-        .requestMatchers("/api/products/**").hasRole("ADMIN")
-        .requestMatchers("/api/cart/getbyuser/**").hasRole("ADMIN")
-        .requestMatchers("/api/cart/**").hasRole("ADMIN")
-        .requestMatchers("/api/categories/**").hasRole("ADMIN")
-        //.requestMatchers("/api/**").hasRole("ADMIN")
+                // ================= PUBLIC =================
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/products/get/**").permitAll()
+                .requestMatchers("/api/reviews/all").permitAll()
+                .requestMatchers("/api/uploads/**").permitAll()
 
-    // user + admin
-        .requestMatchers("/api/users/getname/**").hasAnyRole("USER","ADMIN")
-        .requestMatchers("/api/products/get/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cart/getbyuser/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cartitem/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/reviews/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/wishlist/add/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/wishlist/get/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/wishlist/remove/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/wishlist/clear/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cart/additem/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cart/additembyuserid/**").hasAnyRole("USER" ,"ADMIN")
-        .requestMatchers("/api/cart/removeitem/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/cart/delete/**").hasAnyRole("USER", "ADMIN")
-        .requestMatchers("/api/chat/**").hasAnyRole("USER", "ADMIN")
+                // ================= ADMIN ONLY =================
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                .requestMatchers("/api/products/**").hasRole("ADMIN")
+                .requestMatchers("/api/cart/**").hasRole("ADMIN")
+                .requestMatchers("/api/categories/**").hasRole("ADMIN")
 
-    // user only
+                // ================= USER + ADMIN =================
+                .requestMatchers("/api/users/getname/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/cartitem/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/orders/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/reviews/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/wishlist/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/chat/**").hasAnyRole("USER","ADMIN")
 
-    // everything else locked
-        .anyRequest().authenticated()
-    )
+                // fallback
+                .anyRequest().authenticated()
+            )
 
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // JWT filter
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
+        return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-    CorsConfiguration config = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOrigins(List.of("http://localhost:5173"));
-    config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-    config.setAllowedHeaders(List.of("*"));
-    config.setAllowCredentials(true);
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "http://192.168.1.10:5173",
+            "https://control-parole-grandkid.ngrok-free.dev"
+        ));
 
-    UrlBasedCorsConfigurationSource source =
-        new UrlBasedCorsConfigurationSource();
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
 
-    source.registerCorsConfiguration("/**", config);
+        config.setAllowedHeaders(List.of("*"));
 
-    return source;
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
-
 }

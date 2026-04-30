@@ -153,7 +153,7 @@ const ProfilePage = () => {
               }`}
               onClick={() => setActiveTab("settings")}
             >
-              <i className="fas fa-cog"></i> Settings
+              <i className="fas fa-cog"></i> Information
             </li>
 
             <li
@@ -250,7 +250,7 @@ const ProfilePage = () => {
           {/* SETTINGS */}
           {activeTab === "settings" && (
             <div className={styles.tabPanel}>
-              <h2>Account Settings</h2>
+              <h2>Account information</h2>
 
               <form className={styles.settingsForm}>
                 <div className={styles.formGroup}>

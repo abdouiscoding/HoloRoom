@@ -1,174 +1,522 @@
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /* =========================
-   SCENE
+   CONFIG
 ========================= */
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.01,
-  100
-);
+const address = "192.168.1.10";
 
 /* =========================
-   RENDERER
+   AUTH / URL PARAMS
 ========================= */
-const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: true
-});
+const params = new URLSearchParams(window.location.search);
+const token = params.get("token");
+const userId = params.get("userId");
+let currentProductId = params.get("productId");
 
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
-document.body.appendChild(renderer.domElement);
+const authHeaders = token
+  ? { Authorization: `Bearer ${token}` }
+  : {};
 
-/* =========================
-   LIGHTS
-========================= */
-scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+  /* =====================================================
+   LOADING SCREEN
+===================================================== */
+const loadingScreen = document.createElement("div");
+loadingScreen.style.cssText = `
+position:fixed;
+inset:0;
+background:linear-gradient(180deg,#050505,#111);
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:999999;
+font-family:Arial,sans-serif;
+color:white;
+`;
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(3, 5, 2);
-scene.add(dirLight);
+loadingScreen.innerHTML = `
+<div style="width:min(420px,90vw);text-align:center;">
+  <h1 style="margin:0 0 10px;font-size:34px;">HoloRoom AR</h1>
+  <p id="loadingText" style="margin:0 0 18px;opacity:.8;">Preparing...</p>
 
-/* =========================
-   AR BUTTON
-========================= */
-document.body.appendChild(
-  ARButton.createButton(renderer, {
-    requiredFeatures: ["hit-test"],
-    optionalFeatures: ["dom-overlay"],
-    domOverlay: { root: document.body }
-  })
-);
+  <div style="
+      width:100%;
+      height:16px;
+      background:#1f1f1f;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+  ">
+      <div id="loadingBar" style="
+          width:0%;
+          height:100%;
+          background:linear-gradient(90deg,#00ffff,#0088ff);
+          transition:width .2s;
+      "></div>
+  </div>
 
-/* =========================
-   RETICLE (yellow ring)
-========================= */
-const reticle = new THREE.Mesh(
-  new THREE.RingGeometry(0.012, 0.02, 32),
-  new THREE.MeshBasicMaterial({
-    color: 0xffff00,
-    side: THREE.DoubleSide
-  })
-);
+  <p id="loadingPercent" style="margin:14px 0 0;font-size:14px;opacity:.7;">0%</p>
+</div>
+`;
 
-reticle.rotation.x = -Math.PI / 2;
-reticle.matrixAutoUpdate = true;
-reticle.visible = false;
-scene.add(reticle);
+document.body.appendChild(loadingScreen);
 
-/* =========================
-   LASER LINE
-========================= */
-const laserGeo = new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(),
-  new THREE.Vector3()
-]);
+const loadingText = document.getElementById("loadingText");
+const loadingBar = document.getElementById("loadingBar");
+const loadingPercent = document.getElementById("loadingPercent");
 
-const laser = new THREE.Line(
-  laserGeo,
-  new THREE.LineBasicMaterial({ color: 0xffff00 })
-);
+function setLoading(percent, text) {
+  const p = Math.max(0, Math.min(100, percent));
+  loadingBar.style.width = p + "%";
+  loadingPercent.textContent = Math.floor(p) + "%";
+  if (text) loadingText.textContent = text;
+}
 
-scene.add(laser);
+function showLoading(msg = "Loading...") {
+  loadingScreen.style.display = "flex";
+  loadingScreen.style.opacity = "1";
+  setLoading(0, msg);
+}
 
+function hideLoading() {
+  loadingScreen.style.opacity = "0";
+  loadingScreen.style.transition = "opacity .35s";
+
+  setTimeout(() => {
+    loadingScreen.style.display = "none";
+  }, 350);
+}
 /* =========================
    STATE
 ========================= */
 const objects = [];
 let selectedObject = null;
+let dragging = false;
 
-const product = {
-  colors: ["cyan", "red", "green", "yellow", "white"]
-};
+let productData = null;
+let productModelTemplate = null;
+let currentColorIndex = 0;
+let allProducts = [];
+let menuScroll = 0;
 
-let currentColor = 0;
-
-let rotateLeft = false;
-let rotateRight = false;
-
-const raycaster = new THREE.Raycaster();
+let hitTestSource = null;
+let referenceSpace = null;
 
 /* =========================
-   UI
+   THREE
 ========================= */
-const productBtn = makeBtn("Product");
-productBtn.style.top = "10px";
-productBtn.style.left = "10px";
+const scene = new THREE.Scene();
 
-const addBtn = makeBtn("Add");
-addBtn.style.top = "10px";
-addBtn.style.right = "10px";
+const camera = new THREE.PerspectiveCamera(
+  70,
+  innerWidth / innerHeight,
+  0.01,
+  100
+);
 
-const rotL = makeBtn("⟲");
-rotL.style.left = "10px";
-rotL.style.top = "45%";
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
 
-const rotR = makeBtn("⟳");
-rotR.style.left = "10px";
-rotR.style.top = "55%";
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.xr.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-const delBtn = makeBtn("Delete");
-delBtn.style.bottom = "10px";
-delBtn.style.left = "10px";
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
 
-const colorBtn = makeBtn("Color");
-colorBtn.style.bottom = "10px";
-colorBtn.style.right = "10px";
+const dir = new THREE.DirectionalLight(0xffffff, 1);
+dir.position.set(2, 4, 2);
+scene.add(dir);
 
-function makeBtn(text) {
+/* =========================
+   AR BUTTON
+========================= */
+const arBtn = ARButton.createButton(renderer, {
+  requiredFeatures: ["hit-test"],
+  optionalFeatures: ["dom-overlay"],
+  domOverlay: { root: document.body }
+});
+document.body.appendChild(arBtn);
+
+/* =========================
+   RETICLE (GROUND SNAP)
+========================= */
+const reticle = new THREE.Mesh(
+  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
+  new THREE.MeshBasicMaterial({
+    color: 0xffdd00,
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    depthTest: false
+  })
+);
+
+reticle.rotation.x = -Math.PI / 2;
+reticle.renderOrder = 9999;
+reticle.matrixAutoUpdate = true;
+reticle.visible = false;
+scene.add(reticle);
+
+/* =========================
+   DOM UI
+========================= */
+const ui = document.createElement("div");
+ui.style.cssText = `
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:9999;
+display:none;
+font-family:Arial,sans-serif;
+`;
+document.body.appendChild(ui);
+
+function makeBtn(txt) {
   const b = document.createElement("button");
-  b.innerText = text;
-  b.style.position = "absolute";
-  b.style.zIndex = "999";
-  b.style.padding = "14px 18px";
-  b.style.border = "none";
-  b.style.borderRadius = "12px";
-  b.style.background = "#00ffff";
-  b.style.fontWeight = "bold";
-  b.style.color = "black";
-  document.body.appendChild(b);
+  b.innerText = txt;
+  b.style.cssText = `
+  position:absolute;
+  pointer-events:auto;
+  padding:12px 18px;
+  border:none;
+  border-radius:14px;
+  background:rgba(0,255,255,.9);
+  color:#000;
+  font-weight:700;
+  box-shadow:0 8px 30px rgba(0,0,0,.3);
+  `;
+  ui.appendChild(b);
   return b;
 }
 
+const addBtn = makeBtn("Add");
+addBtn.style.top = "12px";
+addBtn.style.right = "12px";
+
+const removeBtn = makeBtn("Remove");
+removeBtn.style.top = "12px";
+removeBtn.style.right = "95px";
+
+const productsBtn = makeBtn("Products");
+productsBtn.style.top = "12px";
+productsBtn.style.left = "12px";
+
 /* =========================
-   HOLD BUTTONS
+   TOAST POPUP
 ========================= */
-function hold(btn, start, end) {
-  btn.onpointerdown = start;
-  btn.onpointerup = end;
-  btn.onpointerleave = end;
+function popup(msg) {
+  const d = document.createElement("div");
+  d.innerText = msg;
+  d.style.cssText = `
+  position:absolute;
+  left:50%;
+  bottom:90px;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.82);
+  color:#fff;
+  padding:14px 22px;
+  border-radius:30px;
+  pointer-events:none;
+  font-weight:700;
+  border:1px solid #00ffff;
+  `;
+  ui.appendChild(d);
+
+  setTimeout(() => {
+    d.remove();
+  }, 2200);
 }
 
-hold(rotL, () => rotateLeft = true, () => rotateLeft = false);
-hold(rotR, () => rotateRight = true, () => rotateRight = false);
-
 /* =========================
-   MENU PANEL
+   PRODUCT MENU (3D CANVAS)
 ========================= */
+const menu = createMenuSprite();
 let menuVisible = false;
-const menu = createMenu();
 
-productBtn.onclick = () => {
-  menuVisible = !menuVisible;
-
-  if (menuVisible) {
-    spawnMenu();
-    menu.visible = true;
-  } else {
-    menu.visible = false;
-  }
-};
-
-function createMenu() {
+function createMenuSprite() {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 768;
+
+  const tex = new THREE.CanvasTexture(canvas);
+
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true
+    })
+  );
+
+  sprite.scale.set(2.4, 1.8, 1);
+  sprite.visible = false;
+  sprite.userData = {
+    canvas,
+    ctx: canvas.getContext("2d"),
+    tex
+  };
+
+  scene.add(sprite);
+  return sprite;
+}
+
+function spawnMenu() {
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+
+  menu.position.copy(camera.position).add(dir.multiplyScalar(2));
+  menu.quaternion.copy(camera.quaternion);
+}
+
+function drawMenu() {
+  const ctx = menu.userData.ctx;
+  ctx.clearRect(0, 0, 1024, 768);
+
+  ctx.fillStyle = "rgba(15,15,20,.95)";
+  roundRect(ctx, 0, 0, 1024, 768, 40);
+  ctx.fill();
+
+  ctx.fillStyle = "#00ffff";
+  ctx.font = "bold 52px Arial";
+  ctx.fillText("Products", 40, 70);
+
+  /* close */
+  ctx.fillStyle = "#ff4d6d";
+  roundRect(ctx, 920, 20, 80, 60, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#fff";
+  ctx.fillText("X", 948, 64);
+
+  /* scroll up */
+  ctx.fillStyle = "#222";
+  roundRect(ctx, 930, 150, 60, 70, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#00ffff";
+  ctx.fillText("↑", 948, 200);
+
+  /* scroll down */
+  ctx.fillStyle = "#222";
+  roundRect(ctx, 930, 250, 60, 70, 18);
+  ctx.fill();
+
+  ctx.fillStyle = "#00ffff";
+  ctx.fillText("↓", 948, 300);
+
+  const start = menuScroll;
+  const visible = allProducts.slice(start, start + 6);
+
+  const cardW = 270;
+  const cardH = 250;
+
+  visible.forEach((p, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+
+    const x = 35 + col * 295;
+    const y = 120 + row * 300;
+
+    const active =
+      Number(p.pId) === Number(currentProductId);
+
+    /* card */
+    ctx.fillStyle = "#222";
+    roundRect(ctx, x, y, cardW, cardH, 22);
+    ctx.fill();
+
+    /* selected frame only */
+    if (active) {
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "#00ffff";
+      roundRect(ctx, x, y, cardW, cardH, 22);
+      ctx.stroke();
+    }
+
+    /* image */
+    ctx.fillStyle = "#111";
+    roundRect(ctx, x + 14, y + 14, 242, 160, 16);
+    ctx.fill();
+
+    if (p._img && p._img.complete) {
+      ctx.drawImage(
+        p._img,
+        x + 20,
+        y + 20,
+        230,
+        148
+      );
+    }
+
+    /* name */
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 23px Arial";
+    ctx.fillText(
+      (p.pName || "").slice(0, 18),
+      x + 16,
+      y + 220
+    );
+  });
+
+  menu.userData.tex.needsUpdate = true;
+}
+
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/* =========================
+   FETCH PRODUCTS
+========================= */
+async function fetchProducts() {
+  try {
+    const res = await fetch(
+      `http://${address}:8080/api/products/get`
+    );
+
+    const data = await res.json();
+
+    allProducts = (data || []).filter(
+      p => p && p.pId && p.pName
+    );
+
+    // preload images
+    allProducts.forEach((p) => {
+      const img = new Image();
+
+      img.crossOrigin = "anonymous";
+
+      img.src =
+        p.images?.[0]?.pImageUrl ||
+        "/no-image.png";
+
+      img.onload = () => drawMenu();
+
+      p._img = img;
+    });
+
+    drawMenu();
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/* =========================
+   LOAD PRODUCT
+========================= */
+async function loadProduct(id = currentProductId) {
+  currentProductId = id;
+
+  showLoading("Fetching product...");
+
+  try {
+    setLoading(10, "Fetching product...");
+
+    const res = await fetch(
+      `http://${address}:8080/api/products/get/${id}`
+    );
+
+    if (!res.ok) throw new Error("Failed fetch");
+
+    productData = await res.json();
+
+    setLoading(25, "Preparing model...");
+
+    const modelUrl = encodeURI(productData.p3DModel);
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+      modelUrl,
+
+      // SUCCESS
+      (gltf) => {
+        productModelTemplate = gltf.scene;
+
+        setLoading(100, "Ready");
+
+        setTimeout(() => {
+          hideLoading();
+        }, 400);
+      },
+
+      // PROGRESS
+      (xhr) => {
+        if (xhr.total && xhr.total > 0) {
+          const percent =
+            25 + (xhr.loaded / xhr.total) * 75;
+
+          setLoading(
+            percent,
+            "Downloading 3D model..."
+          );
+        } else {
+          // fallback for unknown size
+          const pulse =
+            30 + ((Date.now() / 80) % 60);
+
+          setLoading(
+            pulse,
+            "Downloading 3D model..."
+          );
+        }
+      },
+
+      // ERROR
+      (err) => {
+        console.error(err);
+        setLoading(100, "Model failed");
+        setTimeout(hideLoading, 1200);
+      }
+    );
+
+  } catch (e) {
+    console.error(e);
+    setLoading(100, "Failed loading product");
+    setTimeout(hideLoading, 1200);
+  }
+}
+
+
+/* =========================
+   MODEL NORMALIZE
+========================= */
+function normalizeModel(model) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+
+  const max = Math.max(size.x, size.y, size.z);
+  const scale = 0.7 / max;
+
+  model.scale.setScalar(scale);
+
+  const newBox = new THREE.Box3().setFromObject(model);
+  model.position.y -= newBox.min.y;
+}
+
+/* =========================
+   HUD HIGHER ABOVE OBJECT
+========================= */
+function createHUD(obj) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
 
   const ctx = canvas.getContext("2d");
   const tex = new THREE.CanvasTexture(canvas);
@@ -180,103 +528,76 @@ function createMenu() {
     })
   );
 
-  sprite.scale.set(2.5, 1.9, 1);
-  sprite.visible = false;
+  sprite.scale.set(0.75, 0.36, 1);
+  sprite.position.set(0, 1.25, 0); // higher
+  obj.add(sprite);
 
-  sprite.userData.ctx = ctx;
-  sprite.userData.tex = tex;
+  function draw() {
+    ctx.clearRect(0, 0, 512, 256);
 
-  scene.add(sprite);
+    ctx.fillStyle = "rgba(0,0,0,.78)";
+    roundRect(ctx, 0, 0, 512, 256, 24);
+    ctx.fill();
 
-  return sprite;
-}
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 30px Arial";
+    ctx.fillText(productData.pName, 20, 50);
 
-function spawnMenu() {
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+    ctx.fillStyle = "#00ffff";
+    ctx.fillText(`${productData.pPrice} DZD`, 20, 95);
 
-  menu.position.copy(camera.position).add(dir.multiplyScalar(4));
-  menu.quaternion.copy(camera.quaternion);
+    // heart
+    ctx.fillStyle = "#ff4d6d";
+    roundRect(ctx, 350, 30, 60, 60, 18);
+    ctx.fill();
 
-  drawMenu();
-}
+    ctx.fillStyle = "#fff";
+    ctx.fillText("♥", 366, 70);
 
-function drawMenu() {
-  const ctx = menu.userData.ctx;
+    // cart
+    ctx.fillStyle = "#00ffff";
+    roundRect(ctx, 290, 140, 180, 70, 18);
+    ctx.fill();
 
-  ctx.clearRect(0, 0, 1024, 768);
+    ctx.fillStyle = "#000";
+    ctx.fillText("ADD CART", 314, 184);
 
-  ctx.fillStyle = "rgba(0,0,0,0.72)";
-  ctx.fillRect(0, 0, 1024, 768);
+    tex.needsUpdate = true;
+  }
 
-  ctx.fillStyle = "white";
-  ctx.font = "bold 72px Arial";
-  ctx.fillText("MENU", 40, 90);
+  draw();
 
-  ctx.fillStyle = "#ff4444";
-  ctx.fillRect(900, 20, 90, 90);
-
-  ctx.fillStyle = "white";
-  ctx.fillText("X", 925, 88);
-
-  ctx.fillStyle = "#00ffff";
-  ctx.fillRect(80, 180, 860, 120);
-
-  ctx.fillStyle = "black";
-  ctx.font = "50px Arial";
-  ctx.fillText("Cube Product", 220, 255);
-
-  ctx.fillStyle = "white";
-  ctx.fillText("Current Color: " + product.colors[currentColor], 90, 420);
-
-  menu.userData.tex.needsUpdate = true;
+  obj.userData.hudSprite = sprite;
 }
 
 /* =========================
    ADD OBJECT
 ========================= */
-addBtn.onclick = () => {
-  if (!reticle.visible) return;
+function addObject() {
+  if (!reticle.visible || !productModelTemplate) return;
 
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.2, 0.2, 0.2),
-    new THREE.MeshStandardMaterial({
-      color: product.colors[currentColor],
-      metalness: 0.9,
-      roughness: 0.2
-    })
-  );
+  const obj = productModelTemplate.clone(true);
+  normalizeModel(obj);
 
-  mesh.position.copy(reticle.position);
+  obj.position.setFromMatrixPosition(reticle.matrix);
 
-  scene.add(mesh);
-  objects.push(mesh);
+  scene.add(obj);
+  objects.push(obj);
 
-  selectObject(mesh);
-};
+  createHUD(obj);
+
+  selectedObject = obj;
+}
+
+addBtn.onclick = addObject;
 
 /* =========================
-   COLOR CHANGE
+   REMOVE
 ========================= */
-colorBtn.onclick = () => {
-  currentColor++;
-  if (currentColor >= product.colors.length) currentColor = 0;
-
-  drawMenu();
-
-  if (selectedObject) {
-    selectedObject.material.color.set(product.colors[currentColor]);
-  }
-};
-
-/* =========================
-   DELETE
-========================= */
-delBtn.onclick = () => {
+removeBtn.onclick = () => {
   if (!selectedObject) return;
 
   scene.remove(selectedObject);
-
   const i = objects.indexOf(selectedObject);
   if (i >= 0) objects.splice(i, 1);
 
@@ -284,60 +605,172 @@ delBtn.onclick = () => {
 };
 
 /* =========================
-   SELECT OBJECT
+   PRODUCTS BUTTON
 ========================= */
-function selectObject(obj) {
-  if (selectedObject) {
-    selectedObject.scale.setScalar(1);
+productsBtn.onclick = () => {
+  menuVisible = !menuVisible;
+  menu.visible = menuVisible;
+
+  if (menuVisible) {
+    spawnMenu();
+    drawMenu();
   }
+};
 
-  selectedObject = obj;
+/* =========================
+   API WISHLIST / CART
+========================= */
+async function addWishlist() {
+  if (!userId || !token) return popup("Login required");
 
-  obj.scale.setScalar(1.08);
+  await fetch(
+    `http://${address}:8080/api/wishlist/add/${userId}/${productData.pId}`,
+    {
+      method: "POST",
+      headers: authHeaders
+    }
+  );
+
+  popup("Added to wishlist");
+}
+
+async function addCart() {
+  if (!userId || !token) return popup("Login required");
+
+  const cartRes = await fetch(
+    `http://${address}:8080/api/cart/getbyuser/${userId}`,
+    { headers: authHeaders }
+  );
+
+  const cartData = await cartRes.json();
+
+  const variant =
+    productData.sizecolorstock?.[0];
+
+  const body = {
+    pId: productData.pId.toString(),
+    pscsId: variant.pscsId.toString(),
+    pImageId:
+      productData.images?.[0]?.pImageId?.toString() || "0",
+    quantity: "1"
+  };
+
+  await fetch(
+    `http://${address}:8080/api/cart/additem/${cartData.pCartId}`,
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    }
+  );
+
+  popup("Added to cart");
 }
 
 /* =========================
-   TAP SELECT / CLOSE MENU
+   POINTER TAP
 ========================= */
-window.addEventListener("click", () => {
+const raycaster = new THREE.Raycaster();
+
+window.addEventListener("click", async () => {
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
 
+  // menu collision
   if (menu.visible) {
-    const hitMenu = raycaster.intersectObject(menu);
+    const hit = raycaster.intersectObject(menu);
 
-    if (hitMenu.length) {
-      const uv = hitMenu[0].uv;
-
+    if (hit.length) {
+      const uv = hit[0].uv;
       const x = uv.x * 1024;
       const y = (1 - uv.y) * 768;
 
-      if (x > 900 && y < 110) {
+      // close
+      if (x > 920 && y < 80) {
         menu.visible = false;
         menuVisible = false;
         return;
       }
+
+      const col = Math.floor((x - 40) / 320);
+      const row = Math.floor((y - 120) / 300);
+
+      const index = row * 3 + col;
+
+      if (index >= 0 && allProducts[index]) {
+        await loadProduct(allProducts[index].pId);
+        popup("Selected " + allProducts[index].pName);
+      }
+
+      return;
     }
   }
 
-  const hits = raycaster.intersectObjects(objects);
+  // object / hud collision
+  const hits = raycaster.intersectObjects(objects, true);
 
   if (hits.length) {
-    selectObject(hits[0].object);
+    let root = hits[0].object;
+
+    while (root.parent && !objects.includes(root)) {
+      root = root.parent;
+    }
+
+    selectedObject = root;
+
+    const hitObj = hits[0].object;
+
+    // if sprite hud
+    if (hitObj.type === "Sprite") {
+      const uv = hits[0].uv;
+      const x = uv.x * 512;
+      const y = (1 - uv.y) * 256;
+
+      if (x > 350 && x < 410 && y > 30 && y < 90) {
+        addWishlist();
+      }
+
+      if (x > 290 && x < 470 && y > 140 && y < 210) {
+        addCart();
+      }
+    }
   }
 });
 
 /* =========================
-   XR HIT TEST
+   DRAG FIXED (X/Z ONLY)
 ========================= */
-let hitTestSource = null;
-let hitTestRequested = false;
-let referenceSpace = null;
+window.addEventListener("pointerdown", () => {
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+  const hits = raycaster.intersectObjects(objects, true);
+
+  if (hits.length) {
+    let root = hits[0].object;
+
+    while (root.parent && !objects.includes(root)) {
+      root = root.parent;
+    }
+
+    selectedObject = root;
+    dragging = true;
+  }
+});
+
+window.addEventListener("pointerup", () => {
+  dragging = false;
+});
 
 /* =========================
-   SESSION RESET
+   XR EVENTS
 ========================= */
+renderer.xr.addEventListener("sessionstart", () => {
+  ui.style.display = "block";
+});
+
 renderer.xr.addEventListener("sessionend", () => {
-  location.reload();
+  ui.style.display = "none";
 });
 
 /* =========================
@@ -352,84 +785,210 @@ renderer.setAnimationLoop(async (_, frame) => {
   }
 
   if (!referenceSpace) {
-    referenceSpace = await renderer.xr.getReferenceSpace();
+    referenceSpace =
+      await renderer.xr.getReferenceSpace();
     return;
   }
 
-  if (!hitTestRequested) {
-    hitTestRequested = true;
+  if (!hitTestSource) {
+    const viewer =
+      await session.requestReferenceSpace(
+        "viewer"
+      );
 
-    const viewer = await session.requestReferenceSpace("viewer");
-
-    hitTestSource = await session.requestHitTestSource({
-      space: viewer
-    });
+    hitTestSource =
+      await session.requestHitTestSource({
+        space: viewer
+      });
   }
 
-  let worldPoint = null;
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
 
-  // AR REAL SURFACE HIT
-  if (hitTestSource) {
-    const hits = frame.getHitTestResults(hitTestSource);
+  const camPos = new THREE.Vector3();
+  camera.getWorldPosition(camPos);
 
-    if (hits.length) {
-      const pose = hits[0].getPose(referenceSpace);
+  raycaster.setFromCamera(
+    { x: 0, y: 0 },
+    camera
+  );
 
-      worldPoint = new THREE.Vector3(
-        pose.transform.position.x,
-        pose.transform.position.y,
-        pose.transform.position.z
+  function applyDynamicScale(
+    targetPos,
+    base = 0.032
+  ) {
+    const dist =
+      camPos.distanceTo(targetPos);
+
+    let s =
+      base *
+      (1 / Math.max(dist * 0.9, 1));
+
+    s = THREE.MathUtils.clamp(
+      s,
+      0.5,
+      1
+    );
+
+    reticle.scale.set(s, s, s);
+  }
+
+  reticle.visible = true;
+  let snapped = false;
+
+  /* =====================================
+     MENU PRIORITY
+  ===================================== */
+  if (menu.visible) {
+    const menuHits =
+      raycaster.intersectObject(menu);
+
+    if (menuHits.length) {
+      const hit = menuHits[0];
+
+      reticle.position.copy(hit.point);
+      reticle.position.add(
+        forward.clone().multiplyScalar(
+          0.01
+        )
       );
+
+      reticle.quaternion.copy(
+        menu.quaternion
+      );
+
+      applyDynamicScale(
+        reticle.position,
+        0.028
+      );
+
+      snapped = true;
     }
   }
 
-  // CAMERA CENTER RAYCAST
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+  /* =====================================
+     OBJECT PRIORITY
+  ===================================== */
+  if (!snapped) {
+    const objHits =
+      raycaster.intersectObjects(
+        objects,
+        true
+      );
 
-  raycaster.set(camera.position, dir);
+    if (objHits.length) {
+      const hit = objHits[0];
 
-  const targets = [];
+      reticle.position.copy(hit.point);
 
-  if (menu.visible) targets.push(menu);
-  objects.forEach(o => targets.push(o));
+      if (hit.face) {
+        const normal = hit.face.normal
+          .clone()
+          .transformDirection(
+            hit.object.matrixWorld
+          )
+          .normalize();
 
-  const hit3D = raycaster.intersectObjects(targets, true);
+        reticle.position.add(
+          normal.clone().multiplyScalar(
+            0.01
+          )
+        );
 
-  let finalPoint = worldPoint;
+        reticle.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 0, 1),
+          normal
+        );
+      }
 
-  if (hit3D.length) {
-    finalPoint = hit3D[0].point;
+      applyDynamicScale(
+        reticle.position,
+        0.032
+      );
+
+      snapped = true;
+    }
   }
 
-  // RETICLE
-  if (finalPoint) {
-    reticle.visible = true;
+  /* =====================================
+     GROUND HIT TEST
+  ===================================== */
+  if (!snapped) {
+    const hits =
+      frame.getHitTestResults(
+        hitTestSource
+      );
 
-    reticle.position.lerp(finalPoint, 0.35);
+    if (hits.length) {
+      const pose =
+        hits[0].getPose(
+          referenceSpace
+        );
 
-    reticle.lookAt(camera.position);
+      const matrix =
+        new THREE.Matrix4().fromArray(
+          pose.transform.matrix
+        );
 
-    // laser
-    const pts = laser.geometry.attributes.position.array;
+      reticle.position.setFromMatrixPosition(
+        matrix
+      );
 
-    pts[0] = camera.position.x;
-    pts[1] = camera.position.y;
-    pts[2] = camera.position.z;
+      reticle.rotation.set(
+        -Math.PI / 2,
+        0,
+        0
+      );
 
-    pts[3] = reticle.position.x;
-    pts[4] = reticle.position.y;
-    pts[5] = reticle.position.z;
+      applyDynamicScale(
+        reticle.position,
+        0.032
+      );
 
-    laser.geometry.attributes.position.needsUpdate = true;
-  } else {
-    reticle.visible = false;
+      snapped = true;
+    }
   }
 
-  // ROTATION
-  if (selectedObject) {
-    if (rotateLeft) selectedObject.rotation.y += 0.03;
-    if (rotateRight) selectedObject.rotation.y -= 0.03;
+  /* =====================================
+     SKY / NO SURFACE FALLBACK
+     always visible in front of camera
+  ===================================== */
+  if (!snapped) {
+    reticle.position.copy(camPos).add(
+      forward.clone().multiplyScalar(
+        1.5
+      )
+    );
+
+    reticle.quaternion.copy(
+      camera.quaternion
+    );
+
+    applyDynamicScale(
+      reticle.position,
+      0.03
+    );
+  }
+
+  reticle.updateMatrix();
+  reticle.updateMatrixWorld(true);
+
+  /* =====================================
+     DRAG
+  ===================================== */
+  if (
+    dragging &&
+    selectedObject
+  ) {
+    selectedObject.position.x +=
+      (reticle.position.x -
+        selectedObject.position.x) *
+      0.25;
+
+    selectedObject.position.z +=
+      (reticle.position.z -
+        selectedObject.position.z) *
+      0.25;
   }
 
   renderer.render(scene, camera);
@@ -438,8 +997,14 @@ renderer.setAnimationLoop(async (_, frame) => {
 /* =========================
    RESIZE
 ========================= */
-window.addEventListener("resize", () => {
+addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+
+/* =========================
+   INIT
+========================= */
+fetchProducts();
+loadProduct(currentProductId);

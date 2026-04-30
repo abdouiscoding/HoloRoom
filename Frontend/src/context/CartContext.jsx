@@ -1,5 +1,8 @@
 import React, { createContext, useState, useContext } from 'react';
 
+// the ip address
+const address = "192.168.1.10"
+
 const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
@@ -19,7 +22,7 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:8080/api/cart/getbyuser/${userId}`,
+        `http://${address}:8080/api/cart/getbyuser/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -46,7 +49,7 @@ export const CartProvider = ({ children }) => {
   const removeItem = async (cartId, cartItemId) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/cart/removeitem/${cartId}/${cartItemId}`,
+        `http://${address}:8080/api/cart/removeitem/${cartId}/${cartItemId}`,
         {
           method: "DELETE",
           headers: {

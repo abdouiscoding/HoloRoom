@@ -2,6 +2,10 @@ import { useState, useCallback } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
+
+// the ip address
+const address = "192.168.1.10"
+
 // displays social media login options 
 const SSOButtons = () => (
     <div className="sso">
@@ -116,7 +120,7 @@ export const LoginPage = () => {
 
     try {
         // 1. Authenticate and get Token
-        const response = await fetch("http://localhost:8080/api/auth/login", {
+        const response = await fetch(`http://${address}:8080/api/auth/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -137,7 +141,7 @@ export const LoginPage = () => {
 
         // 2. Fetch full User details using the token we just got
         // Using 'info' here assuming 'info' holds the userName used to login
-        const userDetailsResponse = await fetch(`http://localhost:8080/api/users/getbyuserbyinfo/${info}`, {
+        const userDetailsResponse = await fetch(`http://${address}:8080/api/users/getbyuserbyinfo/${info}`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`
@@ -174,7 +178,7 @@ export const LoginPage = () => {
    const handleSignup = async (e) => {
    e.preventDefault();
 
-   const response = await fetch("http://localhost:8080/api/auth/register", {
+   const response = await fetch(`http://${address}:8080/api/auth/register`, {
       method: "POST",
       headers: {
          "Content-Type": "application/json"

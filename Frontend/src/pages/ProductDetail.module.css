@@ -355,3 +355,13 @@
   min-width: 180px;
   max-width: 220px;
 }
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+  .productContainer {
+    padding: var(--spacing-md) var(--spacing-sm);
+    margin-top: 1rem;
+  }
+}

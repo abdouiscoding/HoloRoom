@@ -19,6 +19,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -64,7 +65,7 @@ public class Products {
     private LocalDateTime pAddDate;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference  
+    @JsonManagedReference
     @JsonProperty("images")
     private List<PImages> images = new ArrayList<>();
 
@@ -96,7 +97,47 @@ public class Products {
         this.pAddDate = LocalDateTime.now();
     }
 
-    // --- Getters & Setters with @JsonProperty for consistency ---
+    @PostLoad
+    public void buildUrls() {
+
+        String ip = getLocalIp();
+
+        if (p3DModel != null &&
+            !p3DModel.startsWith("http://") &&
+            !p3DModel.startsWith("https://")) {
+
+            p3DModel =
+                "http://" + ip + ":8080/api/uploads/models/" + p3DModel;
+        }
+
+        if (images != null) {
+            for (PImages img : images) {
+
+                String fileName = img.getProductImage();
+
+                if (fileName != null &&
+                    !fileName.startsWith("http://") &&
+                    !fileName.startsWith("https://")) {
+
+                    img.setProductImage(
+                        "http://" + ip + ":8080/api/uploads/images/" + fileName
+                    );
+                }
+            }
+        }
+    }
+
+    private String getLocalIp() {
+        try {
+            return java.net.InetAddress
+                    .getLocalHost()
+                    .getHostAddress();
+        } catch (Exception e) {
+            return "localhost";
+        }
+    }
+
+    // ===== Getters / Setters =====
 
     @JsonProperty("pId")
     public Long getProductId() { return pId; }
@@ -148,20 +189,21 @@ public class Products {
     public PCart getCart() { return cart; }
     public void setCart(PCart cart) { this.cart = cart; }
 
-    // --- Helper methods ---
-    public void addImage(PImages img) { 
+    // ===== Helpers =====
+
+    public void addImage(PImages img) {
         if (images == null) images = new ArrayList<>();
         images.add(img);
         img.setProduct(this);
     }
 
-    public void addSizeColorStock(PSizeColorStock scs) { 
+    public void addSizeColorStock(PSizeColorStock scs) {
         if (sizecolorstock == null) sizecolorstock = new ArrayList<>();
         sizecolorstock.add(scs);
         scs.setProduct(this);
     }
 
-    public void addCategory(PCategories cat) { 
+    public void addCategory(PCategories cat) {
         if (categories == null) categories = new ArrayList<>();
         categories.add(cat);
     }

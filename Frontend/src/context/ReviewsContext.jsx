@@ -9,6 +9,9 @@ import React, {
 } from 'react';
 import { Navigate } from 'react-router-dom';
 
+// the ip address
+const address = "192.168.1.10"
+
 const ReviewsContext = createContext();
 
 export const useReviews = () => useContext(ReviewsContext);
@@ -24,7 +27,7 @@ export const ReviewsProvider = ({ children }) => {
       const token = localStorage.getItem('token');
 
       const response = await fetch(
-        'http://localhost:8080/api/reviews/all',
+        `http://${address}:8080/api/reviews/all`,
         {
           method: 'GET',
           headers: {
@@ -74,7 +77,7 @@ export const ReviewsProvider = ({ children }) => {
       const token = localStorage.getItem('token');
 
       const response = await fetch(
-        `http://localhost:8080/api/reviews/add/${productId}`,
+        `http://${address}:8080/api/reviews/add/${productId}`,
         {
           method: 'POST',
           headers: {

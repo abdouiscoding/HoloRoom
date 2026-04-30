@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// the ip address
+const address = "192.168.1.10"
+
 const WishlistContext = createContext();
 
 export const useWishlist = () => useContext(WishlistContext);
@@ -16,7 +19,7 @@ export const WishlistProvider = ({ children }) => {
       if (!userId || !token) return;
 
       const res = await fetch(
-        `http://localhost:8080/api/wishlist/get/${userId}`,
+        `http://${address}:8080/api/wishlist/get/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -33,7 +36,7 @@ export const WishlistProvider = ({ children }) => {
         baseItems.map(async (item) => {
           try {
             const pRes = await fetch(
-              `http://localhost:8080/api/products/get/${item.pId}`,
+              `http://${address}:8080/api/products/get/${item.pId}`,
               {
                 headers: { Authorization: `Bearer ${token}` }
               }
@@ -75,7 +78,7 @@ export const WishlistProvider = ({ children }) => {
       if (!item) return;
 
       await fetch(
-        `http://localhost:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }

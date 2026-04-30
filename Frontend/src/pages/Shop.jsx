@@ -9,6 +9,9 @@ import {
 
 import styles from './Shop.module.css';
 
+// backend ip
+const address = "192.168.1.10";
+
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -36,7 +39,7 @@ const Shop = () => {
       setLoading(true);
 
       const response = await fetch(
-        'http://localhost:8080/api/products/get'
+        `http://${address}:8080/api/products/get`
       );
 
       if (!response.ok) {
@@ -86,8 +89,7 @@ const Shop = () => {
       : products.filter((product) =>
           (product.categories || []).some(
             (cat) =>
-              cat?.pCategory ===
-              activeCategory
+              cat?.pCategory === activeCategory
           )
         );
 
@@ -277,7 +279,6 @@ const Shop = () => {
                         setSelectedRoom(
                           room
                         );
-
                         setRoomDropdownOpen(
                           false
                         );
@@ -314,9 +315,11 @@ const Shop = () => {
                       ?.length > 0 &&
                     product.images[0]
                       ?.pImageUrl
-                      ? product
-                          .images[0]
-                          .pImageUrl
+                      ? encodeURI(
+                          product
+                            .images[0]
+                            .pImageUrl
+                        )
                       : '/no-image.png';
 
                   const firstCategory =
@@ -352,12 +355,16 @@ const Shop = () => {
                           onError={(
                             e
                           ) => {
+                            console.log(
+                              'Image failed:',
+                              firstImage
+                            );
                             e.target.src =
                               '/no-image.png';
                           }}
                         />
 
-                        {/* ONLY SHOW IF 3D MODEL EXISTS */}
+                        {/* 3D MODEL BADGE */}
                         {has3DModel(
                           product
                         ) && (

@@ -13,6 +13,10 @@ import styles from './ProductDetail.module.css';
 import { useReviews } from '../context/ReviewsContext';
 import ReviewModal from '../components/product/ReviewModal';
 
+// the ip address
+const address = "192.168.1.10"
+
+
 const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +50,7 @@ const ProductDetail = () => {
           localStorage.getItem('selectedProductId') || id;
 
         const response = await fetch(
-          `http://localhost:8080/api/products/get/${productId}`
+          `http://${address}:8080/api/products/get/${productId}`
         );
 
         if (response.ok) {
@@ -75,7 +79,7 @@ const ProductDetail = () => {
         if (!userId || !token) return;
 
         const response = await fetch(
-          `http://localhost:8080/api/wishlist/get/${userId}`,
+          `http://${address}:8080/api/wishlist/get/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -162,7 +166,7 @@ const ProductDetail = () => {
       setWishlistLoading(true);
 
       const response = await fetch(
-        `http://localhost:8080/api/wishlist/add/${userId}/${pid}`,
+        `http://${address}:8080/api/wishlist/add/${userId}/${pid}`,
         {
           method: 'POST',
           headers: {
@@ -236,7 +240,7 @@ const ProductDetail = () => {
 
       // get wishlist first
       const getRes = await fetch(
-        `http://localhost:8080/api/wishlist/get/${userId}`,
+        `http://${address}:8080/api/wishlist/get/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -260,7 +264,7 @@ const ProductDetail = () => {
       }
 
       const removeRes = await fetch(
-        `http://localhost:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: {
@@ -363,7 +367,7 @@ const ProductDetail = () => {
 
       // ---------------- GET CART ----------------
       const cartRes = await fetch(
-        `http://localhost:8080/api/cart/getbyuser/${userId}`,
+        `http://${address}:8080/api/cart/getbyuser/${userId}`,
         {
           method: 'GET',
           headers: {
@@ -402,7 +406,7 @@ const ProductDetail = () => {
       };
 
       const response = await fetch(
-        `http://localhost:8080/api/cart/additem/${cartId}`,
+        `http://${address}:8080/api/cart/additem/${cartId}`,
         {
           method: 'POST',
           headers: {
@@ -450,6 +454,28 @@ const ProductDetail = () => {
       );
     }
   };
+
+  // ---------------- AR NAVIGATION ----------------
+const openAR = () => {
+  const isLoggedIn = localStorage.getItem("loggedin");
+
+  if (!isLoggedIn || isLoggedIn === "false") {
+    window.location.href = "/login";
+    return;
+  }
+
+  const productId = product?.pId;
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+
+  const arUrl =
+    `https://control-parole-grandkid.ngrok-free.dev/` +
+    `?token=${encodeURIComponent(token)}` +
+    `&userId=${encodeURIComponent(userId)}` +
+    `&productId=${encodeURIComponent(productId)}`;
+
+  window.location.href = arUrl;
+};
 
   return (
     <div
@@ -699,17 +725,13 @@ const ProductDetail = () => {
             </button>
 
             <button
-              className="btn-secondary flex-center gap-2"
-              style={{ flex: 1 }}
-              onClick={() =>
-                navigate(
-                  `/ar/${id}`
-                )
-              }
+            className="btn-secondary flex-center gap-2"
+            style={{ flex: 1 }}
+            onClick={openAR}
             >
-              <View size={20} />
-              Preview in AR
-            </button>
+            <View size={20} />
+            Preview in AR
+          </button>
           </div>
 
           <div
