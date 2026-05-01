@@ -386,6 +386,25 @@
   max-width: 500px;
 }
 
+.formGroup1 {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-xs);
+  align-items: flex-start;
+  width: 100%;
+  max-width: 500px;
+}
+
+.formGroup1 p {
+  margin-top: 2%;
+  width: 200%;
+}
+
+.formGroup1 button {
+  width: 50%;
+  margin-right: -65%;
+}
+
 .formGroup label {
   font-size: 0.9rem;
   font-weight: 600;
@@ -547,6 +566,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+}
+
+.modalBody input,
+.modalBody select {
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .statusStep {
@@ -870,4 +902,24 @@
     align-items: flex-start;
     gap: var(--spacing-sm);
   }
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+}
+.actionGroup {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.iconBtn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
 }

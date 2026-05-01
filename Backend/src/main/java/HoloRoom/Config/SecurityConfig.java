@@ -33,9 +33,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ IMPORTANT FIX: explicitly attach CORS config
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
             .csrf(csrf -> csrf.disable())
 
             .sessionManagement(session ->
@@ -47,31 +45,54 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // ================= PUBLIC =================
+                // =====================================
+                // PUBLIC
+                // =====================================
+                .requestMatchers("/api/users/send-code/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/products/get/**").permitAll()
                 .requestMatchers("/api/reviews/all").permitAll()
                 .requestMatchers("/api/uploads/**").permitAll()
 
-                // ================= ADMIN ONLY =================
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers("/api/products/**").hasRole("ADMIN")
-                .requestMatchers("/api/cart/**").hasRole("ADMIN")
-                .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                // EMAIL CODE APIs
+                .requestMatchers("/api/users/send-code/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/verify-code/**").hasAnyRole("USER","ADMIN")
 
-                // ================= USER + ADMIN =================
-                .requestMatchers("/api/users/getname/**").hasAnyRole("USER","ADMIN")
+                // =====================================
+                // USER + ADMIN
+                // =====================================
+                //.requestMatchers("/api/users/get/{id}").hasAnyRole("USER","ADMIN")
+                //.requestMatchers("/api/users/getbyinfo/**").hasAnyRole("USER","ADMIN")
+
+                .requestMatchers("/api/users/update/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/email/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/password/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN")
+
+                .requestMatchers("/api/cart/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/cartitem/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/orders/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/reviews/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/wishlist/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/chat/**").hasAnyRole("USER","ADMIN")
 
-                // fallback
+                // =====================================
+                // ADMIN ONLY
+                // =====================================
+                .requestMatchers("/api/users/get").hasRole("ADMIN")
+                .requestMatchers("/api/users/delete/**").hasRole("ADMIN")
+
+                .requestMatchers("/api/products/**").hasRole("ADMIN")
+                .requestMatchers("/api/categories/**").hasRole("ADMIN")
+
+                // =====================================
+                // FALLBACK
+                // =====================================
                 .anyRequest().authenticated()
             )
 
-            // JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -84,7 +105,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "http://192.168.1.10:5173",
+            "http://192.168.1.6:5173",
             "https://control-parole-grandkid.ngrok-free.dev"
         ));
 
@@ -93,7 +114,6 @@ public class SecurityConfig {
         ));
 
         config.setAllowedHeaders(List.of("*"));
-
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =

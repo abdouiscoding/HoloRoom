@@ -97,46 +97,6 @@ public class Products {
         this.pAddDate = LocalDateTime.now();
     }
 
-    @PostLoad
-    public void buildUrls() {
-
-        String ip = getLocalIp();
-
-        if (p3DModel != null &&
-            !p3DModel.startsWith("http://") &&
-            !p3DModel.startsWith("https://")) {
-
-            p3DModel =
-                "http://" + ip + ":8080/api/uploads/models/" + p3DModel;
-        }
-
-        if (images != null) {
-            for (PImages img : images) {
-
-                String fileName = img.getProductImage();
-
-                if (fileName != null &&
-                    !fileName.startsWith("http://") &&
-                    !fileName.startsWith("https://")) {
-
-                    img.setProductImage(
-                        "http://" + ip + ":8080/api/uploads/images/" + fileName
-                    );
-                }
-            }
-        }
-    }
-
-    private String getLocalIp() {
-        try {
-            return java.net.InetAddress
-                    .getLocalHost()
-                    .getHostAddress();
-        } catch (Exception e) {
-            return "localhost";
-        }
-    }
-
     // ===== Getters / Setters =====
 
     @JsonProperty("pId")

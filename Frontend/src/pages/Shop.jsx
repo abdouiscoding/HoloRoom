@@ -10,7 +10,7 @@ import {
 import styles from './Shop.module.css';
 
 // backend ip
-const address = "192.168.1.10";
+const address = "192.168.1.6";
 
 const Shop = () => {
   const [products, setProducts] = useState([]);

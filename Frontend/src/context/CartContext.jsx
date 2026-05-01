@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext } from 'react';
 
 // the ip address
-const address = "192.168.1.10"
+const address = "192.168.1.6"
 
 const CartContext = createContext();
 

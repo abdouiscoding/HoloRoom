@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
+import { Trash2, Eye, EyeOff, Camera } from "lucide-react";
+
+// ip address
+const API = "http://192.168.1.6:8080";
 
 const Logout = () => {
   localStorage.removeItem("token");
@@ -11,6 +14,8 @@ const Logout = () => {
   localStorage.removeItem("userImage");
   localStorage.removeItem("userEmail");
   localStorage.removeItem("userId");
+  localStorage.removeItem("shipping");
+  localStorage.removeItem("userPassword");
   localStorage.setItem("loggedin", "false");
   window.location.href = "/login";
 };
@@ -39,6 +44,12 @@ const ProfilePage = () => {
 
   const { wishlistItems, removeFromWishlist, fetchWishlist } = useWishlist();
 
+  const [showPasswordText, setShowPasswordText] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newShipping, setNewShipping] = useState("");
+
   useEffect(() => {
     fetchWishlist();
   }, []);
@@ -56,6 +67,7 @@ const ProfilePage = () => {
     };
 
     reader.readAsDataURL(file);
+    updateimage;
   };
 
   const getStatusClass = (step) => {
@@ -74,6 +86,158 @@ const ProfilePage = () => {
 
     return "";
   };
+
+  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
+
+// ===============================
+// UPDATE USERNAME
+// ===============================
+const updateusername = async (newName) => {
+  console.log(newName);
+  try {
+    const res = await fetch(`${API}/api/users/update/name/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userName: newName,
+      }),
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    localStorage.setItem("userName", data.userName);
+
+    setIsUsernameModalOpen(false);
+    window.location.reload();
+
+  } catch (err) {
+    alert("Failed to update username");
+  }
+};
+
+// ===============================
+// UPDATE EMAIL
+// (uses full update endpoint)
+// ===============================
+const updateemail = async (newEmail) => {
+  try {
+    const res = await fetch(`${API}/api/users/update/email/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userEmail: newEmail,
+      }),
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    localStorage.setItem("userEmail", data.userEmail);
+
+    setIsPhoneModalOpen(false);
+    window.location.reload();
+
+  } catch (err) {
+    alert("Failed to update email");
+  }
+};
+
+// ===============================
+// UPDATE PASSWORD
+// ===============================
+const updatepassword = async (newPassword) => {
+  try {
+    const res = await fetch(`${API}/api/users/update/password/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userPassword: newPassword,
+      }),
+    });
+
+    if (!res.ok) throw new Error();
+
+    localStorage.setItem("userPassword", password);
+
+    setIsPasswordModalOpen(false);
+
+    alert("Password updated");
+
+  } catch (err) {
+    alert("Failed to update password");
+  }
+};
+
+// ===============================
+// UPDATE SHIPPING
+// ===============================
+const updateshipping = async (newShipping) => {
+  try {
+    const res = await fetch(`${API}/api/users/update/shipping/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        shipping: newShipping,
+      }),
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    localStorage.setItem("shipping", data.shipping);
+
+    setIsAddressModalOpen(false);
+    window.location.reload();
+
+  } catch (err) {
+    alert("Failed to update shipping");
+  }
+};
+
+// ===============================
+// UPDATE IMAGE
+// ===============================
+const updateimage = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API}/api/users/update/image/${userId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    localStorage.setItem("userImage", data.userImage);
+    setProfileImage(data.userImage);
+
+  } catch (err) {
+    alert("Failed to update image");
+  }
+};
 
   return (
     <div className={styles.profileContainer}>
@@ -154,15 +318,6 @@ const ProfilePage = () => {
               onClick={() => setActiveTab("settings")}
             >
               <i className="fas fa-cog"></i> Information
-            </li>
-
-            <li
-              className={`${styles.tabItem} ${
-                activeTab === "cards" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("cards")}
-            >
-              <i className="fas fa-credit-card"></i> Payment Methods
             </li>
           </ul>
         </aside>
@@ -247,80 +402,68 @@ const ProfilePage = () => {
             </div>
           )}
 
-          {/* SETTINGS */}
+          {/* SETTINGS PANEL */}
           {activeTab === "settings" && (
             <div className={styles.tabPanel}>
-              <h2>Account information</h2>
-
-              <form className={styles.settingsForm}>
+              <h2>Account Information</h2>
+              <div className={styles.settingsForm}>
+                
+                {/* Username Row */}
                 <div className={styles.formGroup}>
                   <label>Username</label>
-
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setIsUsernameModalOpen(true)}
-                  >
-                    Edit Username
-                  </button>
+                  <div className={styles.infoRow}>
+                    <p>{localStorage.getItem("userName")}</p>
+                    <button onClick={() => setIsUsernameModalOpen(true)}>Change</button>
+                  </div>
                 </div>
 
+                {/* Email Row */}
                 <div className={styles.formGroup}>
-                  <label>Phone Number</label>
-
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setIsPhoneModalOpen(true)}
-                  >
-                    Add Phone Number
-                  </button>
+                  <label>Email</label>
+                  <div className={styles.infoRow}>
+                    <p>{localStorage.getItem("userEmail")}</p>
+                    <button onClick={() => setIsPhoneModalOpen(true)}>Change</button>
+                  </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label>Shipping Address</label>
-
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setIsAddressModalOpen(true)}
-                  >
-                    Add Address
-                  </button>
-                </div>
-
+                {/* Password Row with Show/Hide */}
                 <div className={styles.formGroup}>
                   <label>Password</label>
-
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setIsPasswordModalOpen(true)}
-                  >
-                    Change Password
-                  </button>
+                  <div className={styles.infoRow}>
+                    <p>
+                      {showPasswordText 
+                        ? localStorage.getItem("userPassword") 
+                        : "••••••••••••"}
+                    </p>
+                    <div className={styles.actionGroup}>
+                      <button 
+                        type="button" 
+                        className={styles.iconBtn} 
+                        onClick={() => setShowPasswordText(!showPasswordText)}
+                      >
+                        {showPasswordText ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                      <button onClick={() => setIsPasswordModalOpen(true)}>Change</button>
+                    </div>
+                  </div>
                 </div>
-              </form>
-            </div>
-          )}
 
-          {/* CARDS */}
-          {activeTab === "cards" && (
-            <div className={styles.tabPanel}>
-              <h2>Payment Methods</h2>
+                {/* Shipping Row */}
+                <div className={styles.formGroup}>
+                  <label>Shipping Address</label>
+                  <div className={styles.infoRow}>
+                    <p>{localStorage.getItem("shipping") || "Not set"}</p>
+                    <button onClick={() => setIsAddressModalOpen(true)}>Update</button>
+                  </div>
+                </div>
 
-              <button
-                className="btn-primary"
-                onClick={() => setIsCreditCardModalOpen(true)}
-              >
-                Add New Card
-              </button>
+              </div>
             </div>
           )}
         </main>
       </div>
 
-      {/* PHONE MODAL */}
+      {/* Email MODAL */}
       {isPhoneModalOpen && (
         <div
           className={styles.modalOverlay}
@@ -331,7 +474,7 @@ const ProfilePage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHeader}>
-              <h3>Add Phone Number</h3>
+              <h3>Change Email</h3>
 
               <button
                 className={styles.closeBtn}
@@ -349,13 +492,13 @@ const ProfilePage = () => {
             >
               <div className={styles.modalBody}>
                 <input
-                  type="tel"
-                  placeholder="+213 555 555 555"
+                  type="Email"
+                  placeholder="New Email"
                   required
                 />
               </div>
 
-              <button className="btn-primary">Save</button>
+              <button className="btn-primary" onClick={updateemail}>Save</button>
             </form>
           </div>
         </div>
@@ -363,80 +506,37 @@ const ProfilePage = () => {
 
       {/* USERNAME MODAL */}
       {isUsernameModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsUsernameModalOpen(false)}
-        >
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Edit Username</h3>
-
-              <button
-                className={styles.closeBtn}
-                onClick={() => setIsUsernameModalOpen(false)}
-              >
-                ×
-              </button>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalBody}>
+            <h3>Change Username</h3>
+            <input 
+              type="text" 
+              placeholder="New Username" 
+              value={newName} 
+              onChange={(e) => setNewName()} 
+            />
+            <button className="btn-primary" onClick={updateusername}>Save Changes</button>
+            <button className="btn-secondaty" onClick={() => setIsUsernameModalOpen(false)}>Cancel</button>
             </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsUsernameModalOpen(false);
-              }}
-            >
-              <div className={styles.modalBody}>
-                <input type="text" placeholder="New username" required />
-              </div>
-
-              <button className="btn-primary">Save</button>
-            </form>
           </div>
         </div>
       )}
 
       {/* PASSWORD MODAL */}
       {isPasswordModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsPasswordModalOpen(false)}
-        >
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Change Password</h3>
-
-              <button
-                className={styles.closeBtn}
-                onClick={() => setIsPasswordModalOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsPasswordModalOpen(false);
-              }}
-            >
-              <div className={styles.modalBody}>
-                <input type="password" placeholder="Current password" required />
-                <input type="password" placeholder="New password" required />
-                <input
-                  type="password"
-                  placeholder="Confirm password"
-                  required
-                />
-              </div>
-
-              <button className="btn-primary">Update</button>
-            </form>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>Change Password</h3>
+            <input 
+              type="password" 
+              placeholder="New Password" 
+              value={newPassword} 
+              onChange={(e) => setNewPassword(e.target.value)} 
+            />
+            <p className={styles.hint}>Note: A verification code may be sent to your email.</p>
+            <button className="btn-primary" onClick={updatepassword}>Update Password</button>
+            <button className="btn-text" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
           </div>
         </div>
       )}
@@ -452,7 +552,7 @@ const ProfilePage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHeader}>
-              <h3>Add Address</h3>
+              <h3>Change Address</h3>
 
               <button
                 className={styles.closeBtn}
@@ -484,62 +584,7 @@ const ProfilePage = () => {
                 </select>
               </div>
 
-              <button className="btn-primary">Save</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* CARD MODAL */}
-      {isCreditCardModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsCreditCardModalOpen(false)}
-        >
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Add Credit Card</h3>
-
-              <button
-                className={styles.closeBtn}
-                onClick={() => setIsCreditCardModalOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsCreditCardModalOpen(false);
-              }}
-            >
-              <div className={styles.modalBody}>
-                <input
-                  type="text"
-                  placeholder="Card Number"
-                  required
-                />
-
-                <input
-                  type="text"
-                  placeholder="Expiry MM/YY"
-                  required
-                />
-
-                <input type="text" placeholder="CVV" required />
-
-                <input
-                  type="text"
-                  placeholder="Card Holder Name"
-                  required
-                />
-              </div>
-
-              <button className="btn-primary">Save Card</button>
+              <button className="btn-primary" onClick={updateshipping}>Save</button>
             </form>
           </div>
         </div>

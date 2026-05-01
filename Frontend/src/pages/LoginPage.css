@@ -383,3 +383,35 @@ form {
     background: rgba(0, 0, 0, 0.06);
     color: #475569;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    width: 350px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.modal-content input {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    text-align: center;
+    font-size: 1.2rem;
+    letter-spacing: 5px;
+}
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.confirm-btn { background: #6366f1; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+.resend-btn { background: transparent; border: 1px solid #ccc; padding: 10px; border-radius: 5px; cursor: pointer; }
+.cancel-btn { color: #888; background: none; border: none; cursor: pointer; font-size: 0.9rem; }

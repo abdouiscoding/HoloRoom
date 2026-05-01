@@ -24,8 +24,9 @@ public class DataSeeder implements CommandLineRunner {
 
             User admin = new User();
             admin.setUserName("admin");
-            admin.setUserEmail("admin@holoroom.com");
+            admin.setUserEmail("abderahim.ferdi1@gmail.com");
             admin.setUserPassword(encoder.encode("admin123"));
+            admin.setActive(true);
             admin.setUserRole("ADMIN");
 
             userRepository.save(admin);

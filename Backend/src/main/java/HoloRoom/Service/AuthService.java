@@ -23,7 +23,7 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     // REGISTER
-    public String register(User user) {
+    public Object register(User user) {
 
         if (userRepository.findByUserName(user.getUserName()).isPresent()) {
             return "Username already exists";
@@ -31,6 +31,14 @@ public class AuthService {
 
         if (userRepository.findByUserEmail(user.getUserEmail()).isPresent()) {
             return "An account with that email already exists";
+        }
+
+        if (user.getUserName().length()<4){
+            return "Username is too short";
+        }
+
+        if (user.getUserPassword().length()<8){
+            return "Password is too short";
         }
 
         // hash password

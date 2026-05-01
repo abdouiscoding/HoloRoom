@@ -14,7 +14,7 @@ import { useReviews } from '../context/ReviewsContext';
 import ReviewModal from '../components/product/ReviewModal';
 
 // the ip address
-const address = "192.168.1.10"
+const address = "192.168.1.6"
 
 
 const ProductDetail = () => {

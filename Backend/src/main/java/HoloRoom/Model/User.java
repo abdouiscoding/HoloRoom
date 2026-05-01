@@ -15,13 +15,14 @@ public class User {
     private Long userId;
 
     private String userName;
-
     private String userEmail;
-
     private String userPassword;
+    private String userImage;
 
-    private String userImage = "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg?semt=ais_hybrid&w=740&q=80";
+    // Use primitive boolean to ensure it defaults to false
+    private boolean active;
 
+    private String shipping;
     private String userRole;
 
     public User() {}
@@ -30,54 +31,40 @@ public class User {
         this.userName = userName;
         this.userEmail = userEmail;
         this.userPassword = userPassword;
+        this.shipping = "None";
+        this.userImage = "default.png";
+        this.active = false; // Explicitly set to false on creation
         this.userRole = userRole;  
     }
 
-    public Long getUserId() {
-        return userId;
+    // Standard Getters and Setters
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
+
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+    public String getUserPassword() { return userPassword; }
+    public void setUserPassword(String userPassword) { this.userPassword = userPassword; }
+
+    // Standard naming for boolean getters is "is..."
+    public boolean isActive() {
+        return active;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
-    public String getUserName() {
-        return userName;
-    }
+    public String getShipping() { return shipping; }
+    public void setShipping(String shipping) { this.shipping = shipping; }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
+    public String getUserImage () { return userImage; }
+    public void setUserImage (String userImage) { this.userImage = userImage; }
 
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
-
-    public String getUserPassword() {
-        return userPassword;
-    }
-
-    public void setUserPassword(String userPassword) {
-        this.userPassword = userPassword;
-    }
-
-    public String getUserImage () {
-        return userImage;
-    }
-
-    public void setUserImage (String userImage) {
-        this.userImage = userImage;
-    }
-
-    public String getUserRole() {
-        return userRole;
-    }
-
-    public void setUserRole(String userRole) {
-        this.userRole = userRole;
-    }
+    public String getUserRole() { return userRole; }
+    public void setUserRole(String userRole) { this.userRole = userRole; }
 }
