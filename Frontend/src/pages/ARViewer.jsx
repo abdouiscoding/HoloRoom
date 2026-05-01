@@ -14,7 +14,6 @@ const ARViewer = () => {
   const [isColorsOpen, setIsColorsOpen] = useState(false);
 
   const handleAddToCart = () => {
-
   };
 
   return (

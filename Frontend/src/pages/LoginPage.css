@@ -415,3 +415,76 @@ form {
 .confirm-btn { background: #6366f1; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
 .resend-btn { background: transparent; border: 1px solid #ccc; padding: 10px; border-radius: 5px; cursor: pointer; }
 .cancel-btn { color: #888; background: none; border: none; cursor: pointer; font-size: 0.9rem; }
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-content {
+    background: #111827;
+    padding: 25px;
+    border-radius: 12px;
+    width: 320px;
+    color: white;
+    text-align: center;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.confirm-btn {
+    flex: 1;
+    background: #3b82f6;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    flex: 1;
+    background: #374151;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+.modal-content1 {
+    background: #111827;
+    padding: 25px;
+    border-radius: 12px;
+    width: 320px;
+    color: white;
+    text-align: center;
+}
+
+.modal-content1 input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}

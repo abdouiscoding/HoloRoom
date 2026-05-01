@@ -90,50 +90,40 @@ public class UserController {
     }
 
     // =====================================
-    // SEND CONFIRMATION CODE
+    // SEND CONFIRMATION CODES
     // =====================================
 
-    @PostMapping("/send-code/{email}")
-    public ResponseEntity<?> sendCode(
-        @PathVariable Long id,
-        @RequestBody Map<String, String> body) {
+    @PostMapping("/emailcode/{id}")
+    public ResponseEntity<?> sendEmailCode(@PathVariable Long id) {
 
     User user = userService.getUserById(id);
 
-    if (user == null) {
+    if (user == null)
         return ResponseEntity.notFound().build();
+
+    userService.sendVerificationCode(user, "email");
+
+    return ResponseEntity.ok(Map.of(
+        "success", true,
+        "message", "Email verification code sent"
+    ));
     }
 
-    String type = body.get("type");
+    @PostMapping("/passwordcode/{id}")
+    public ResponseEntity<?> sendPasswordCode(@PathVariable Long id) {
 
-    if (type == null || (!type.equals("email") && !type.equals("password"))) {
-        return ResponseEntity
-                .badRequest()
-                .body(Map.of(
-                        "success", false,
-                        "message", "Type must be 'email' or 'password'"
-                ));
+    User user = userService.getUserById(id);
+
+    if (user == null)
+        return ResponseEntity.notFound().build();
+
+    userService.sendVerificationCode(user, "password");
+
+    return ResponseEntity.ok(Map.of(
+        "success", true,
+        "message", "Password verification code sent"
+    ));
     }
-
-    try {
-        userService.sendVerificationCode(user, type);
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "success", true,
-                        "message", "Verification code sent"
-                )
-        );
-
-    } catch (Exception e) {
-        return ResponseEntity
-                .status(500)
-                .body(Map.of(
-                        "success", false,
-                        "message", "Failed to send verification code"
-                ));
-    }
-}
 
     // =====================================
     // FULL UPDATE
@@ -160,32 +150,6 @@ public class UserController {
     }
 
     // =====================================
-    // UPDATE EMAIL (CODE REQUIRED)
-    // =====================================
-
-    @PutMapping("/update/email/{id}")
-    public ResponseEntity<?> updateEmail(
-            @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-
-        String newEmail = body.get("userEmail");
-        String code = body.get("code");
-
-        if (!userService.verifyCode(id, code)) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("Invalid code");
-        }
-
-        User user = userService.updateUserEmail(id, newEmail);
-
-        if (user == null)
-            return ResponseEntity.notFound().build();
-
-        return ResponseEntity.ok(user);
-    }
-
-    // =====================================
     // UPDATE NAME
     // =====================================
 
@@ -206,6 +170,33 @@ public class UserController {
     }
 
     // =====================================
+    // UPDATE EMAIL (CODE REQUIRED)
+    // =====================================
+
+    @PutMapping("/update/email/{id}")
+    public ResponseEntity<?> updateEmail(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        String newEmail = body.get("userEmail");
+        String code = body.get("code");
+
+        if (!userService.verifyCode(id, code, "email")) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid code");
+        }
+
+        User user = userService.updateUserEmail(id, newEmail);
+
+        if (user == null)
+            return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(user);
+    }
+
+
+    // =====================================
     // UPDATE PASSWORD (CODE REQUIRED)
     // =====================================
 
@@ -217,7 +208,7 @@ public class UserController {
         String rawPassword = body.get("userPassword");
         String code = body.get("code");
 
-        if (!userService.verifyCode(id, code)) {
+        if (!userService.verifyCode(id, code, "password")) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body("Invalid code");

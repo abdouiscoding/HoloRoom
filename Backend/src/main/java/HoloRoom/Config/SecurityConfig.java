@@ -48,11 +48,13 @@ public class SecurityConfig {
                 // =====================================
                 // PUBLIC
                 // =====================================
-                .requestMatchers("/api/users/send-code/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/products/get/**").permitAll()
                 .requestMatchers("/api/reviews/all").permitAll()
                 .requestMatchers("/api/uploads/**").permitAll()
+                .requestMatchers("/api/users/update/passwordcode/**").permitAll()
+                .requestMatchers("/api/users/getbyinfo/**").permitAll()
 
                 // EMAIL CODE APIs
                 .requestMatchers("/api/users/send-code/**").hasAnyRole("USER","ADMIN")
@@ -62,11 +64,12 @@ public class SecurityConfig {
                 // USER + ADMIN
                 // =====================================
                 //.requestMatchers("/api/users/get/{id}").hasAnyRole("USER","ADMIN")
-                //.requestMatchers("/api/users/getbyinfo/**").hasAnyRole("USER","ADMIN")
 
                 .requestMatchers("/api/users/update/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/users/update/email/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/passwordcode/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/update/emailcode/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/users/update/password/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN")
                 .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN")

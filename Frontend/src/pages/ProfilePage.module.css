@@ -911,6 +911,7 @@
   background: rgba(255, 255, 255, 0.05);
   padding: 12px;
   border-radius: 8px;
+  width: 165%;
 }
 .actionGroup {
   display: flex;
@@ -918,8 +919,15 @@
   align-items: center;
 }
 .iconBtn {
-  background: none;
-  border: none;
-  color: #666;
+  color: black;
   cursor: pointer;
+}
+
+.changebtn {
+  margin-left: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 90% 10%;
 }

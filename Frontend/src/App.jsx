@@ -11,6 +11,8 @@ import { LoginPage } from './pages/LoginPage';
 import Cart from './pages/Cart';
 import ProfilePage from './pages/ProfilePage';
 import DashboardLayout from './pages/dashboard/DashboardLayout';
+import Changeemail from './pages/changedata/Changeemail';
+import Changepassword from './pages/changedata/Changepassword';
 import './App.css';
 
 function App() {
@@ -34,6 +36,8 @@ function App() {
                 <Route path="/ar/:id" element={<ARViewer />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/changeemail" element={<Changeemail />} />
+                <Route path="/changepassword" element={<Changepassword />} />
               </Routes>
             </main>
             <Footer />

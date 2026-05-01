@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Random;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 
 
@@ -64,11 +66,15 @@ public class UserService {
 
     private JavaMailSender mailSender;
 
+    String ip = "192.168.1.6";
+
 
 
     private final Map<String, User> pendingUsers = new ConcurrentHashMap<>();
 
     private final Map<String, String> registrationCodes = new ConcurrentHashMap<>();
+
+    private final Map<Long, Map<String, VerificationEntry>> verificationCodes = new ConcurrentHashMap<>();
 
 
 
@@ -76,13 +82,6 @@ public class UserService {
 
         "C:\\Users\\abder\\Desktop\\HoloRoom\\Backend\\src\\main\\java\\HoloRoom\\Uploads\\Uimages";
 
-
-
-    // userId -> code
-
-    private final Map<Long, String> verificationCodes =
-
-        new ConcurrentHashMap<>();
 
 
 
@@ -306,127 +305,75 @@ public class UserService {
 
 
 
-    public void sendVerificationCode(User user, String type) {
+   public void sendVerificationCode(User user, String type) {
 
+    String code = String.valueOf(100000 + new Random().nextInt(900000));
 
+    long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000); // 10 min
 
-    String code = String.valueOf(
-
-        100000 + new Random().nextInt(900000)
-
-    );
-
-
-
-    verificationCodes.put(user.getUserId(), code);
-
-
+    verificationCodes
+        .computeIfAbsent(user.getUserId(), k -> new ConcurrentHashMap<>())
+        .put(type, new VerificationEntry(code, expiresAt));
 
     SimpleMailMessage message = new SimpleMailMessage();
 
-
-
-    String email = user.getUserEmail();
-
-
+    String link;
 
     if ("email".equals(type)) {
-
-
-
-        message.setTo(email);
-
+        link = "http://" + ip + ":5173/changeemail";
         message.setSubject("HoloRoom Email Change Verification");
 
-
-
         message.setText(
-
             "Hello,\n\n" +
-
-            "Your verification code to change your EMAIL is:\n\n" +
-
+            "Your EMAIL change code is:\n\n" +
             code + "\n\n" +
-
             "This code expires in 10 minutes.\n\n" +
-
-            "If you didn't request this, ignore this email."
-
+            "Open this link:\n" +
+            link
         );
-
-
-
-    } else if ("password".equals(type)) {
-
-
-
-        message.setTo(email);
-
-        message.setSubject("HoloRoom Password Change Verification");
-
-
-
-        message.setText(
-
-            "Hello,\n\n" +
-
-            "Your verification code to change your PASSWORD is:\n\n" +
-
-            code + "\n\n" +
-
-            "This code expires in 10 minutes.\n\n" +
-
-            "If you didn't request this, ignore this email."
-
-        );
-
-
 
     } else {
+        link = "http://" + ip + ":5173/changepassword";
+        message.setSubject("HoloRoom Password Change Verification");
 
-        throw new IllegalArgumentException("Invalid verification type: " + type);
-
+        message.setText(
+            "Hello,\n\n" +
+            "Your PASSWORD change code is:\n\n" +
+            code + "\n\n" +
+            "This code expires in 10 minutes.\n\n" +
+            "Open this link:\n" +
+            link
+        );
     }
 
-
-
+    message.setTo(user.getUserEmail());
     mailSender.send(message);
-
 }
 
+   public boolean verifyCode(Long userId, String code, String type) {
 
+    Map<String, VerificationEntry> userCodes = verificationCodes.get(userId);
 
-    public boolean verifyCode(Long userId, String code) {
+    if (userCodes == null) return false;
 
+    VerificationEntry entry = userCodes.get(type);
 
+    if (entry == null) return false;
 
-        String savedCode =
-
-            verificationCodes.get(userId);
-
-
-
-        if (savedCode == null)
-
-            return false;
-
-
-
-        if (!savedCode.equals(code))
-
-            return false;
-
-
-
-        verificationCodes.remove(userId);
-
-
-
-        return true;
-
+    // ⛔ EXPIRED
+    if (System.currentTimeMillis() > entry.expiresAt) {
+        userCodes.remove(type);
+        return false;
     }
 
+    // ❌ WRONG CODE
+    if (!entry.code.equals(code)) return false;
 
+    // ✅ SUCCESS → remove it
+    userCodes.remove(type);
+
+    return true;
+}
 
     // =====================================
 
@@ -468,35 +415,26 @@ public class UserService {
 
 
 
-    public User buildUserImage(User user) {
+public User buildUserImage(User user) {
 
+    if (user == null)
+        return null;
 
+    if (user.getUserImage() != null &&
+        !user.getUserImage().startsWith("http")) {
 
-        if (user == null)
+        String encodedFileName = URLEncoder.encode(
+        user.getUserImage(),
+        StandardCharsets.UTF_8
+        ).replace("+", "%20");
 
-            return null;
-
-
-
-        if (user.getUserImage() != null &&
-
-            !user.getUserImage().startsWith("http")) {
-
-
-
-            user.setUserImage(
-
-                getBaseUrl() + user.getUserImage()
-
-            );
-
-        }
-
-
-
-        return user;
-
+        user.setUserImage(
+            getBaseUrl() + encodedFileName
+        );
     }
+
+    return user;
+}
 
 
 
@@ -763,5 +701,15 @@ public class UserService {
         return buildUserImage(user);
 
     }
+
+    private static class VerificationEntry {
+    String code;
+    long expiresAt;
+
+    VerificationEntry(String code, long expiresAt) {
+        this.code = code;
+        this.expiresAt = expiresAt;
+    }
+}
 
 }

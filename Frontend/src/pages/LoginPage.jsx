@@ -89,6 +89,10 @@ export const LoginPage = () => {
     const [verificationCode, setVerificationCode] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
 
+    const [showForgotModal, setShowForgotModal] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [isSending, setIsSending] = useState(false);
+
     const [toasts, setToasts] = useState([]);
 
     const toggleView = () => setView(isSignup ? "signin" : "signup");
@@ -142,6 +146,7 @@ export const LoginPage = () => {
                 localStorage.setItem("userName", userData.userName);
                 localStorage.setItem("shipping", userData.shipping);
                 localStorage.setItem("userImage", userData.userImage);
+                console.log(userData.userImage);
                 localStorage.setItem("loggedin", "true");
 
                 showToast("Login successful", "success");
@@ -155,6 +160,7 @@ export const LoginPage = () => {
             showToast("Login unsuccessful", "error");
         }
     };
+    
 
     // --- STEP 1: START REGISTRATION ---
     const handleSignup = async (e) => {
@@ -207,6 +213,50 @@ export const LoginPage = () => {
         }
     };
 
+
+    const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+        showToast("Enter your email", "error");
+        return;
+    }
+
+    setIsSending(true);
+
+    try {
+        // 1. CHECK IF USER EXISTS
+        const userRes = await fetch(
+            `http://${address}:8080/api/users/getbyinfo/${forgotEmail}`
+        );
+
+        if (!userRes.ok) {
+            showToast("This email is not linked to any account", "error");
+            setIsSending(false);
+            return;
+        }
+
+        const user = await userRes.json();
+
+        // 2. SEND PASSWORD CODE EMAIL
+        const codeRes = await fetch(
+            `http://${address}:8080/api/users/passwordcode/${user.userId}`,
+            {
+                method: "POST",
+            }
+        );
+
+        if (!codeRes.ok) throw new Error();
+
+        showToast("Password reset email sent, check your inbox!", "success");
+        setShowForgotModal(false);
+        setForgotEmail("");
+
+    } catch (err) {
+        showToast("Failed to send email", "error");
+    } finally {
+        setIsSending(false);
+    }
+};
+
     return (
         <div className="login-wrapper">
             <div className="toast-container">
@@ -220,6 +270,40 @@ export const LoginPage = () => {
                     />
                 ))}
             </div>
+
+            {/* forgot password POPUP */}
+            {showForgotModal && (
+            <div className="modal-overlay">
+                <div className="modal-content1">
+                    <h3>Reset Password</h3>
+                    <p>Enter your email to receive a reset link and code</p>
+
+                    <input
+                        type="email"
+                        placeholder="Your email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                    />
+
+                    <div className="modal-actions">
+                        <button
+                            className="confirm-btn"
+                            onClick={handleForgotPassword}
+                            disabled={isSending}
+                        >
+                            {isSending ? "Sending..." : "Send Email"}
+                        </button>
+
+                        <button
+                            className="cancel-btn"
+                            onClick={() => setShowForgotModal(false)}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
             {/* VERIFICATION POPUP */}
             {showVerifyModal && (
@@ -238,7 +322,7 @@ export const LoginPage = () => {
                             <button className="confirm-btn" onClick={handleConfirmCode} disabled={isVerifying}>
                                 {isVerifying ? "Verifying..." : "Confirm"}
                             </button>
-                            <button className="resend-btn" onClick={() => handleSignup(null)}>
+                            <button className="confirm-btn" onClick={() => handleSignup(null)}>
                                 Resend Code
                             </button>
                             <button className="cancel-btn" onClick={() => setShowVerifyModal(false)}>
@@ -280,7 +364,9 @@ export const LoginPage = () => {
                 <AuthFormForLogin type="signin" active={!isSignup} title="Sign in" onSubmit={handleLogin}>
                     <input type="text" placeholder="Username or email" value={info} onChange={(e) => setInfo(e.target.value)} required />
                     <input type="password" placeholder="Password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} required />
-                    <a>Forgot password?</a>
+                    <a onClick={() => setShowForgotModal(true)} style={{cursor: "pointer"}}>
+                    Forgot password?
+                    </a>
                     <button type="submit">Sign In</button>
                 </AuthFormForLogin>
             </div>

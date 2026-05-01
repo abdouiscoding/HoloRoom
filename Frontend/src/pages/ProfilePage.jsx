@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
 import { Trash2, Eye, EyeOff, Camera } from "lucide-react";
+import { userData } from "three/tsl";
 
 // ip address
 const API = "http://192.168.1.6:8080";
@@ -23,7 +24,7 @@ const Logout = () => {
 const ProfilePage = () => {
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("settings");
   const [selectedTrackOrder, setSelectedTrackOrder] = useState(null);
 
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
@@ -48,6 +49,8 @@ const ProfilePage = () => {
   const [newName, setNewName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newplace, setNewplace] = useState("");
+  const [newaddress, setNewaddress] = useState("");
   const [newShipping, setNewShipping] = useState("");
 
   useEffect(() => {
@@ -67,7 +70,7 @@ const ProfilePage = () => {
     };
 
     reader.readAsDataURL(file);
-    updateimage;
+    updateimage(file);
   };
 
   const getStatusClass = (step) => {
@@ -93,8 +96,7 @@ const ProfilePage = () => {
 // ===============================
 // UPDATE USERNAME
 // ===============================
-const updateusername = async (newName) => {
-  console.log(newName);
+const updateusername = async () => {
   try {
     const res = await fetch(`${API}/api/users/update/name/${userId}`, {
       method: "PUT",
@@ -114,7 +116,6 @@ const updateusername = async (newName) => {
     localStorage.setItem("userName", data.userName);
 
     setIsUsernameModalOpen(false);
-    window.location.reload();
 
   } catch (err) {
     alert("Failed to update username");
@@ -125,66 +126,47 @@ const updateusername = async (newName) => {
 // UPDATE EMAIL
 // (uses full update endpoint)
 // ===============================
-const updateemail = async (newEmail) => {
+const updateemail = async () => {
+  setIsPhoneModalOpen(true);
   try {
-    const res = await fetch(`${API}/api/users/update/email/${userId}`, {
-      method: "PUT",
+    // 1. send verification code first
+    const codeRes = await fetch(`${API}/api/users/emailcode/${userId}`, {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        userEmail: newEmail,
-      }),
     });
 
-    if (!res.ok) throw new Error();
-
-    const data = await res.json();
-
-    localStorage.setItem("userEmail", data.userEmail);
-
-    setIsPhoneModalOpen(false);
-    window.location.reload();
-
+    if (!codeRes.ok) throw new Error("Failed to send code");
   } catch (err) {
-    alert("Failed to update email");
+    alert("Failed to send code");
   }
 };
 
 // ===============================
 // UPDATE PASSWORD
 // ===============================
-const updatepassword = async (newPassword) => {
+const updatepassword = async () => {
+  setIsPasswordModalOpen(true);
   try {
-    const res = await fetch(`${API}/api/users/update/password/${userId}`, {
-      method: "PUT",
+    // 1. send verification code first
+    const codeRes = await fetch(`${API}/api/users/passwordcode/${userId}`, {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        userPassword: newPassword,
-      }),
     });
 
-    if (!res.ok) throw new Error();
-
-    localStorage.setItem("userPassword", password);
-
-    setIsPasswordModalOpen(false);
-
-    alert("Password updated");
-
+    if (!codeRes.ok) throw new Error("Failed to send code");
   } catch (err) {
-    alert("Failed to update password");
+    alert("Failed to send code");
   }
 };
 
 // ===============================
 // UPDATE SHIPPING
 // ===============================
-const updateshipping = async (newShipping) => {
+const updateshipping = async () => {
   try {
     const res = await fetch(`${API}/api/users/update/shipping/${userId}`, {
       method: "PUT",
@@ -193,7 +175,7 @@ const updateshipping = async (newShipping) => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        shipping: newShipping,
+        shipping: `${newaddress}` + " "+ `${newplace}`,
       }),
     });
 
@@ -204,7 +186,6 @@ const updateshipping = async (newShipping) => {
     localStorage.setItem("shipping", data.shipping);
 
     setIsAddressModalOpen(false);
-    window.location.reload();
 
   } catch (err) {
     alert("Failed to update shipping");
@@ -232,7 +213,7 @@ const updateimage = async (file) => {
     const data = await res.json();
 
     localStorage.setItem("userImage", data.userImage);
-    setProfileImage(data.userImage);
+    console.log(data.userImage);
 
   } catch (err) {
     alert("Failed to update image");
@@ -248,7 +229,7 @@ const updateimage = async (file) => {
             <div className={styles.avatar}>
               <img
                 className={styles.avatar}
-                src={profileImage}
+                src={localStorage.getItem("userImage")}
                 alt="Profile"
               />
             </div>
@@ -295,11 +276,20 @@ const updateimage = async (file) => {
           <ul className={styles.tabList}>
             <li
               className={`${styles.tabItem} ${
+                activeTab === "settings" ? styles.active : ""
+              }`}
+              onClick={() => setActiveTab("settings")}
+            >
+              <i className="fas fa-cog"></i> Information
+            </li>
+
+            <li
+              className={`${styles.tabItem} ${
                 activeTab === "orders" ? styles.active : ""
               }`}
               onClick={() => setActiveTab("orders")}
             >
-              <i className="fas fa-box"></i> My Orders
+              <i className="fas fa-box"></i> Orders
             </li>
 
             <li
@@ -309,15 +299,6 @@ const updateimage = async (file) => {
               onClick={() => setActiveTab("wishlist")}
             >
               <i className="fas fa-heart"></i> Wishlist
-            </li>
-
-            <li
-              className={`${styles.tabItem} ${
-                activeTab === "settings" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("settings")}
-            >
-              <i className="fas fa-cog"></i> Information
             </li>
           </ul>
         </aside>
@@ -410,50 +391,52 @@ const updateimage = async (file) => {
                 
                 {/* Username Row */}
                 <div className={styles.formGroup}>
-                  <label>Username</label>
+                  <label>Username:</label>
                   <div className={styles.infoRow}>
                     <p>{localStorage.getItem("userName")}</p>
-                    <button onClick={() => setIsUsernameModalOpen(true)}>Change</button>
+                    <button className="btn-secondary" onClick={() => setIsUsernameModalOpen(true)}>Change</button>
                   </div>
                 </div>
 
                 {/* Email Row */}
                 <div className={styles.formGroup}>
-                  <label>Email</label>
+                  <label>Email:</label>
                   <div className={styles.infoRow}>
                     <p>{localStorage.getItem("userEmail")}</p>
-                    <button onClick={() => setIsPhoneModalOpen(true)}>Change</button>
+                    <button className="btn-secondary" onClick={updateemail}>Change</button>
                   </div>
                 </div>
 
                 {/* Password Row with Show/Hide */}
                 <div className={styles.formGroup}>
-                  <label>Password</label>
+                  <label>Password:</label>
                   <div className={styles.infoRow}>
+                    <div className={styles.grid}>
                     <p>
                       {showPasswordText 
                         ? localStorage.getItem("userPassword") 
                         : "••••••••••••"}
                     </p>
-                    <div className={styles.actionGroup}>
-                      <button 
+                    <button 
                         type="button" 
                         className={styles.iconBtn} 
                         onClick={() => setShowPasswordText(!showPasswordText)}
                       >
                         {showPasswordText ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
-                      <button onClick={() => setIsPasswordModalOpen(true)}>Change</button>
+                      </div>
+                    <div className={styles.actionGroup}>
+                      <button className="btn-secondary" onClick={ updatepassword}>Change</button>
                     </div>
                   </div>
                 </div>
 
                 {/* Shipping Row */}
                 <div className={styles.formGroup}>
-                  <label>Shipping Address</label>
+                  <label>Shipping Address:</label>
                   <div className={styles.infoRow}>
                     <p>{localStorage.getItem("shipping") || "Not set"}</p>
-                    <button onClick={() => setIsAddressModalOpen(true)}>Update</button>
+                    <button className="btn-secondary" onClick={() => setIsAddressModalOpen(true)}>Change</button>
                   </div>
                 </div>
 
@@ -462,7 +445,6 @@ const updateimage = async (file) => {
           )}
         </main>
       </div>
-
       {/* Email MODAL */}
       {isPhoneModalOpen && (
         <div
@@ -484,22 +466,12 @@ const updateimage = async (file) => {
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsPhoneModalOpen(false);
-              }}
-            >
-              <div className={styles.modalBody}>
-                <input
-                  type="Email"
-                  placeholder="New Email"
-                  required
-                />
-              </div>
-
-              <button className="btn-primary" onClick={updateemail}>Save</button>
-            </form>
+            <div className={styles.modalBody}>
+              <p style={{ textAlign: "center", lineHeight: "1.6" }}>
+                We sent a verification email to your inbox.<br />
+                Please check your email and use the link and code to continue changing your email.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -507,17 +479,29 @@ const updateimage = async (file) => {
       {/* USERNAME MODAL */}
       {isUsernameModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalBody}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
             <h3>Change Username</h3>
+
+            <button
+                className={styles.closeBtn}
+                onClick={() => setIsUsernameModalOpen(false)}
+              >
+                ×
+              </button>
+              </div>
+            <div className={styles.modalBody}>
             <input 
               type="text" 
               placeholder="New Username" 
               value={newName} 
-              onChange={(e) => setNewName()} 
+              onChange={(e) => setNewName(e.target.value)} 
             />
             <button className="btn-primary" onClick={updateusername}>Save Changes</button>
-            <button className="btn-secondaty" onClick={() => setIsUsernameModalOpen(false)}>Cancel</button>
+            <button className="btn-secondary" onClick={() => setIsUsernameModalOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -525,18 +509,31 @@ const updateimage = async (file) => {
 
       {/* PASSWORD MODAL */}
       {isPasswordModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h3>Change Password</h3>
-            <input 
-              type="password" 
-              placeholder="New Password" 
-              value={newPassword} 
-              onChange={(e) => setNewPassword(e.target.value)} 
-            />
-            <p className={styles.hint}>Note: A verification code may be sent to your email.</p>
-            <button className="btn-primary" onClick={updatepassword}>Update Password</button>
-            <button className="btn-text" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setIsPasswordModalOpen(false)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3>Change Password</h3>
+
+              <button
+                className={styles.closeBtn}
+                onClick={() => setIsPasswordModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <p style={{ textAlign: "center", lineHeight: "1.6" }}>
+                We sent a verification email to your inbox.<br />
+                Please check your email and use the link and code to continue changing your password.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -565,30 +562,37 @@ const updateimage = async (file) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setIsAddressModalOpen(false);
+                updateshipping();
               }}
             >
               <div className={styles.modalBody}>
                 <input
+                  value={newaddress}
                   type="text"
                   placeholder="Street / Apartment"
                   required
+                  onChange={(e) => setNewaddress(e.target.value)}
                 />
 
-                <select>
-                  <option>Algiers</option>
-                  <option>Setif</option>
-                  <option>Oran</option>
-                  <option>Constantine</option>
-                  <option>Annaba</option>
+                <select
+                  value={newplace}
+                  onChange={(e) => setNewplace(e.target.value)}
+                >
+                  <option value="Algiers">Algiers</option>
+                  <option value="Setif">Setif</option>
+                  <option value="Oran">Oran</option>
+                  <option value="Constantine">Constantine</option>
+                  <option value="Annaba">Annaba</option>
                 </select>
               </div>
 
-              <button className="btn-primary" onClick={updateshipping}>Save</button>
+              <button type="submit" className="btn-primary">
+                Save
+              </button>
             </form>
           </div>
         </div>
-      )}
+          )}
 
       {/* POPUP */}
       {showPopup && (
@@ -624,3 +628,4 @@ const updateimage = async (file) => {
 };
 
 export default ProfilePage;
+
