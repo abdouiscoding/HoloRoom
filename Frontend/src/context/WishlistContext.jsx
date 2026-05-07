@@ -17,7 +17,7 @@ export const WishlistProvider = ({ children }) => {
       if (!userId || !token) return;
 
       const res = await fetch(
-        `http://${address}:8080/api/wishlist/get/${userId}`,
+        `${API}/api/wishlist/get/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -34,7 +34,7 @@ export const WishlistProvider = ({ children }) => {
         baseItems.map(async (item) => {
           try {
             const pRes = await fetch(
-              `http://${address}:8080/api/products/get/${item.pId}`,
+              `${API}/api/products/get/${item.pId}`,
               {
                 headers: { Authorization: `Bearer ${token}` }
               }
@@ -76,7 +76,7 @@ export const WishlistProvider = ({ children }) => {
       if (!item) return;
 
       await fetch(
-        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        `${API}/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }

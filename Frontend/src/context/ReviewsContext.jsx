@@ -25,7 +25,7 @@ export const ReviewsProvider = ({ children }) => {
       const token = localStorage.getItem('token');
 
       const response = await fetch(
-        `http://${address}:8080/api/reviews/all`,
+        `${API}/api/reviews/all`,
         {
           method: 'GET',
           headers: {
@@ -75,7 +75,7 @@ export const ReviewsProvider = ({ children }) => {
       const token = localStorage.getItem('token');
 
       const response = await fetch(
-        `http://${address}:8080/api/reviews/add/${productId}`,
+        `${API}/api/reviews/add/${productId}`,
         {
           method: 'POST',
           headers: {

@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
 
       const res = await fetch(
-        `http://${address}:8080/api/cart/getbyuser/${userId}`,
+        `${API}/api/cart/getbyuser/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
   const removeItem = async (cartId, cartItemId) => {
     try {
       const res = await fetch(
-        `http://${address}:8080/api/cart/removeitem/${cartId}/${cartItemId}`,
+        `${API}/api/cart/removeitem/${cartId}/${cartItemId}`,
         {
           method: "DELETE",
           headers: {

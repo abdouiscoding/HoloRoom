@@ -40,7 +40,7 @@ const Shop = () => {
       setLoading(true);
 
       const response = await fetch(
-        `http://${address}:8080/api/products/get`
+        `${API}/api/products/get`
       );
 
       if (!response.ok) {
@@ -287,7 +287,7 @@ const toproductpage = (name, id) => {
 
 const fetchDiscounts = async () => {
   try {
-    const res = await fetch(`http://${address}:8080/api/discounts/active`);
+    const res = await fetch(`${API}/api/discounts/active`);
     const data = await res.json();
 
     setDiscounts(data || []);

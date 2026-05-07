@@ -41,7 +41,7 @@ const ProductDetail = () => {
 
   const fetchDiscounts = async () => {
   try {
-    const res = await fetch(`http://${address}:8080/api/discounts/active`);
+    const res = await fetch(`${API}/api/discounts/active`);
     const data = await res.json();
 
     let total = 0;
@@ -70,7 +70,7 @@ const ProductDetail = () => {
           localStorage.getItem('selectedProductId') || id;
 
         const response = await fetch(
-          `http://${address}:8080/api/products/get/${productId}`
+          `${API}/api/products/get/${productId}`
         );
 
         if (response.ok) {
@@ -100,7 +100,7 @@ const ProductDetail = () => {
         if (!userId || !token) return;
 
         const response = await fetch(
-          `http://${address}:8080/api/wishlist/get/${userId}`,
+          `${API}/api/wishlist/get/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -187,7 +187,7 @@ const ProductDetail = () => {
       setWishlistLoading(true);
 
       const response = await fetch(
-        `http://${address}:8080/api/wishlist/add/${userId}/${pid}`,
+        `${API}/api/wishlist/add/${userId}/${pid}`,
         {
           method: 'POST',
           headers: {
@@ -261,7 +261,7 @@ const ProductDetail = () => {
 
       // get wishlist first
       const getRes = await fetch(
-        `http://${address}:8080/api/wishlist/get/${userId}`,
+        `${API}/api/wishlist/get/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -285,7 +285,7 @@ const ProductDetail = () => {
       }
 
       const removeRes = await fetch(
-        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        `${API}/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: {
@@ -387,7 +387,7 @@ const ProductDetail = () => {
 
       // ---------------- GET CART ----------------
       const cartRes = await fetch(
-        `http://${address}:8080/api/cart/getbyuser/${userId}`,
+        `${API}/api/cart/getbyuser/${userId}`,
         {
           method: 'GET',
           headers: {
@@ -426,7 +426,7 @@ const ProductDetail = () => {
       };
 
       const response = await fetch(
-        `http://${address}:8080/api/cart/additem/${cartId}`,
+        `${API}/api/cart/additem/${cartId}`,
         {
           method: 'POST',
           headers: {
