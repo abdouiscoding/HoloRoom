@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react';
 import styles from './ChatbotWidget.module.css';
-import { API, address } from "../../api";
+import { API, address, myFetch } from "../../api";
 
 const token = localStorage.getItem("token");
 
@@ -61,10 +61,9 @@ const ChatbotWidget = () => {
         text: msg.text
       }));
 
-      const res = await fetch(`${API}/api/chat`, {
+      const res = await myFetch(`${API}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           history

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Percent, X, Trash2, Star } from 'lucide-react';
 import DashboardTable from '../../../components/dashboard/common/DashboardTable';
 import styles from './DashboardViews.module.css';
-import { color, select } from 'three/tsl';
 import { API, address, myFetch } from "../../../api";
 
 const PRODUCTS_API = `${API}/api/products/get`;
