@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
 import { Trash2, Eye, EyeOff, Camera } from "lucide-react";
-import { userData } from "three/tsl";
-import { NoToneMapping } from "three";
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const Logout = () => {
   localStorage.removeItem("token");
