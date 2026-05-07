@@ -397,3 +397,102 @@
     justify-content: space-between;
   }
 }
+
+.priceInputs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.discountBadge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  background: linear-gradient(135deg, #ff4d4d, #ffb300);
+  color: white;
+
+  padding: 6px 10px;
+  border-radius: 50px;
+
+  font-size: 12px;
+  font-weight: bold;
+
+  transform: rotate(-10deg);
+
+  animation: pulseDiscount 1.5s infinite ease-in-out;
+  box-shadow: 0 0 15px rgba(255, 100, 0, 0.4);
+}
+
+@keyframes pulseDiscount {
+  0% {
+    transform: scale(1) rotate(-10deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1) rotate(-10deg);
+  }
+}
+
+.priceBlock {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.finalPrice {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color:#ff4d4d;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.discountBanner {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.discountCard {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 12px;
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #ff4d4d, #ffb300);
+  color: white;
+  font-weight: 600;
+
+  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+}

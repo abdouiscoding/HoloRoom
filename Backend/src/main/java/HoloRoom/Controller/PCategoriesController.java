@@ -72,10 +72,7 @@ public class PCategoriesController {
 
     // DELETE category
     @DeleteMapping("/delete/{categoryId}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId) {
-        boolean deleted = categoriesService.deleteCategory(categoryId);
-        return deleted
-                ? new ResponseEntity<>(HttpStatus.NO_CONTENT)
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public void deleteCategory(@PathVariable Long categoryId) {
+        categoriesService.deleteCategory(categoryId);
     }
 }

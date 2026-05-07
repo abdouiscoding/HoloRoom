@@ -29,14 +29,14 @@ public class PCart {
     private List<PCartItem> items;
 
     @JsonProperty("total")
-    private BigDecimal Total;
+    private float Total;
 
     @JsonProperty("userId")
     private Long userId;
 
     public PCart() {}
 
-    public PCart(List<PCartItem> items , BigDecimal total, Long userId) {
+    public PCart(List<PCartItem> items , float total, Long userId) {
         this.items = items;
         this.Total = total;
         this.userId = userId;
@@ -51,17 +51,19 @@ public class PCart {
     public void setItems(List<PCartItem> items) { this.items = items; }
 
     @JsonProperty("total")
-    public BigDecimal getTotal() { return Total; }  
-    public void setTotal(BigDecimal total) { Total = total; }
+    public float getTotal() { return Total; }  
+    public void setTotal(float total) { Total = total; }
 
     @JsonProperty("userId")
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public void updateTotal() {
-        this.Total = items.stream()
-                          .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                          .reduce(BigDecimal.ZERO, BigDecimal::add);
+   public void updateTotal() {
+    float total = items.stream()
+        .map(item -> item.getPrice() * item.getQuantity())
+        .reduce(0f, Float::sum);
+
+    this.Total = (float) Math.round(total);
     }
 
 }

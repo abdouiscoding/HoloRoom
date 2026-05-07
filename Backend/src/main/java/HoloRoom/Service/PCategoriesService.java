@@ -4,14 +4,20 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import HoloRoom.Model.PCategories;
 import HoloRoom.Repository.PCategoriesRepository;
+import HoloRoom.Repository.ProductsRepository;
 
 @Service
 public class PCategoriesService {
 
     @Autowired
     private PCategoriesRepository categoriesRepository;
+
+    @Autowired
+    private ProductsRepository productsRepository;
 
     public List<PCategories> getAllCategories() {
         return categoriesRepository.findAll();
@@ -39,11 +45,26 @@ public class PCategoriesService {
         return null;
     }
 
-    public boolean deleteCategory(Long categoryId) {
-        if (categoriesRepository.existsById(categoryId)) {
-            categoriesRepository.deleteById(categoryId);
-            return true;
-        }
-        return false;
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        System.out.println("🔥 DELETE REQUEST FOR CATEGORY ID: " + categoryId);
+
+        PCategories cat = categoriesRepository.findById(categoryId)
+            .orElseThrow(() -> {
+                System.out.println("❌ CATEGORY NOT FOUND");
+                return new RuntimeException("Category not found");
+            });
+
+        System.out.println("✅ FOUND CATEGORY: " + cat.getProductCategory());
+
+        // 🔥 FAST: remove all relations in one query
+        productsRepository.removeCategoryRelations(categoryId);
+
+        System.out.println("⚡ Removed relations from product_categories");
+
+        // now delete
+        categoriesRepository.delete(cat);
+
+        System.out.println("🗑️ CATEGORY DELETED SUCCESSFULLY");
     }
 }

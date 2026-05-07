@@ -3,40 +3,27 @@ import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
-const Header = ({ activeRole, setActiveRole }) => {
+const Header = ({ role, changeRole }) => {
   const navigate = useNavigate();
 
   return (
     <header className={styles.headerContainer}>
-      <div className={styles.searchBar}>
-        <Search size={18} className={styles.searchIcon} />
-        <input type="text" placeholder="Search..." />
+      <div>
       </div>
 
       <div className={styles.headerRight}>
-        {/*nswitchi mabizman ------*/}
+        {/* Role Switcher */}
         <div className={styles.roleSwitcher}>
           <label>Role:</label>
-          <select
-            value={activeRole}
-            onChange={(e) => setActiveRole(e.target.value)}
-            className={styles.roleSelect}
-          >
-            <option value="admin">Admin</option>
-            <option value="productManager">Product Manager</option>
-            <option value="marketingManager">Marketing Manager</option>
-          </select>
-        </div> {/*---------*/}
+          <label>{localStorage.getItem("role")}</label>
+        </div>
 
         <div className={styles.profileSection} onClick={() => navigate('/profile')}>
           <div className={styles.avatar}>
-
+            <img className={styles.avatar} src={localStorage.getItem("userImage")}/>
           </div>
           <div className={styles.profileInfo}>
-            <span className={styles.profileName}>User</span>
-            <span className={styles.profileRole}>
-              {activeRole === 'productManager' ? 'Product Manager' : activeRole === 'marketingManager' ? 'Marketing' : 'Admin'}
-            </span>
+            <span className={styles.profileName}>{localStorage.getItem("userName")}</span>
           </div>
         </div>
       </div>

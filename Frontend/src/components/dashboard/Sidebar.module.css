@@ -1,4 +1,5 @@
 .sidebarContainer {
+  width: 18%;
   background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -7,6 +8,10 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+}
+
+.collapsed {
+  width: 7%;
 }
 
 .logoArea {
@@ -42,9 +47,15 @@
   gap: var(--spacing-md);
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
+  white-space: nowrap;
   color: var(--text-secondary);
   font-weight: 500;
   transition: all var(--transition-fast);
+}
+
+
+.collapsed .navItem {
+  justify-content: center;
 }
 
 .navIcon {
@@ -71,27 +82,28 @@
   color: var(--accent-primary);
 }
 
-.helpCenter {
-  margin-top: auto;
-  padding: var(--spacing-md);
-  background: rgba(248, 157, 0, 0.05);
-  border-radius: var(--radius-md);
-  text-align: center;
+.logoLeft {
+  display: grid;
+  grid-template-columns: 20% 79% 1%;
 }
 
-.helpCenter p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: var(--spacing-sm);
-}
-
-.helpCenter button {
-  width: 100%;
-  padding: 0.5rem;
-  background: white;
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-weight: 600;
+.logoLeft:hover {
   cursor: pointer;
+}
+
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 157, 0, 0.3);
 }

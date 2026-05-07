@@ -11,7 +11,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/**",
-                "file:C:/Users/abder/Desktop/HoloRoom/Backend/src/main/java/HoloRoom/Uploads/Uimages/"
+                "file:C:/Users/abder/Desktop/HoloRoom/Backend/src/main/java/HoloRoom/Uploads/Uimages/",
+                "file:C:/Users/abder/Desktop/HoloRoom/Backend/src/main/java/HoloRoom/Uploads/Pimages/",
+                "file:C:/Users/abder/Desktop/HoloRoom/Backend/src/main/java/HoloRoom/Uploads/Pmodels/"
                 );
     }
 }

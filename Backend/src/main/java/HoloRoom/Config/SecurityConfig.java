@@ -48,47 +48,65 @@ public class SecurityConfig {
                 // =====================================
                 // PUBLIC
                 // =====================================
-                .requestMatchers("/api/users/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/products/get/**").permitAll()
                 .requestMatchers("/api/reviews/all").permitAll()
                 .requestMatchers("/api/uploads/**").permitAll()
-                .requestMatchers("/api/users/update/passwordcode/**").permitAll()
                 .requestMatchers("/api/users/getbyinfo/**").permitAll()
+                .requestMatchers("/api/users/passwordcode/**").permitAll()
+                .requestMatchers("/api/users/update/emailcode/**").permitAll()
+                .requestMatchers("/api/discounts/active").permitAll()
+                .requestMatchers("/api/users/update/email/**").permitAll()
+                .requestMatchers("/api/users/update/password/**").permitAll()
 
                 // EMAIL CODE APIs
-                .requestMatchers("/api/users/send-code/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/verify-code/**").hasAnyRole("USER","ADMIN")
+                .requestMatchers("/api/users/send-code/**").hasAnyRole("USER","ADMIN","MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/users/verify-code/**").hasAnyRole("USER","ADMIN","MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/users/emailcode/**").hasAnyRole("USER","ADMIN","MARKETING_MANAGER", "PRODUCT_MANAGER")
 
                 // =====================================
-                // USER + ADMIN
+                // EVERYONE
                 // =====================================
                 //.requestMatchers("/api/users/get/{id}").hasAnyRole("USER","ADMIN")
 
-                .requestMatchers("/api/users/update/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/email/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/passwordcode/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/emailcode/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/password/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN")
+                //ai
+                .requestMatchers("/api/chat").permitAll()
+                .requestMatchers("/api/chat/**").permitAll()
 
-                .requestMatchers("/api/cart/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/cartitem/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/orders/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/reviews/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/wishlist/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/chat/**").hasAnyRole("USER","ADMIN")
+                
+                .requestMatchers("/api/users/update/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+
+                //change when done with app
+                .requestMatchers("/api/cart/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/cartitem/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/orders/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/reviews/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                .requestMatchers("/api/wishlist/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+
+                // =====================================
+                // PRODUCT MANAGER
+                // =====================================
+                .requestMatchers("/api/products/**")
+                    .hasAnyRole("PRODUCT_MANAGER", "ADMIN")
+
+                // =====================================
+                // MARKETING MANAGER
+                // =====================================
+                .requestMatchers("/api/marketing/**")
+                    .hasAnyRole("MARKETING_MANAGER", "ADMIN")
+                .requestMatchers("/api/discounts/**")
+                    .hasAnyRole("MARKETING_MANAGER", "ADMIN")
+                .requestMatchers("/api/featured")
+                    .hasAnyRole("MARKETING_MANAGER", "ADMIN")
+
 
                 // =====================================
                 // ADMIN ONLY
                 // =====================================
-                .requestMatchers("/api/users/get").hasRole("ADMIN")
-                .requestMatchers("/api/users/delete/**").hasRole("ADMIN")
-
-                .requestMatchers("/api/products/**").hasRole("ADMIN")
-                .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                .requestMatchers("/api/**").hasRole("ADMIN")
 
                 // =====================================
                 // FALLBACK
@@ -108,12 +126,13 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "http://192.168.1.6:5173",
+            "http://192.168.1.3:5173",
+            "http://172.20.10.9:5173",
             "https://control-parole-grandkid.ngrok-free.dev"
         ));
 
         config.setAllowedMethods(List.of(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+            "GET", "POST", "PUT", "DELETE", "OPTIONS" , "PATCH"
         ));
 
         config.setAllowedHeaders(List.of("*"));

@@ -19,6 +19,13 @@ public class PReviewsService {
     @Autowired
     private ProductsRepository productsRepository;
 
+    public void removebyId(Long pId) {
+        reviewsRepository.findAll()
+        .stream()
+        .filter(review -> review.getProductId().equals(pId))
+        .forEach(reviewsRepository::delete);
+    }
+
     public List<PReviews> getProductReviews(Long productId) {
         return reviewsRepository.findByProduct_PId(productId);
     }

@@ -1,6 +1,7 @@
 package HoloRoom.Controller;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,9 +44,9 @@ public class PCartItemController {
     }
 
     @GetMapping("/get/price/{cartItemId}")
-    public ResponseEntity<BigDecimal> getPrice(@PathVariable Long cartItemId) {
+    public ResponseEntity<Float> getPrice(@PathVariable Long cartItemId) {
         try {
-            BigDecimal price = cartItemService.getPrice(cartItemId);
+            Float price = cartItemService.getPrice(cartItemId);
             return new ResponseEntity<>(price, HttpStatus.OK);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
@@ -82,11 +83,11 @@ public class PCartItemController {
         }
     }
 
-    @GetMapping("/get/color/{cartItemId}")
-    public ResponseEntity<String> getColor(@PathVariable Long cartItemId) {
+    @GetMapping("/get/colors/{cartItemId}")
+    public ResponseEntity<List<String>> getColor(@PathVariable Long cartItemId) {
         try {
-            String color = cartItemService.getColor(cartItemId);
-            return new ResponseEntity<>(color, HttpStatus.OK);
+            List<String> colors = cartItemService.getColors(cartItemId);
+            return new ResponseEntity<>(colors, HttpStatus.OK);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }

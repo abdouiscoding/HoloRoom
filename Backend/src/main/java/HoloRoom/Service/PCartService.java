@@ -33,6 +33,9 @@ public class PCartService {
     @Autowired
     private PImagesRepository pImagesRepository;
 
+    @Autowired
+    private ProductsService productsService;
+
     /**
      * Find cart for a specific user.
      */
@@ -54,7 +57,7 @@ public class PCartService {
         return pCartRepository.findByUserId(userId).orElseGet(() -> {
             PCart cart = new PCart();
             cart.setUserId(userId);
-            cart.setTotal(BigDecimal.ZERO);
+            cart.setTotal(0);
             cart.setItems(new ArrayList<>());
             return pCartRepository.save(cart);
         });
@@ -64,8 +67,14 @@ public class PCartService {
      * Helper to load a product and throw a clear exception if it does not exist.
      */
     private Products getProductOrThrow(Long productId) {
-        return productsRepository.findById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        Products p = productsService.getProductById(productId);
+        if (p != null){
+        return p;
+        }
+        else{
+            new IllegalArgumentException("Product not found");
+            return p;
+        }
     }
 
     /**
@@ -83,7 +92,7 @@ public class PCartService {
         String size = pscs.getProductSize();
         String color = pscs.getProductColor();
         int stock = pscs.getProductStock();
-        BigDecimal price = product.getProductPrice().multiply(BigDecimal.valueOf(quantity));
+        float price = product.getProductFinalPrice();
 
         PCart cart = pCartRepository.findById(cartId)
             .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
@@ -99,8 +108,10 @@ public class PCartService {
 
         if (existingItem != null) {
             existingItem.setQuantity(existingItem.getQuantity() + quantity);
+            existingItem.setSubtotal(price*quantity);
         } else {
-            PCartItem newItem = new PCartItem(product, pscs, image, size, color, stock, price, quantity);
+            float subtotal = price*quantity ;
+            PCartItem newItem = new PCartItem(product, pscs, image, size, color, stock, price, quantity, subtotal);
             newItem.setCart(cart);
             cart.getItems().add(newItem);
         }
@@ -195,7 +206,7 @@ public void clearCartById(Long cartId) {
             cart.getItems().clear();
         }
 
-        cart.setTotal(BigDecimal.ZERO);
+        cart.setTotal(0);
 
         pCartRepository.save(cart);
     });
@@ -206,14 +217,14 @@ public void clearCartById(Long cartId) {
      */
     public void updateCartTotal(PCart cart) {
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
-            cart.setTotal(BigDecimal.ZERO);
+            cart.setTotal(0);
             pCartRepository.save(cart);
             return;
         }
 
-        BigDecimal total = cart.getItems().stream()
-            .map(item -> item.getProduct().getProductPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        float total = cart.getItems().stream()
+            .map(item -> item.getProduct().getProductFinalPrice()*item.getQuantity())
+            .reduce(0f, Float::sum);    
 
         cart.setTotal(total);
         pCartRepository.save(cart);

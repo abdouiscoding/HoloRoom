@@ -1,25 +1,29 @@
 .dashboardContainer {
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: flex; /* ✅ SWITCH FROM GRID → FLEX */
   min-height: 100vh;
-  background-color: var(--bg-primary); /* Using the light gray body bg */
+  background-color: var(--bg-primary);
 }
 
+/* Sidebar handles its own width */
+
 .mainContent {
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  transition: all 0.3s ease; /* smooth expand */
 }
 
 .pageContent {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-xl);
+  transition: all 0.3s ease;
 }
 
 @media (max-width: 992px) {
   .dashboardContainer {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }

@@ -1,187 +1,350 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import { MessageSquare, X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react';
 import styles from './ChatbotWidget.module.css';
+import { API, address } from "../../api";
 
-const INITIAL_MESSages = [
-  { id: 1, sender: 'bot', text: 'Hi! I am your HoloRoom Assistant. Are you looking for anything specific today?' }
+const token = localStorage.getItem("token");
+
+const INITIAL_MESSAGES = [
+  {
+    id: 1,
+    sender: 'bot',
+    text: 'Hi! I am your HoloRoom Assistant. Are you looking for anything specific today?'
+  }
 ];
 
-const PRE_AR_SUGGESTIONS = ['Help me find a sofa', 'What fits in a small room?', 'Show latest trends'];
-const DURING_AR_SUGGESTIONS = ['Change color to Blue', 'Is this the real size?', 'Similar items'];
 
+const COOLDOWN_SECONDS = 10;
+const loggedin = localStorage.getItem("loggedin");
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState(INITIAL_MESSages);
+  const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+  const [login, setlogin] = useState(false);
+
   const location = useLocation();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
-  // Determine context based on route
-  const isARMode = location.pathname.includes('/ar/');
-  const currentSuggestions = isARMode ? DURING_AR_SUGGESTIONS : PRE_AR_SUGGESTIONS;
-
-  const scrollToBottom = () => {
+  // =========================
+  // SCROLL
+  // =========================
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (loggedin == "true"){
+    setlogin(true);
+  }
+  }, [messages]);
+
+  // =========================
+  // COOLDOWN TIMER
+  // =========================
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCooldown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldown]);
+
+  // =========================
+  // BACKEND CALL
+  // ========================= 
+  const sendToBackend = async (text, chatHistory) => {
+    try {
+      const history = chatHistory.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        text: msg.text
+      }));
+
+      const res = await fetch(`http://${address}:8080/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: text,
+          history
+        })
+      });
+
+      const raw = await res.text();
+
+      if (!raw) return JSON.stringify({
+        action: "none",
+        type: "none",
+        message: "Empty response"
+      });
+
+      try {
+        return raw;
+      } catch {
+        return JSON.stringify({
+          action: "none",
+          type: "none",
+          message: "Invalid response"
+        });
+      }
+
+    } catch (err) {
+      return JSON.stringify({
+        action: "none",
+        type: "none",
+        message: "Server error"
+      });
+    }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
+ // =========================
+  // ACTIONS
+  // =========================
+  const handleNavigation = (type) => {
+    if (!type) return;
+    
+    const target = type.toLowerCase();
+    
+    // Map AI navigation types to your routes
+    if (target.includes('wishlist') || target.includes('profile') || target.includes('orders')) {
+      navigate('/profile');
+    } else if (target.includes('cart')) {
+      navigate('/cart');
+    } else if (target.includes('shop') || target.includes('store')) {
+      navigate('/shop');
+    } else if (target.includes('home')) {
+      navigate('/');
     }
-  }, [messages, isOpen]);
-
-  // Contextual greeting when entering AR
-  useEffect(() => {
-    if (isARMode && !messages.find(m => m.text.includes('AR mode enabled'))) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'bot',
-        text: 'AR mode enabled! You can ask me to change the color, scale the object, or find similar items.'
-      }]);
-      setIsOpen(true);
+    else if (target.includes('orders') || target.includes('order')) {
+      navigate('/profile');
     }
-  }, [isARMode]);
+    else if (target.includes('settings') || target.includes('setting')) {
+      navigate('/profile');
+    }
+  };
 
+  // =========================
+  // RESPONSE HANDLER
+  // =========================
+  const handleAIResponse = (reply) => {
+    console.log("RAW AI RESPONSE:", reply);
+
+    try {
+      // 1st parse (outer wrapper)
+      let outer = JSON.parse(reply);
+
+      // 2nd parse (inner AI JSON string)
+      let parsed =
+        typeof outer.reply === "string"
+          ? JSON.parse(outer.reply)
+          : outer;
+
+      const safeMessage =
+        parsed?.message?.trim()
+          ? parsed.message
+          : "I couldn't generate a response.";
+
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: 'bot',
+          text: safeMessage
+        }
+      ]);
+
+      // Handle Page Changes
+      if (parsed.action === 'navigate') {
+        handleNavigation(parsed.type);
+        return; 
+      }
+
+      if (['search', 'price', 'top_selling', 'most_wished'].includes(parsed.action)) {
+        window.dispatchEvent(new CustomEvent('ai-search', {
+          detail: {
+            action: parsed.action,
+            type: parsed.type,     
+            query: parsed.type,     
+            min: parsed.min,
+            max: parsed.max
+          }
+        }));
+      }
+
+      if (parsed.action === 'cancel') {
+        window.dispatchEvent(new CustomEvent('ai-search', {
+          detail: {
+            action: parsed.action
+          }
+        }));
+      }
+
+    } catch (err) {
+      console.error("AI parse error:", err);
+
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: 'bot',
+          text: "Couldn't process AI response"
+        }
+      ]);
+    }
+  };
+
+  // =========================
+  // SEND MESSAGE (COOLDOWN SAFE)
+  // =========================
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!inputText.trim()) return;
 
-    const userMsg = { id: Date.now(), sender: 'user', text: inputText };
-    setMessages(prev => [...prev, userMsg]);
+    if (!inputText.trim()) return;
+    if (cooldown > 0) return;
+
+    const userText = inputText;
+
+    const updatedMessages = [
+      ...messages,
+      { id: Date.now(), sender: 'user', text: userText }
+    ];
+
+    setMessages(updatedMessages);
     setInputText('');
 
-    // Build Gemini-format conversation history
-    const history = [...messages, userMsg]
-      .filter(m => m.text)
-      .map(m => ({
-        role: m.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
+    // start cooldown
+    setCooldown(COOLDOWN_SECONDS);
 
-    try {
-      const res = await fetch('http://localhost:8080/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ history })
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'bot',
-        text: data.reply
-      }]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'bot',
-        text: 'Sorry, I encountered an error. Please try again.'
-      }]);
-    }
+    const reply = await sendToBackend(userText, updatedMessages);
+    handleAIResponse(reply);
   };
 
-  const handleSuggestionClick = async (text) => {
-    const userMsg = { id: Date.now(), sender: 'user', text };
-    setMessages(prev => [...prev, userMsg]);
-
-    // Build Gemini-format conversation history
-    const history = [...messages, userMsg]
-      .filter(m => m.text)
-      .map(m => ({
-        role: m.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
-
-    try {
-      const res = await fetch('http://localhost:8080/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ history })
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'bot',
-        text: data.reply
-      }]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'bot',
-        text: 'Sorry, I encountered an error. Please try again.'
-      }]);
-    }
-  };
-
+  // =========================
+  // UI (NO CSS CHANGES)
+  // =========================
   return (
     <div className={styles.chatbotContainer}>
-      {/* Chat Window */}
-      {isOpen && (
-        <div className={`${styles.chatWindow} glass-panel`}>
-          <div className={styles.chatHeader}>
-            <div className={styles.botInfo}>
-              <div className={styles.avatar}>
-                <Sparkles size={16} />
-              </div>
-              <div>
-                <h4>AI Assistant</h4>
-                <span className={styles.status}>Online</span>
-              </div>
-            </div>
-            <button className={styles.closeBtn} onClick={() => setIsOpen(false)}>
-              <X size={20} />
-            </button>
-          </div>
 
-          <div className={styles.messagesContainer}>
-            {messages.map(msg => (
-              <div key={msg.id} className={`${styles.messageWrapper} ${msg.sender === 'user' ? styles.msgRight : styles.msgLeft}`}>
-                {msg.sender === 'bot' && <Bot size={16} className={styles.msgIcon} />}
-                <div className={`${styles.message} ${msg.sender === 'user' ? styles.userMsg : styles.botMsg}`}>
-                  {msg.text}
+      {isOpen && (
+        <div className={styles.chatWindowWrapper}>
+          
+          <div
+            className={`${styles.chatWindow} glass-panel ${
+              !login ? styles.blurred : ''
+            }`}
+          >
+            {/* HEADER */}
+            <div className={styles.chatHeader}>
+              <div className={styles.botInfo}>
+                <div className={styles.avatar}>
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <h4>AI Assistant</h4>
+                  <span className={styles.status}>Online</span>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
 
-          <div className={styles.suggestions}>
-            {currentSuggestions.map((sug, idx) => (
               <button
-                key={idx}
-                className={styles.sugBtn}
-                onClick={() => handleSuggestionClick(sug)}
+                className={styles.closeBtn}
+                onClick={() => setIsOpen(false)}
               >
-                {sug}
+                <X size={20} />
               </button>
-            ))}
+            </div>
+
+            {/* MESSAGES */}
+            <div className={styles.messagesContainer}>
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`${styles.messageWrapper} ${
+                    msg.sender === 'user'
+                      ? styles.msgRight
+                      : styles.msgLeft
+                  }`}
+                >
+                  {msg.sender === 'bot' && (
+                    <Bot size={16} className={styles.msgIcon} />
+                  )}
+
+                  <div
+                    className={`${styles.message} ${
+                      msg.sender === 'user'
+                        ? styles.userMsg
+                        : styles.botMsg
+                    }`}
+                  >
+                    {msg.text?.trim() ? msg.text : "…"}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* INPUT */}
+            <form className={styles.inputArea} onSubmit={handleSend}>
+              <input
+                type="text"
+                placeholder={
+                  cooldown > 0
+                    ? `Wait ${cooldown}s...`
+                    : "Type your message..."
+                }
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className={styles.input}
+                disabled={cooldown > 0 || !login}
+              />
+
+              <button
+                type="submit"
+                className={styles.sendBtn}
+                disabled={!inputText.trim() || cooldown > 0 || !login}
+              >
+                {cooldown > 0 ? cooldown : <Send size={18} />}
+              </button>
+            </form>
           </div>
 
-          <form className={styles.inputArea} onSubmit={handleSend}>
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className={styles.input}
-            />
-            <button type="submit" className={styles.sendBtn} disabled={!inputText.trim()}>
-              <Send size={18} />
-            </button>
-          </form>
+          {/* 🔒 OVERLAY ONLY INSIDE OPEN CHAT */}
+          {!login && (
+            <div className={styles.loginOverlay}>
+              <div className={styles.loginBox}>
+                <div className={styles.head}>
+                <h3>Login required</h3>
+                <button
+                  className={styles.closeBtnl}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X size={20} />
+                </button>
+                </div>
+                <p>You need to log in to use the AI assistant.</p>
+
+                <button
+                  onClick={() => navigate('/login')}
+                  className={styles.loginBtn}
+                >
+                  Login
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* Floating Button */}
       {!isOpen && (
         <button
           className={styles.floatingBtn}
           onClick={() => setIsOpen(true)}
         >
           <MessageSquare size={24} />
-          {isARMode && <span className={styles.badge}>1</span>}
         </button>
       )}
+
     </div>
   );
 };

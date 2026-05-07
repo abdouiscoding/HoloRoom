@@ -114,6 +114,21 @@
   color: white;
 }
 
+.closeBtnl {
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+  color: white;
+}
+
+.closeBtnl:hover {
+  color: black;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 90% 10%;
+}
+
 .messagesContainer {
   flex: 1;
   padding: var(--spacing-md);
@@ -132,7 +147,6 @@
   background: var(--border-glass);
   border-radius: 4px;
 }
-
 .messageWrapper {
   display: flex;
   align-items: flex-end;
@@ -253,4 +267,47 @@
     width: calc(100vw - 2rem);
     height: 400px;
   }
+}
+
+.chatWrapper {
+  position: relative;
+}
+
+.blurred {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.loginOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(3px);
+  z-index: 10;
+}
+
+.loginBox {
+  background: rgba(255,255,255,0.08);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.loginBox h3 {
+  text-align: center;
+  margin-left: 10%;
+}
+
+.loginBtn {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }

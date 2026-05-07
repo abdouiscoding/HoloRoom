@@ -1,9 +1,13 @@
 package HoloRoom.Model;
 
+import java.sql.Date;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -19,10 +23,14 @@ public class User {
     private String userPassword;
     private String userImage;
 
-    // Use primitive boolean to ensure it defaults to false
     private boolean active;
 
     private String shipping;
+
+    private LocalDateTime creationdate;
+
+    private LocalDateTime lastactive;
+
     private String userRole;
 
     public User() {}
@@ -31,10 +39,16 @@ public class User {
         this.userName = userName;
         this.userEmail = userEmail;
         this.userPassword = userPassword;
-        this.shipping = "None";
-        this.userImage = "default.png";
-        this.active = false; // Explicitly set to false on creation
         this.userRole = userRole;  
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.shipping == null) this.shipping = "None";
+        if (this.userImage == null)
+            this.userImage = "default.png";
+        if (this.creationdate == null)
+            this.creationdate = LocalDateTime.now();
     }
 
     // Standard Getters and Setters
@@ -50,7 +64,11 @@ public class User {
     public String getUserPassword() { return userPassword; }
     public void setUserPassword(String userPassword) { this.userPassword = userPassword; }
 
-    // Standard naming for boolean getters is "is..."
+    public LocalDateTime getCreationdate() { return creationdate; }
+
+    public LocalDateTime getLastactive() { return lastactive; }
+    public void setLastactive(LocalDateTime currentime) { this.lastactive = currentime; } 
+
     public boolean isActive() {
         return active;
     }

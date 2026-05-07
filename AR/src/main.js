@@ -5,7 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 /* =========================
    CONFIG
 ========================= */
-const address = "192.168.1.10";
+const address = "192.168.1.3";
 
 /* =========================
    AUTH / URL PARAMS
@@ -87,6 +87,141 @@ function hideLoading() {
   setTimeout(() => {
     loadingScreen.style.display = "none";
   }, 350);
+}
+
+const viewerOverlay = document.createElement("div");
+
+viewerOverlay.style.cssText = `
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.75);
+backdrop-filter:blur(10px);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:1000000;
+`;
+
+viewerOverlay.innerHTML = `
+<div style="
+  width:75vw;
+  height:75vh;
+  background:#111;
+  border-radius:20px;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="color:white;margin:0;">3D Model Viewer</h2>
+    <button id="closeViewerBtn" style="
+      padding:8px 14px;
+      border:none;
+      border-radius:10px;
+      background:#ff4d6d;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    ">X</button>
+  </div>
+
+  <model-viewer
+    id="modelViewer"
+    style="width:100%;height:100%;background:#000;border-radius:12px;"
+    camera-controls
+    auto-rotate
+  ></model-viewer>
+
+</div>
+`;
+
+document.body.appendChild(viewerOverlay);
+
+function showXRUnsupportedPopup() {
+  const overlay = document.createElement("div");
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999999;
+    font-family:Arial;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:#111;
+      padding:30px;
+      border-radius:16px;
+      text-align:center;
+      color:white;
+      width:min(400px,90vw);
+      border:1px solid rgba(255,255,255,0.1);
+    ">
+      <h2 style="margin-bottom:10px;">WebXR Not Supported</h2>
+      <p style="opacity:0.8; margin-bottom:20px;">
+        Your device does not support AR mode.  
+        You can still view the 3D model.
+      </p>
+
+      <div style="display:flex;justify-content:center;gap:10px;">
+        <button id="goBackBtn" style="
+          padding:10px 16px;
+          border:none;
+          border-radius:10px;
+          cursor:pointer;
+          background:#00ffff;
+          color:#000;
+          font-weight:bold;
+        ">Go Back</button>
+
+        <button id="show3dBtn" style="
+          padding:10px 16px;
+          border:none;
+          border-radius:10px;
+          cursor:pointer;
+          background:#444;
+          color:white;
+          font-weight:bold;
+        ">View 3D</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const goBackBtn = overlay.querySelector("#goBackBtn");
+  const show3dBtn = overlay.querySelector("#show3dBtn");
+
+  goBackBtn.onclick = () => {
+    window.location.href = `http://${address}:5173/shop`;
+  };
+
+  show3dBtn.onclick = () => {
+    overlay.remove();
+
+    modelViewer.src = productData.p3DModel;
+    viewerOverlay.style.display = "flex";
+  };
+}
+
+const closeViewerBtn = document.getElementById("closeViewerBtn");
+const modelViewer = document.getElementById("modelViewer");
+
+closeViewerBtn.onclick = () => {
+    window.location.href = `http://${address}:5173/shop`;
+  };
+
+async function checkWebXR() {
+  const supported = await navigator.xr?.isSessionSupported?.("immersive-ar");
+
+  return supported;
 }
 /* =========================
    STATE
@@ -445,16 +580,24 @@ async function loadProduct(id = currentProductId) {
     loader.load(
       modelUrl,
 
-      // SUCCESS
       (gltf) => {
-        productModelTemplate = gltf.scene;
+      productModelTemplate = gltf.scene;
 
-        setLoading(100, "Ready");
+      setLoading(100, "Ready");
 
-        setTimeout(() => {
-          hideLoading();
-        }, 400);
-      },
+      setTimeout(() => {
+        hideLoading();
+
+        if (!navigator.xr) {
+          showXRUnsupportedPopup();
+        } else {
+          navigator.xr.isSessionSupported("immersive-ar").then(supported => {
+            if (!supported) showXRUnsupportedPopup();
+          });
+        }
+
+      }, 400);
+    },
 
       // PROGRESS
       (xhr) => {
@@ -1006,5 +1149,8 @@ addEventListener("resize", () => {
 /* =========================
    INIT
 ========================= */
-fetchProducts();
-loadProduct(currentProductId);
+(async () => {
+  const ok = await checkWebXR();
+  fetchProducts();
+  loadProduct(currentProductId);
+})();

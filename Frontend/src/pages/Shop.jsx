@@ -6,13 +6,15 @@ import {
   ChevronDown,
   Star
 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 import styles from './Shop.module.css';
-
-// backend ip
-const address = "192.168.1.6";
+import { API, address } from "../api";
 
 const Shop = () => {
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
 
@@ -27,11 +29,10 @@ const Shop = () => {
     useState(false);
 
   const [selectedRoom, setSelectedRoom] =
-    useState('All Rooms');
+    useState('Standard');
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  const [discounts, setDiscounts] = useState([]); 
+  const [globalDiscount, setglobalDiscount] = useState(0);
 
   // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = async () => {
@@ -55,7 +56,7 @@ const Shop = () => {
           item &&
           item.pId &&
           item.pName &&
-          item.pPrice !== null
+          item.pFinalPrice !== null
       );
 
       setProducts(cleanProducts);
@@ -82,7 +83,7 @@ const Shop = () => {
 
   const CATEGORIES = ['All', ...dbCategories];
 
-  // ---------------- FILTER ----------------
+  // ---------------- FILTERS ----------------
   const filteredProducts =
     activeCategory === 'All'
       ? products
@@ -92,6 +93,83 @@ const Shop = () => {
               cat?.pCategory === activeCategory
           )
         );
+
+  // sortbyrooms
+// ---------------- SORT FUNCTIONS ----------------
+const sortProducts = (type, list) => {
+  let sorted = [...list];
+
+  switch (type) {
+    case 'Reviews':
+      sorted.sort((a, b) => (b.pRating || 0) - (a.pRating || 0));
+      break;
+
+    case 'Most wished for':
+      sorted.sort((a, b) => (b.pWishes || 0) - (a.pWishes || 0));
+      break;
+
+    case 'Top selling':
+      sorted.sort((a, b) => (b.pSold || 0) - (a.pSold || 0));
+      break;
+
+    case 'Discounts':
+    return list
+      .filter(p => (calctotaldis(p.pDiscount) || 0) > 0)
+      .sort((a, b) => (calctotaldis(b.pDiscount) || 0) - (calctotaldis(a.pDiscount) || 0));
+
+    case 'Standard':
+    default:
+      return list;
+    
+  }
+
+  return sorted;
+};
+
+useEffect(() => {
+  let filtered = [...allProducts];
+
+  // CATEGORY
+  if (activeCategory !== 'All') {
+    filtered = filtered.filter((product) =>
+      (product.categories || []).some(
+        (cat) => cat?.pCategory === activeCategory
+      )
+    );
+  }
+
+  // PRICE FILTER (final price)
+  const min = parseFloat(minPrice);
+  const max = parseFloat(maxPrice);
+
+  if (!isNaN(min)) {
+    filtered = filtered.filter(
+      (p) => Number(p.pFinalPrice) >= min
+    );
+  }
+
+  if (!isNaN(max)) {
+    filtered = filtered.filter(
+      (p) => Number(p.pFinalPrice) <= max
+    );
+  }
+
+  // SORT
+  const sorted = sortProducts(selectedRoom, filtered);
+
+  setProducts(sorted);
+}, [
+  allProducts,
+  activeCategory,
+  selectedRoom,
+  minPrice,
+  maxPrice
+]);
+
+const resetPriceFilter = () => {
+  setMinPrice('');
+  setMaxPrice('');
+};
 
   // ---------------- SEARCH ----------------
   const Search = (value) => {
@@ -112,14 +190,13 @@ const Shop = () => {
     setProducts(filtered);
   };
 
-  const toproductpage = (name, id) => {
-    localStorage.setItem(
-      'selectedProductId',
-      id
-    );
+const toproductpage = (name, id) => {
+  const safeName = encodeURIComponent(name);
 
-    window.location.href = `/product/${name}`;
-  };
+  localStorage.setItem("selectedProductId", id);
+
+  window.location.href = `/product/${safeName}`;
+};
 
   const rating = (product) => {
     const val = Number(product.pRating);
@@ -130,12 +207,119 @@ const Shop = () => {
     return val.toFixed(1);
   };
 
-  const has3DModel = (product) => {
-    return (
-      product.p3DModel &&
-      product.p3DModel !== 'none'
-    );
-  };
+ useEffect(() => {
+    const handleAISearch = (e) => {
+      const { action, type, min, max, query } = e.detail || {};
+      console.log("AI FILTER RECEIVED:", e.detail);
+
+      // =========================
+      // CANCEL / RESET
+      // =========================
+      if (action === "cancel") {
+        setMinPrice('');
+        setMaxPrice('');
+        setActiveCategory('All');
+        setSelectedRoom('Standard');
+        setSearch('');
+        setProducts(allProducts); // Reset the visual grid
+        return;
+      }
+
+      // =========================
+      // PRICE FILTER
+      // =========================
+      if (action === "price") {
+        if (min != null) setMinPrice(min.toString());
+        if (max != null) setMaxPrice(max.toString());
+        
+        // If the AI passed a category with the price (e.g., "cheap sofas")
+        if (type && type.toLowerCase() !== "none") {
+          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === type.toLowerCase());
+          if (matchedCat) setActiveCategory(matchedCat);
+        }
+      }
+
+      // =========================
+      // CATEGORY / SEARCH
+      // =========================
+      if (action === "search" || action === "category") {
+        const searchTerm = type || query;
+        if (searchTerm && searchTerm.toLowerCase() !== "none") {
+          // Check if it matches an exact category first
+          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === searchTerm.toLowerCase());
+          
+          if (matchedCat) {
+            setActiveCategory(matchedCat);
+          } else {
+            // Fallback to text search input
+            setSearch(searchTerm);
+            // Trigger text search manually since it's separate from your main useEffect
+            const filteredSearch = allProducts.filter((product) =>
+              product.pName?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setProducts(filteredSearch);
+          }
+        }
+      }
+
+      // =========================
+      // SORTS
+      // =========================
+      if (action === "top_selling") {
+        setSelectedRoom("Top selling");
+      }
+
+      if (action === "most_wished") {
+        setSelectedRoom("Most wished for");
+      }
+
+      if (action === "most_reviewed") {
+        setSelectedRoom("Reviews");
+      }
+    };
+
+    window.addEventListener("ai-search", handleAISearch);
+
+    return () => {
+      window.removeEventListener("ai-search", handleAISearch);
+    };
+  }, [allProducts, CATEGORIES]);
+
+const fetchDiscounts = async () => {
+  try {
+    const res = await fetch(`http://${address}:8080/api/discounts/active`);
+    const data = await res.json();
+
+    setDiscounts(data || []);
+
+    let total = 0;
+
+    (data || [])
+      .filter(d => d.active && d.productId == null)
+      .forEach(d => {
+        total += d.percentage || 0;
+      });
+
+    // cap at 80%
+    total = Math.min(total, 80);
+
+    setglobalDiscount(total);
+
+  } catch (e) {
+    console.error(e);
+    setDiscounts([]);
+    setglobalDiscount(0);
+  }
+};
+
+const calctotaldis = (productDiscount) => {
+  return Math.min(productDiscount + globalDiscount,80);
+};
+
+useEffect(() => {
+  fetchProducts();
+  fetchDiscounts();
+}, []);
 
   return (
     <div className={styles.shopContainer}>
@@ -194,6 +378,48 @@ const Shop = () => {
                 </li>
               ))}
             </ul>
+            {/* PRICE FILTER */}
+<div className={styles.filterBlock}>
+  <div className={styles.filterHeader}>
+    <h3>Price</h3>
+  </div>
+
+  <div className={styles.priceInputs}>
+    <input
+      type="number"
+      placeholder="Min"
+      value={minPrice}
+      onChange={(e) => setMinPrice(e.target.value)}
+      className={styles.input}
+    />
+
+    <span style={{ color: 'var(--text-secondary)' }}>-</span>
+
+    <input
+      type="number"
+      placeholder="Max"
+      value={maxPrice}
+      onChange={(e) => setMaxPrice(e.target.value)}
+      className={styles.input}
+    />
+  </div>
+
+  <button
+    onClick={resetPriceFilter}
+    style={{
+      marginTop: '10px',
+      width: '100%',
+      padding: '6px',
+      borderRadius: '8px',
+      border: '1px solid var(--border-glass)',
+      background: 'var(--bg-glass)',
+      color: 'var(--text-secondary)',
+      cursor: 'pointer'
+    }}
+  >
+    Reset Price
+  </button>
+</div>
           </div>
         </aside>
 
@@ -262,10 +488,11 @@ const Shop = () => {
                   }
                 >
                   {[
-                    'All Rooms',
-                    'Bedroom',
-                    'Living Room',
-                    'Office'
+                    'Standard',
+                    'Discounts',
+                    'Reviews',
+                    'Most wished for',
+                    'Top selling'
                   ].map((room) => (
                     <button
                       key={room}
@@ -291,6 +518,21 @@ const Shop = () => {
               )}
             </div>
           </div>
+
+          {/* DISCOUNT BANNER */}
+          {discounts.filter(d => !d.productId).length > 0 && (
+            <div className={styles.discountBanner}>
+              {discounts
+                .filter(d => !d.productId)
+                .map((d, i) => (
+                  <div key={i} className={styles.discountCard}>
+                    <Sparkles size={16} />
+                    <span>{d.name}</span>
+                    <b>-{d.percentage}%</b>
+                  </div>
+                ))}
+            </div>
+          )}
 
           {/* PRODUCTS */}
           {loading ? (
@@ -364,10 +606,16 @@ const Shop = () => {
                           }}
                         />
 
+                       {calctotaldis(product.pDiscount) > 0 && (
+                        <div className={styles.discountBadge}>
+                          <Sparkles size={14} />
+                          -{calctotaldis(product.pDiscount)}% 
+                        </div>
+                      )}        
+
+
                         {/* 3D MODEL BADGE */}
-                        {has3DModel(
-                          product
-                        ) && (
+                        {product.pARSupport && (
                           <div
                             className={
                               styles.arBadge
@@ -434,16 +682,23 @@ const Shop = () => {
                           </Link>
                         </h3>
 
-                        <p
-                          className={
-                            styles.price
-                          }
-                        >
-                          {
-                            product.pPrice
-                          }{' '}
-                          DZD
-                        </p>
+                        <div className={styles.priceBlock}>
+                          {calctotaldis(product.pDiscount) > 0 ? (
+                            <>
+                              <span className={styles.finalPrice}>
+                                {product.pFinalPrice} DZD
+                              </span>
+
+                              <span className={styles.oldPrice}>
+                                {product.pPrice} DZD
+                              </span>
+                            </>
+                          ) : (
+                            <span className={styles.finalPrice}>
+                              {product.pFinalPrice} DZD
+                            </span>
+                          )}
+                        </div>
 
                         <div
                           className={

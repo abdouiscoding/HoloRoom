@@ -24,11 +24,13 @@ public class OrdersItem {
 
     @ManyToOne
     @JoinColumn(name = "cart_id")
-    @JsonIgnore // Added to avoid serialization issues with PCart relation
-    private PCart cart; 
+    private PCart cart;
+    
+    @JsonProperty("pCartId")
+    private Long pCartId;
 
     @JsonProperty("price")
-    private BigDecimal price;
+    private float price;
     
     @JsonProperty("Status")
     private String Status;
@@ -47,9 +49,10 @@ public class OrdersItem {
     // Constructors
     public OrdersItem() {}
 
-    public OrdersItem(BigDecimal price, String status, Long userId) {
-        this.price = price;
-        this.Status = status;
+    public OrdersItem(PCart cart, Long userId) {
+        this.cart = cart;
+        this.price = cart.getTotal();
+        this.Status = "Pending";
         this.userId = userId;
         this.orderDate = LocalDateTime.now();
     }
@@ -58,8 +61,8 @@ public class OrdersItem {
     public Long getoItemId() { return oItemId; }
     public void setoItemId(Long oItemId) { this.oItemId = oItemId; }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public float getPrice() { return price; }
+    public void setPrice(float price) { this.price = price; }
 
     public Orders getOrder() { return order; }
     public void setOrder(Orders order) { this.order = order; }

@@ -10,12 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import HoloRoom.Model.PWishlist;
 import HoloRoom.Model.PWishlistItem;
+import HoloRoom.Model.Products;
 import HoloRoom.Repository.PWishlistItemRepository;
 import HoloRoom.Repository.PWishlistRepository;
+import HoloRoom.Repository.ProductsRepository;
 
 @Service
 @Transactional
 public class PWishlistService {
+
+    @Autowired
+    private ProductsRepository productrepo;
 
     @Autowired
     private PWishlistRepository wishlistRepository;
@@ -83,12 +88,22 @@ public class PWishlistService {
 
         wishlist.getWishlistItems().add(newItem);
 
+        Products product = productrepo.findById(productId).orElse(null);
+        product.increasePWishes();
+        productrepo.save(product);
+
         wishlistRepository.save(wishlist);
     }
 
     // -------------------------------------------------
     // REMOVE ITEM (FIXED)
     // -------------------------------------------------
+    public void removebypId(Long pId) {
+        wishlistItemRepository.findAll()
+        .stream()
+        .filter(item -> item.getpId().equals(pId))
+        .forEach(wishlistItemRepository::delete);
+    }
     public void removeItemFromWishlist(Long userId, Long wItemId) {
 
         PWishlist wishlist = wishlistRepository.findByUserId(userId)
@@ -104,6 +119,10 @@ public class PWishlistService {
                 .filter(item -> wItemId.equals(item.getwItemId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        Products product = productrepo.findById(itemToDelete.getpId()).orElse(null);
+        product.decreasePWishes();
+        productrepo.save(product);
 
         // remove from list
         wishlist.getWishlistItems().remove(itemToDelete);

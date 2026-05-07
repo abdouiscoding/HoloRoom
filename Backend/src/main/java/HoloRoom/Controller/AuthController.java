@@ -1,5 +1,6 @@
 package HoloRoom.Controller;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,15 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import HoloRoom.Model.User;
-import HoloRoom.Service.AuthService;
 import HoloRoom.Service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-    @Autowired
-    private AuthService authService;
 
     @Autowired
     private UserService userService;
@@ -81,7 +78,7 @@ public class AuthController {
         }
 
         // 3. Proceed with standard login via AuthService
-        Object result = authService.login(info, userPassword);
+        Object result = userService.login(info, userPassword);
 
         if (result instanceof String && ((String) result).contains(" ")) {
             response.put("success", false);
@@ -89,8 +86,17 @@ public class AuthController {
             return ResponseEntity.status(401).body(response);
         }
 
+        if (!user.isActive()) {
+            response.put("success", false);
+            response.put("message", "account is disabled!");
+            return ResponseEntity.status(401).body(response);
+        }
+
         response.put("success", true);
         response.put("token", result);
+
+        user.setLastactive(LocalDateTime.now());
+        userService.saveUser(user);
 
         return ResponseEntity.ok(response);
     }

@@ -1,16 +1,13 @@
 import { useState, useCallback } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
-
-const address = "192.168.1.6";
+import { API, address } from "../api";
 
 // --- COMPONENTS ---
 
 const SSOButtons = () => (
     <div className="sso">
-        <a className="fa-brands fa-facebook" />
-        <a className="fa-brands fa-x-twitter" />
-        <a className="fa-brands fa-linkedin" />
+        {/*<a className="fa-brands fa-facebook" />*/}
     </div>
 );
 
@@ -26,7 +23,7 @@ const AuthFormForLogin = ({ type, active, title, children, onSubmit }) => (
     <div className={`form ${type} ${active ? "active" : ""}`}>
         <h2>{title}</h2>
         <SSOButtons />
-        <p>or use your email account</p>
+        <p>or use your email account/username</p>
         <form onSubmit={onSubmit}>
             {children}
             <p id="logerror"></p>
@@ -146,11 +143,12 @@ export const LoginPage = () => {
                 localStorage.setItem("userName", userData.userName);
                 localStorage.setItem("shipping", userData.shipping);
                 localStorage.setItem("userImage", userData.userImage);
-                console.log(userData.userImage);
+                localStorage.setItem("role", userData.userRole);
                 localStorage.setItem("loggedin", "true");
 
                 showToast("Login successful", "success");
                 navigate(-1);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
                 localStorage.setItem("token", token);
                 showToast("Login successful", "success");
@@ -349,7 +347,7 @@ export const LoginPage = () => {
                     <input type="text" placeholder="Username" value={userName} onChange={(e) => setUserName(e.target.value)} required />
                     <input type="email" placeholder="Email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
                     <input type="password" placeholder="Password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} required />
-                    <button type="submit">Send Code</button>
+                    <button type="submit">Sign Up</button>
                 </AuthFormForSignup>
 
                 <Hero

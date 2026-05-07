@@ -13,9 +13,7 @@ public class PSizeColorStockController {
 
     @Autowired
     private PSizeColorStockService pscsService;
-
-    // Get all variants for a specific product
-    // GET http://localhost:8080/api/stock/product/{productId}
+      
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<PSizeColorStock>> getProductVariants(@PathVariable Long productId) {
         List<PSizeColorStock> variants = pscsService.getProductSizeColorStocks(productId);

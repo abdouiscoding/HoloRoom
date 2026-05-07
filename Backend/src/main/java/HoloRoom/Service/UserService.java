@@ -15,7 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import java.util.Map;
-
+import java.util.Optional;
 import java.util.Random;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 
 import org.springframework.mail.javamail.JavaMailSender;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import org.springframework.stereotype.Service;
 
@@ -41,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 import HoloRoom.Model.User;
 
 import HoloRoom.Repository.UserRepository;
+import HoloRoom.Security.JwtUtil;
 
 
 
@@ -51,24 +51,21 @@ public class UserService {
 
 
     @Autowired
-
     private UserRepository userrepo;
 
 
 
     @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
-    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    UserRepository userRepository;
 
 
 
     @Autowired
-
     private JavaMailSender mailSender;
-
-    String ip = "192.168.1.6";
-
-
 
     private final Map<String, User> pendingUsers = new ConcurrentHashMap<>();
 
@@ -106,9 +103,17 @@ public class UserService {
 
 
     public void saveUser(User user) {
+    if (user.getUserPassword() != null &&
+        !user.getUserPassword().startsWith("$2a$")) {
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
+    }
+    userrepo.save(user);
+}
 
+    public void createUser(User user) {
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
+        applyDefaultImage(user);
         userrepo.save(user);
-
     }
 
 
@@ -151,6 +156,35 @@ public class UserService {
 
 
 
+        @Autowired
+    private JwtUtil jwtUtil;
+    
+    // LOGIN
+    public Object login(String info, String password) {
+
+    info = info.trim();
+    password = password.trim();
+
+    Optional<User> userOpt =
+        userRepository.findByUserEmail(info);
+
+    if (userOpt.isEmpty()) {
+        userOpt = userRepository.findByUserName(info);
+    }
+
+    if (userOpt.isEmpty()) {
+        return "Invalid password or email/username";
+    }
+    User user = userOpt.get();
+
+    if (!passwordEncoder.matches(password, user.getUserPassword())) {
+        return "Invalid password or email/username";
+    }
+
+    return jwtUtil.generateToken(user);
+}
+
+
    
 
 
@@ -164,7 +198,8 @@ public class UserService {
 
 
     public void sendRegisterCode(User user) {
-
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getUserEmail());
 
 
     String code = String.valueOf(100000 + new Random().nextInt(900000));
@@ -173,21 +208,14 @@ public class UserService {
 
     registrationCodes.put(user.getUserEmail(), code);
 
-
-
-    SimpleMailMessage message = new SimpleMailMessage();
-
-
-
-    message.setTo(user.getUserEmail());
-
     message.setSubject("HoloRoom Registration Code");
 
+    String username = user.getUserName(); 
 
 
     message.setText(
 
-        "Hello,\n\n" +
+        "Hello, "+username+" \n\n" +
 
         "Your registration code is:\n\n" +
 
@@ -209,8 +237,10 @@ public class UserService {
 
     public String startRegistration(User user) {
 
-
-
+    if (userrepo.findByUserName(user.getUserName()).isPresent()) {
+            return "Username already exists";
+        }
+    
     if (userrepo.findByUserEmail(user.getUserEmail()).isPresent()) {
 
         return "Email already exists";
@@ -319,12 +349,14 @@ public class UserService {
 
     String link;
 
+    String username = user.getUserName(); 
+
     if ("email".equals(type)) {
-        link = "http://" + ip + ":5173/changeemail";
+        link = "http://" + getCurrentIp() + ":5173/changeemail?email=" + user.getUserEmail();
         message.setSubject("HoloRoom Email Change Verification");
 
         message.setText(
-            "Hello,\n\n" +
+            "Hello, "+username+"\n\n" +
             "Your EMAIL change code is:\n\n" +
             code + "\n\n" +
             "This code expires in 10 minutes.\n\n" +
@@ -333,11 +365,11 @@ public class UserService {
         );
 
     } else {
-        link = "http://" + ip + ":5173/changepassword";
+        link = "http://" + getCurrentIp() + ":5173/changepassword?email=" + user.getUserEmail();
         message.setSubject("HoloRoom Password Change Verification");
 
         message.setText(
-            "Hello,\n\n" +
+            "Hello, "+username+"\n\n" +
             "Your PASSWORD change code is:\n\n" +
             code + "\n\n" +
             "This code expires in 10 minutes.\n\n" +
@@ -360,16 +392,13 @@ public class UserService {
 
     if (entry == null) return false;
 
-    // ⛔ EXPIRED
     if (System.currentTimeMillis() > entry.expiresAt) {
         userCodes.remove(type);
         return false;
     }
 
-    // ❌ WRONG CODE
     if (!entry.code.equals(code)) return false;
 
-    // ✅ SUCCESS → remove it
     userCodes.remove(type);
 
     return true;
@@ -421,11 +450,18 @@ public User buildUserImage(User user) {
         return null;
 
     if (user.getUserImage() != null &&
-        !user.getUserImage().startsWith("http")) {
+        !user.getUserImage().equals("null")) {
+
+        String image = user.getUserImage();
+
+        // keep only filename
+        if (image.contains("/")) {
+            image = image.substring(image.lastIndexOf("/") + 1);
+        }
 
         String encodedFileName = URLEncoder.encode(
-        user.getUserImage(),
-        StandardCharsets.UTF_8
+            image,
+            StandardCharsets.UTF_8
         ).replace("+", "%20");
 
         user.setUserImage(

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import HoloRoom.Model.Orders;
 import HoloRoom.Model.OrdersItem;
+import HoloRoom.Repository.OrdersRepository;
 import HoloRoom.Service.OrdersItemService;
 import HoloRoom.Service.OrdersService;
 
@@ -51,11 +52,12 @@ public class OrdersController {
         return new ResponseEntity<>(orderItems, HttpStatus.OK);
     }
 
-    // POST create order item
-    @PostMapping("/create")
-    public ResponseEntity<OrdersItem> createOrderItem(@RequestBody OrdersItem orderItem) {
+    // POST create order item /add it to user list
+    @PostMapping("/create/{userId}")
+    public ResponseEntity<OrdersItem> createOrderItem(@PathVariable Long userId, @RequestBody OrdersItem orderItem) {
         try {
             OrdersItem savedOrderItem = ordersItemService.saveOrderItem(orderItem);
+            ordersService.addorderitemtolist(userId,savedOrderItem);
             return new ResponseEntity<>(savedOrderItem, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -63,7 +65,7 @@ public class OrdersController {
     }
 
     // PUT update order item status
-    @PutMapping("/update/{orderItemId}/status")
+    @PutMapping("/update/status/{orderItemId}")
     public ResponseEntity<OrdersItem> updateOrderItemStatus(@PathVariable Long orderItemId, @RequestBody UpdateStatusRequest request) {
         try {
             OrdersItem updatedOrderItem = ordersItemService.updateOrderItemStatus(orderItemId, request.getStatus());

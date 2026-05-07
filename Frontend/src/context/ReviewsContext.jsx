@@ -8,9 +8,7 @@ import React, {
   useCallback
 } from 'react';
 import { Navigate } from 'react-router-dom';
-
-// the ip address
-const address = "192.168.1.6"
+import { API, address } from "../api";
 
 const ReviewsContext = createContext();
 

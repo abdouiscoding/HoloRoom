@@ -12,9 +12,7 @@ import {
 import styles from './ProductDetail.module.css';
 import { useReviews } from '../context/ReviewsContext';
 import ReviewModal from '../components/product/ReviewModal';
-
-// the ip address
-const address = "192.168.1.6"
+import { API, address } from "../api";
 
 
 const ProductDetail = () => {
@@ -33,13 +31,35 @@ const ProductDetail = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupTitle, setPopupTitle] = useState('');
   const [popupMessage, setPopupMessage] = useState('');
-  const [popupMode, setPopupMode] = useState('ok'); // ok | login | remove
+  const [popupMode, setPopupMode] = useState('ok');
+  const [globalDiscount, setglobalDiscount] = useState(0);
 
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { getReviews, getAverageRating } = useReviews();
 
+  const fetchDiscounts = async () => {
+  try {
+    const res = await fetch(`http://${address}:8080/api/discounts/active`);
+    const data = await res.json();
+
+    let total = 0;
+
+    (data || [])
+      .filter(d => d.active && d.productId == null)
+      .forEach(d => {
+        total += d.percentage || 0;
+      });
+
+    total = Math.min(total, 80);
+
+    setglobalDiscount(total);
+  } catch (e) {
+    console.error(e);
+    setglobalDiscount(0);
+  }
+};
   // ---------------- PRODUCT ----------------
   useEffect(() => {
     const fetchProductData = async () => {
@@ -65,6 +85,7 @@ const ProductDetail = () => {
     };
 
     fetchProductData();
+    fetchDiscounts();
   }, [id]);
 
   // ---------------- CHECK WISHLIST ----------------
@@ -315,10 +336,7 @@ const ProductDetail = () => {
     variants[activeVariant];
 
   const stock =
-    selectedVariant?.productStock ??
     selectedVariant?.pStock ??
-    selectedVariant?.stock ??
-    selectedVariant?.quantity ??
     0;
 
   const images =
@@ -328,6 +346,8 @@ const ProductDetail = () => {
         (img) => img.pImageUrl
       )
       : ['/no-image.png'];
+
+  const hasAR = !!product?.pARSupport;
 
   // ---------------- REVIEWS ----------------
   const reviews =
@@ -419,7 +439,6 @@ const ProductDetail = () => {
 
       const text = await response.text();
 
-      // 🔥 SESSION EXPIRED HANDLING (POST)
       if (response.status === 401 || response.status === 403) {
         openPopup(
           'Session Expired',
@@ -475,6 +494,12 @@ const openAR = () => {
     `&productId=${encodeURIComponent(productId)}`;
 
   window.location.href = arUrl;
+};
+
+
+
+const calctotaldis = (productDiscount) => {
+  return Math.min((productDiscount || 0) + globalDiscount, 80);
 };
 
   return (
@@ -637,7 +662,21 @@ const openAR = () => {
           </div>
 
           <div className={styles.price}>
-            {product.pPrice} DZD
+            {calctotaldis(product.pDiscount) > 0 ? (
+              <>
+                <span className={styles.finalPrice}>
+                  {product.pFinalPrice} DZD
+                </span>
+
+                <span className={styles.oldPrice}>
+                  {product.pPrice} DZD
+                </span>
+              </>
+            ) : (
+              <span className={styles.finalPrice}>
+                {product.pFinalPrice} DZD
+              </span>
+            )}
           </div>
 
           <p
@@ -655,12 +694,7 @@ const openAR = () => {
               }
             >
               <h4>
-                Color:{' '}
-                {
-                  variants[
-                    activeVariant
-                  ]?.pColor
-                }
+                Colors:{' '}
               </h4>
 
               <div
@@ -726,11 +760,16 @@ const openAR = () => {
 
             <button
             className="btn-secondary flex-center gap-2"
-            style={{ flex: 1 }}
-            onClick={openAR}
-            >
+            style={{
+              flex: 1,
+              opacity: hasAR ? 1 : 0.5,
+              cursor: hasAR ? "pointer" : "not-allowed"
+            }}
+            onClick={hasAR ? openAR : undefined}
+            disabled={!hasAR}
+          >
             <View size={20} />
-            Preview in AR
+            {hasAR ? "Preview in AR" : "Coming Soon"}
           </button>
           </div>
 
@@ -743,25 +782,8 @@ const openAR = () => {
 
             <ul>
               <li>
-                <Check
-                  size={16}
-                  className={
-                    styles.checkIcon
-                  }
-                />
                 Brand:{' '}
                 {product.pBrand}
-              </li>
-
-              <li>
-                <Check
-                  size={16}
-                  className={
-                    styles.checkIcon
-                  }
-                />
-                Status:{' '}
-                {product.pStatus}
               </li>
             </ul>
           </div>

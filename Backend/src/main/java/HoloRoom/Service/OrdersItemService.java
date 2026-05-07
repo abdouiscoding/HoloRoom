@@ -2,7 +2,10 @@ package HoloRoom.Service;
 
 import HoloRoom.Model.OrdersItem;
 import HoloRoom.Model.PCart;
+import HoloRoom.Model.Products;
 import HoloRoom.Repository.OrdersItemRepository;
+import HoloRoom.Repository.ProductsRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -10,6 +13,9 @@ import java.util.Optional;
 
 @Service
 public class OrdersItemService {
+
+    @Autowired
+    private ProductsRepository productsRepository;
 
     @Autowired
     private OrdersItemRepository orderItemRepository;
@@ -23,7 +29,16 @@ public class OrdersItemService {
     }
 
     public OrdersItem saveOrderItem(OrdersItem orderItem) {
-        return orderItemRepository.save(orderItem);
+
+    orderItem.getCart()
+        .getItems()
+        .forEach(item -> {
+            Products product = item.getProduct();
+            product.addtoPSold(item.getQuantity());
+            productsRepository.save(product); // persist change
+        });
+
+    return orderItemRepository.save(orderItem);
     }
 
     public void deleteOrderItem(Long id) {

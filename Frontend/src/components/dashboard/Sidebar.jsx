@@ -1,53 +1,75 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingBag, Settings, Star, Box, Ticket } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingBag,
+  Star,
+  Box,
+  Ticket,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-const menuConfig = {
-  admin: [
-    { name: 'Overview', path: 'overview', icon: LayoutDashboard },
-    { name: 'Users', path: 'users', icon: Users },
-    { name: 'Settings', path: 'settings', icon: Settings },
-  ],
-  productManager: [
-    { name: 'Products', path: 'products', icon: ShoppingBag },
-    { name: 'AR Support', path: 'ar', icon: Box },
-  ],
-  marketingManager: [
-    { name: 'Discounts', path: 'marketing', icon: Ticket },
-    { name: 'Featured', path: 'featured', icon: Star },
-  ]
-};
+const allMenuItems = [
+  { id: 'overview', name: 'Overview', path: 'overview', icon: LayoutDashboard },
+  { id: 'users', name: 'Users', path: 'users', icon: Users },
+  { id: 'products', name: 'Products', path: 'products', icon: ShoppingBag },
+  { id: 'ar', name: 'AR Support', path: 'ar', icon: Box },
+  { id: 'marketing', name: 'Discounts', path: 'marketing', icon: Ticket },
+  { id: 'featured', name: 'Featured', path: 'featured', icon: Star },
+];
 
-const Sidebar = ({ activeRole }) => {
-  const currentMenu = menuConfig[activeRole] || [];
+const Sidebar = ({ role, permissions = [] }) => {
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const currentMenu = allMenuItems.filter(item =>
+    permissions.includes(item.id)
+  );
 
   return (
-    <aside className={styles.sidebarContainer}>
+    <aside
+      className={`${styles.sidebarContainer} ${
+        collapsed ? styles.collapsed : ''
+      }`}
+    >
+      {/* HEADER */}
       <div className={styles.logoArea}>
-        <Box size={32} className={styles.logoIcon} strokeWidth={2.5} />
-        <h2 className={styles.logoText}>HoloRoom</h2>
+        <div
+          className={styles.logoLeft}
+          onClick={() => navigate('/')}
+        >
+          <Box size={30} className={styles.logoIcon} />
+          {!collapsed && <h3 className={styles.logoText}>HoloRoom</h3>}
+        </div>
+
       </div>
 
+      {/* COLLAPSE BUTTON */}
+        <button
+          className={styles.navItem}
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+
+      {/* NAV */}
       <nav className={styles.navMenu}>
         {currentMenu.map((item) => (
           <NavLink
             key={item.path}
             to={`/dashboard/${item.path}`}
-            className={({ isActive }) => 
+            className={({ isActive }) =>
               `${styles.navItem} ${isActive ? styles.active : ''}`
             }
           >
             <item.icon size={20} className={styles.navIcon} />
-            {item.name}
+            {!collapsed && item.name}
           </NavLink>
         ))}
       </nav>
-      
-      <div className={styles.helpCenter}>
-          <p>Need help?</p>
-          <button>Help Center</button>
-      </div>
     </aside>
   );
 };

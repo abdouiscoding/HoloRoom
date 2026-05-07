@@ -26,6 +26,9 @@ public class PCartItem {
     @JoinColumn(name = "product_id")
     private Products product;
 
+    @JsonProperty("pId")
+    private long pId;
+
     @ManyToOne
     @JoinColumn(name = "cart_id")
     @JsonBackReference
@@ -34,6 +37,9 @@ public class PCartItem {
     @ManyToOne
     @JoinColumn(name = "pscs_Id")
     private PSizeColorStock ProductSizeColorStock;
+
+    @JsonProperty("name")
+    private String name;
 
     @JsonProperty("image")
     private String image;
@@ -47,23 +53,33 @@ public class PCartItem {
     @JsonProperty("color")
     private String color;
 
+    @JsonProperty("ARSupport")
+    private boolean ARSupport;
+
     @JsonProperty("stock")
     private int stock;
 
     @JsonProperty("price")
-    private BigDecimal price;
+    private float price;
+
+    @JsonProperty("subtotal")
+    private float subtotal;
 
     public PCartItem() {}
 
-    public PCartItem(Products product, PSizeColorStock pscs, String image, String size, String color,int stock, BigDecimal price, int quantity) {
+    public PCartItem(Products product, PSizeColorStock pscs, String image, String size, String color,int stock, float price, int quantity, float subtotal) {
         this.product = product;
+        this.pId = product.getProductId();
+        this.name = product.getProductName();
         this.ProductSizeColorStock = pscs;
         this.image = image;
         this.size = size;
         this.color = color;
         this.price = price;
         this.stock = stock;
+        this.ARSupport = product.isProductARSupport();
         this.quantity = quantity;
+        this.subtotal = subtotal;
     }
 
     @JsonProperty("cartItemId")
@@ -79,6 +95,9 @@ public class PCartItem {
         return ProductSizeColorStock;
     }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
     public String getImage() { return image; }
     public void setImage(String pImageId) { this.image = pImageId; }
 
@@ -91,14 +110,21 @@ public class PCartItem {
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public float getPrice() { return price; }
+    public void setPrice(float price) { this.price = price; }
 
     public PCart getCart() { return cart; }
     public void setCart(PCart cart) { this.cart = cart; }
 
+    public boolean isARSupport() { return ARSupport; }
+    public void setARSupport(boolean ARSupport) { this.ARSupport = ARSupport; }
+
     @JsonProperty("quantity")
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    @JsonProperty("subtotal")
+    public float getSubtotal() { return subtotal; }
+    public void setSubtotal(float subtotal) { this.subtotal = subtotal; }
 
 }

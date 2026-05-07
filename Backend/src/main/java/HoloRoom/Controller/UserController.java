@@ -7,9 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import HoloRoom.Model.User;
+import HoloRoom.Repository.UserRepository;
 import HoloRoom.Service.UserService;
 
 @RestController
@@ -30,7 +32,10 @@ public class UserController {
     private UserService userService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserRepository userrepo;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     // =====================================
     // GET ALL USERS
@@ -59,6 +64,16 @@ public class UserController {
     // =====================================
     // GET USER BY EMAIL OR NAME
     // =====================================
+    @GetMapping("/infoexists{info}")
+    public ResponseEntity<Boolean> infoexists(@PathVariable String info) {
+
+        User user = userService.getUserByNameOrEmail(info);
+
+        if (user == null)
+            return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(true);
+    }
 
     @GetMapping("/getbyinfo/{info}")
     public ResponseEntity<User> getByInfo(@PathVariable String info) {
@@ -78,13 +93,7 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<User> createUser(@RequestBody User user) {
 
-        userService.applyDefaultImage(user);
-
-        user.setUserPassword(
-            passwordEncoder.encode(user.getUserPassword())
-        );
-
-        userService.saveUser(user);
+        userService.createUser(user);
 
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
@@ -125,25 +134,35 @@ public class UserController {
     ));
     }
 
-    // =====================================
-    // FULL UPDATE
-    // =====================================
-
-    @PutMapping("/update/{id}")
-    public ResponseEntity<User> updateUser(
-            @PathVariable Long id,
-            @RequestBody User details) {
-
-        User user = userService.getUserById(id);
-
-        if (user == null)
+    @PatchMapping("/patch/Role/{id}")
+    public ResponseEntity<User> updateRole(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> body
+        ) {
+       
+        User user = userrepo.findById(id).orElse(null);
+        if (user == null){
             return ResponseEntity.notFound().build();
+        }
 
-        user.setUserName(details.getUserName());
-        user.setUserEmail(details.getUserEmail());
-        user.setShipping(details.getShipping());
-        user.setUserRole(details.getUserRole());
+        user.setUserRole(body.get("userRole"));
+        userService.saveUser(user);
 
+
+
+        return ResponseEntity.ok(user);
+
+    }
+
+    @PatchMapping("/patch/status/{id}")
+    public ResponseEntity<User> updateStatus(
+        @PathVariable Long id,
+        @RequestBody Map<String, Boolean> body
+    ) {
+        User user = userrepo.findById(id).orElse(null);
+        if (user == null) return ResponseEntity.notFound().build();
+
+        user.setActive(body.get("active"));
         userService.saveUser(user);
 
         return ResponseEntity.ok(user);

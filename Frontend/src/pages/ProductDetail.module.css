@@ -365,3 +365,14 @@
     margin-top: 1rem;
   }
 }
+.finalPrice {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color:#ff4d4d;
+  opacity: 0.5;
+  font-size: 20px;
+}

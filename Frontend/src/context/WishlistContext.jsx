@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-// the ip address
-const address = "192.168.1.6"
+import { API, address } from "../api";
 
 const WishlistContext = createContext();
 
@@ -50,7 +48,7 @@ export const WishlistProvider = ({ children }) => {
               wItemId: item.wItemId,
               id: p.pId,
               name: p.pName,
-              price: p.pPrice,
+              price: p.pFinalPrice,
               image: p.images?.[0]?.pImageUrl || ''
             };
           } catch {

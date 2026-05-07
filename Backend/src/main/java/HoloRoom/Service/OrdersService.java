@@ -35,8 +35,14 @@ public class OrdersService {
         ordersRepository.deleteById(id);
     }
 
-    public List<Orders> getOrdersByUserId(Long userId) {
+    public Orders getOrdersByUserId(Long userId) {
         return ordersRepository.findByUserId(userId);
+    }
+
+    public void addorderitemtolist(Long userId, OrdersItem item) {
+        Orders orderlist = ordersRepository.findByUserId(userId);
+        orderlist.getOrderItems().add(item);
+        saveOrders(orderlist);
     }
 
 }

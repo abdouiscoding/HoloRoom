@@ -21,35 +21,7 @@ public class AuthService {
 
     @Autowired
     private JwtUtil jwtUtil;
-
-    // REGISTER
-    public Object register(User user) {
-
-        if (userRepository.findByUserName(user.getUserName()).isPresent()) {
-            return "Username already exists";
-        }
-
-        if (userRepository.findByUserEmail(user.getUserEmail()).isPresent()) {
-            return "An account with that email already exists";
-        }
-
-        if (user.getUserName().length()<4){
-            return "Username is too short";
-        }
-
-        if (user.getUserPassword().length()<8){
-            return "Password is too short";
-        }
-
-        // hash password
-        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
-        user.setUserRole("USER");
-
-        userRepository.save(user);
-
-        return "User registered successfully";
-    }
-
+    
     // LOGIN
     public Object login(String info, String password) {
 
@@ -66,8 +38,10 @@ public class AuthService {
     if (userOpt.isEmpty()) {
         return "Invalid password or email/username";
     }
-
     User user = userOpt.get();
+    System.out.println("expecting"+user.getUserName()+"and got from user"+info);
+    System.out.println("expecting"+user.getUserPassword()+"and got from user"+password+"encoded into:"+passwordEncoder.encode(password));
+    System.out.println(passwordEncoder.matches(password, user.getUserPassword()));
 
     if (!passwordEncoder.matches(password, user.getUserPassword())) {
         return "Invalid password or email/username";

@@ -1,20 +1,31 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { API, address } from "../../api";
 
-const API = "http://192.168.1.6:8080";
+const ADDRESS = address;
 
 const ChangeEmail = () => {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const userId = localStorage.getItem("userId");
+
+  const location = useLocation();
+  
+  const queryParams = new URLSearchParams(location.search);
+  const info = queryParams.get("email");
 
   const updateEmail = async () => {
   const token = localStorage.getItem("token");
+  const userDetailsResponse = await fetch(`${API}/api/users/getbyinfo/${info}`, {
+                method: "GET"});
+      const userData = await userDetailsResponse.json();
+      localStorage.setItem("userId", userData.userId);
+      const userId = localStorage.getItem("userId");
 
   const res = await fetch(`${API}/api/users/update/email/${userId}`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, 
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       userEmail: email,
@@ -24,10 +35,10 @@ const ChangeEmail = () => {
 
   if (res.ok) {
     localStorage.setItem("userEmail", email);
-    window.location.href = "/profile";
+    window.location.href = "/login";
   } else {
     const text = await res.text();
-    console.log(text); // 🔥 debug
+    console.log(text); 
     alert("Invalid code");
   }
 };

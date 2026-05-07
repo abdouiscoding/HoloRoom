@@ -1,7 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-
-// the ip address
-const address = "192.168.1.6"
+import { API, address } from "../api";
 
 const CartContext = createContext();
 
@@ -37,6 +35,7 @@ export const CartProvider = ({ children }) => {
 
       const data = await res.json();
       setCart(data);
+      localStorage.setItem("cartId", data.pCartId);
 
     } catch (err) {
       console.error("Cart fetch error:", err);

@@ -4,9 +4,8 @@ import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
 import { Trash2, Eye, EyeOff, Camera } from "lucide-react";
 import { userData } from "three/tsl";
-
-// ip address
-const API = "http://192.168.1.6:8080";
+import { NoToneMapping } from "three";
+import { API, address } from "../api";
 
 const Logout = () => {
   localStorage.removeItem("token");
@@ -52,6 +51,17 @@ const ProfilePage = () => {
   const [newplace, setNewplace] = useState("");
   const [newaddress, setNewaddress] = useState("");
   const [newShipping, setNewShipping] = useState("");
+  const [isUser, setIsUser] = useState(false);
+
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+
+    if (role === "USER" || role === null) {
+      setIsUser(true);
+    } else {
+      setIsUser(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchWishlist();
@@ -220,6 +230,20 @@ const updateimage = async (file) => {
   }
 };
 
+const role = localStorage.getItem("role")
+//dashboard button
+const dashboardbtn = () => {
+  if (role == "ADMIN") {
+    navigate("/dashboard");
+  }
+  if (role == "PRODUCT_MANAGER") {
+    navigate("/dashboard");
+  }
+  if (role == "MARKETING_MANAGER") {
+    navigate("/dahsboard");
+  }
+}
+
   return (
     <div className={styles.profileContainer}>
       {/* HEADER */}
@@ -260,6 +284,15 @@ const updateimage = async (file) => {
               {localStorage.getItem("userEmail")}
             </p>
           </div>
+
+          {!isUser && (
+            <button 
+              className="btn-primary"
+              onClick={dashboardbtn}
+            >
+              Dashboard
+            </button>
+          )}
 
           <div className={styles.profileActions}>
             <button className="btn-secondary" onClick={Logout}>
