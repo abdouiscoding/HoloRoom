@@ -41,7 +41,7 @@ const ProductDetail = () => {
 
   const fetchDiscounts = async () => {
   try {
-    const res = await fetch(`${API}/api/discounts/active`);
+    const res = await myFetch(`${API}/api/discounts/active`);
     const data = await res.json();
 
     let total = 0;
@@ -69,7 +69,7 @@ const ProductDetail = () => {
         const productId =
           localStorage.getItem('selectedProductId') || id;
 
-        const response = await fetch(
+        const response = await myFetch(
           `${API}/api/products/get/${productId}`
         );
 
@@ -99,7 +99,7 @@ const ProductDetail = () => {
 
         if (!userId || !token) return;
 
-        const response = await fetch(
+        const response = await myFetch(
           `${API}/api/wishlist/get/${userId}`,
           {
             headers: {
@@ -186,7 +186,7 @@ const ProductDetail = () => {
 
       setWishlistLoading(true);
 
-      const response = await fetch(
+      const response = await myFetch(
         `${API}/api/wishlist/add/${userId}/${pid}`,
         {
           method: 'POST',
@@ -260,7 +260,7 @@ const ProductDetail = () => {
       }
 
       // get wishlist first
-      const getRes = await fetch(
+      const getRes = await myFetch(
         `${API}/api/wishlist/get/${userId}`,
         {
           headers: {
@@ -284,7 +284,7 @@ const ProductDetail = () => {
         return;
       }
 
-      const removeRes = await fetch(
+      const removeRes = await myFetch(
         `${API}/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
@@ -386,7 +386,7 @@ const ProductDetail = () => {
       }
 
       // ---------------- GET CART ----------------
-      const cartRes = await fetch(
+      const cartRes = await myFetch(
         `${API}/api/cart/getbyuser/${userId}`,
         {
           method: 'GET',
@@ -425,7 +425,7 @@ const ProductDetail = () => {
         quantity: '1'
       };
 
-      const response = await fetch(
+      const response = await myFetch(
         `${API}/api/cart/additem/${cartId}`,
         {
           method: 'POST',

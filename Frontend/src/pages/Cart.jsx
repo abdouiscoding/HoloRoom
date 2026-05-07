@@ -12,7 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import styles from "./Cart.module.css";
 import { useCart } from "../context/CartContext";
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const UPLOADS_BASE = `${API}/api/uploads/images/`;
 
@@ -50,7 +50,7 @@ const Cart = () => {
   const cartId = localStorage.getItem("cartId");
 
   const Order = async () => {
-  const res = await fetch (`${API}/api/orders/create/${userId}`, {
+  const res = await myFetch (`${API}/api/orders/create/${userId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -103,7 +103,7 @@ const Cart = () => {
 
     for (let item of cart.items) {
       try {
-        const res = await fetch(
+        const res = await myFetch(
           `${API}/api/cartitem/get/colors/${item.cartItemId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -153,7 +153,7 @@ const Cart = () => {
      CLEAR CART
   ========================= */
   const clearCart = async () => {
-    await fetch(`${API}/api/cart/delete/${cartId}`, {
+    await myFetch(`${API}/api/cart/delete/${cartId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -169,7 +169,7 @@ const Cart = () => {
   const updateQuantity = async (item, newQty) => {
     try {
       // check stock first
-      const stockRes = await fetch(
+      const stockRes = await myFetch(
         `${API}/api/cartitem/get/stock/${item.cartItemId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -185,7 +185,7 @@ const Cart = () => {
 
       if (newQty < 1) return;
 
-      await fetch(
+      await myFetch(
         `${API}/api/cartitem/update/${item.cartItemId}`,
         {
           method: "PUT",
@@ -212,7 +212,7 @@ const Cart = () => {
      UPDATE COLOR
   ========================= */
   const updateColor = async (item, color) => {
-    await fetch(
+    await myFetch(
       `${API}/api/cartitem/update/${item.cartItemId}`,
       {
         method: "PUT",

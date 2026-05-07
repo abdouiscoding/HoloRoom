@@ -108,7 +108,7 @@ const ProfilePage = () => {
 // ===============================
 const updateusername = async () => {
   try {
-    const res = await fetch(`${API}/api/users/update/name/${userId}`, {
+    const res = await myFetch(`${API}/api/users/update/name/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -140,7 +140,7 @@ const updateemail = async () => {
   setIsPhoneModalOpen(true);
   try {
     // 1. send verification code first
-    const codeRes = await fetch(`${API}/api/users/emailcode/${userId}`, {
+    const codeRes = await myFetch(`${API}/api/users/emailcode/${userId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -160,7 +160,7 @@ const updatepassword = async () => {
   setIsPasswordModalOpen(true);
   try {
     // 1. send verification code first
-    const codeRes = await fetch(`${API}/api/users/passwordcode/${userId}`, {
+    const codeRes = await myFetch(`${API}/api/users/passwordcode/${userId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -178,7 +178,7 @@ const updatepassword = async () => {
 // ===============================
 const updateshipping = async () => {
   try {
-    const res = await fetch(`${API}/api/users/update/shipping/${userId}`, {
+    const res = await myFetch(`${API}/api/users/update/shipping/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -210,7 +210,7 @@ const updateimage = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`${API}/api/users/update/image/${userId}`, {
+    const res = await myFetch(`${API}/api/users/update/image/${userId}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,

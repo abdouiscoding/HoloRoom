@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const CartContext = createContext();
 
@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
 
       setLoading(true);
 
-      const res = await fetch(
+      const res = await myFetch(
         `${API}/api/cart/getbyuser/${userId}`,
         {
           headers: {
@@ -47,7 +47,7 @@ export const CartProvider = ({ children }) => {
   // ---------------- REMOVE ITEM ----------------
   const removeItem = async (cartId, cartItemId) => {
     try {
-      const res = await fetch(
+      const res = await myFetch(
         `${API}/api/cart/removeitem/${cartId}/${cartItemId}`,
         {
           method: "DELETE",

@@ -8,7 +8,7 @@ import React, {
   useCallback
 } from 'react';
 import { Navigate } from 'react-router-dom';
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const ReviewsContext = createContext();
 
@@ -24,7 +24,7 @@ export const ReviewsProvider = ({ children }) => {
 
       const token = localStorage.getItem('token');
 
-      const response = await fetch(
+      const response = await myFetch(
         `${API}/api/reviews/all`,
         {
           method: 'GET',
@@ -74,7 +74,7 @@ export const ReviewsProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await fetch(
+      const response = await myFetch(
         `${API}/api/reviews/add/${productId}`,
         {
           method: 'POST',

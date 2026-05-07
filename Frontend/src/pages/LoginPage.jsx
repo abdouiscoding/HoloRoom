@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 // --- COMPONENTS ---
 
@@ -115,7 +115,7 @@ export const LoginPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${API}/api/auth/login`, {
+            const response = await myFetch(`${API}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ info, userPassword })
@@ -130,7 +130,7 @@ export const LoginPage = () => {
             const token = data.token;
             localStorage.setItem("userPassword", userPassword);
 
-            const userDetailsResponse = await fetch(`${API}/api/users/getbyinfo/${info}`, {
+            const userDetailsResponse = await myFetch(`${API}/api/users/getbyinfo/${info}`, {
                 method: "GET",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -164,7 +164,7 @@ export const LoginPage = () => {
     const handleSignup = async (e) => {
         if (e) e.preventDefault();
         try {
-            const response = await fetch(`${API}/api/auth/register/start`, {
+            const response = await myFetch(`${API}/api/auth/register/start`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userName, userEmail, userPassword })
@@ -187,7 +187,7 @@ export const LoginPage = () => {
     const handleConfirmCode = async () => {
         setIsVerifying(true);
         try {
-            const response = await fetch(`${API}/api/auth/register/confirm`, {
+            const response = await myFetch(`${API}/api/auth/register/confirm`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: userEmail, code: verificationCode })
@@ -222,7 +222,7 @@ export const LoginPage = () => {
 
     try {
         // 1. CHECK IF USER EXISTS
-        const userRes = await fetch(
+        const userRes = await myFetch(
             `${API}/api/users/getbyinfo/${forgotEmail}`
         );
 
@@ -235,7 +235,7 @@ export const LoginPage = () => {
         const user = await userRes.json();
 
         // 2. SEND PASSWORD CODE EMAIL
-        const codeRes = await fetch(
+        const codeRes = await myFetch(
             `${API}/api/users/passwordcode/${user.userId}`,
             {
                 method: "POST",

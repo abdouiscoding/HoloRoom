@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import styles from './DashboardViews.module.css';
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const ProductsManagerView = () => {
   const [products, setProducts] = useState([]);
@@ -20,7 +20,7 @@ const ProductsManagerView = () => {
   const token = localStorage.getItem("token");
   // fetch categories
   const fetchCategories = async () => {
-  const res = await fetch(`${address}/api/categories/get`, {
+  const res = await myFetch(`${address}/api/categories/get`, {
       headers: { Authorization: `Bearer ${token}` }
     });
   const data = await res.json();
@@ -38,7 +38,7 @@ const ProductsManagerView = () => {
   const [name, setName] = useState("");
 
   const add = async () => {
-    const res = await fetch(`${address}/api/categories/create`, {
+    const res = await myFetch(`${address}/api/categories/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json",  
       Authorization: `Bearer ${token}` },
@@ -79,7 +79,7 @@ const ProductsManagerView = () => {
   // FETCH
   // =========================
   const fetchProducts = async () => {
-    const res = await fetch(`${API}/api/products/get`);
+    const res = await myFetch(`${API}/api/products/get`);
     const data = await res.json();
     setProducts(data);
   };
@@ -113,7 +113,7 @@ const ProductsManagerView = () => {
   // =========================
   const deleteProduct = (id) => {
   askConfirm("Delete this product?", async () => {
-    await fetch(`${API}/api/products/delete/${id}`, {
+    await myFetch(`${API}/api/products/delete/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -126,7 +126,7 @@ const ProductsManagerView = () => {
     const deleteCategory = async (id) => {
   try {
 
-    const res = await fetch(`${address}/api/categories/delete/${id}`, {
+    const res = await myFetch(`${address}/api/categories/delete/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -186,7 +186,7 @@ const ProductsManagerView = () => {
     try {
       if (editingProduct) {
 
-        const res = await fetch(`${API}/api/products/update-full/${editingProduct.pId}`, {
+        const res = await myFetch(`${API}/api/products/update-full/${editingProduct.pId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -198,7 +198,7 @@ const ProductsManagerView = () => {
         const data = await res.json();
         productId = data.pId;
       } else {
-        const res = await fetch(`${API}/api/products/create`, {
+        const res = await myFetch(`${API}/api/products/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -217,7 +217,7 @@ const ProductsManagerView = () => {
           const fd = new FormData();
           fd.append("file", img.file);
 
-          await fetch(`${API}/api/products/upload-image/${productId}`, {
+          await myFetch(`${API}/api/products/upload-image/${productId}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: fd

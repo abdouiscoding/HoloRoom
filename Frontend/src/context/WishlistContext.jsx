@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const WishlistContext = createContext();
 
@@ -16,7 +16,7 @@ export const WishlistProvider = ({ children }) => {
 
       if (!userId || !token) return;
 
-      const res = await fetch(
+      const res = await myFetch(
         `${API}/api/wishlist/get/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -29,11 +29,10 @@ export const WishlistProvider = ({ children }) => {
 
       const baseItems = data.wishlistItems || [];
 
-      // 🔥 FETCH PRODUCT DETAILS FOR EACH ITEM
       const enriched = await Promise.all(
         baseItems.map(async (item) => {
           try {
-            const pRes = await fetch(
+            const pRes = await myFetch(
               `${API}/api/products/get/${item.pId}`,
               {
                 headers: { Authorization: `Bearer ${token}` }
@@ -75,8 +74,8 @@ export const WishlistProvider = ({ children }) => {
       const item = wishlistItems.find(i => i.id === productId);
       if (!item) return;
 
-      await fetch(
-        `${API}/api/wishlist/remove/${userId}/${item.wItemId}`,
+      await myFetch(
+        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }

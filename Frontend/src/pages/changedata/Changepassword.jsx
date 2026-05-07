@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { API, address } from "../../api";
+import { API, address, myFetch } from "../../api";
 
 const ADDRESS = address;
 
@@ -17,13 +17,13 @@ const ChangePassword = () => {
   const updatePassword = async () => {
     try {
       const token = localStorage.getItem("token");
-      const userDetailsResponse = await fetch(`${API}/api/users/getbyinfo/${info}`, {
+      const userDetailsResponse = await myFetch(`${API}/api/users/getbyinfo/${info}`, {
                 method: "GET",
             });
       const userData = await userDetailsResponse.json();
       localStorage.setItem("userId", userData.userId);
       const userId = localStorage.getItem("userId");
-      const res = await fetch(`${API}/api/users/update/password/${userId}`, {
+      const res = await myFetch(`${API}/api/users/update/password/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

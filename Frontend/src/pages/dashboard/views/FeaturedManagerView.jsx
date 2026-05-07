@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, X, Edit, Trash2, GripVertical } from "lucide-react";
 import styles from "./DashboardViews.module.css";
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const FeaturedManagerView = () => {
   const token = localStorage.getItem("token");
@@ -30,7 +30,7 @@ const FeaturedManagerView = () => {
 
   // ---------------- FETCH ----------------
   const fetchLists = async () => {
-    const res = await fetch(`${API}/api/featured/lists`, {
+    const res = await myFetch(`${API}/api/featured/lists`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -38,7 +38,7 @@ const FeaturedManagerView = () => {
   };
 
   const fetchProducts = async () => {
-    const res = await fetch(`${API}/api/products/get`);
+    const res = await myFetch(`${API}/api/products/get`);
     const data = await res.json();
     setProducts(data);
   };
@@ -53,7 +53,7 @@ const FeaturedManagerView = () => {
     e.preventDefault();
     if (!listName.trim()) return;
 
-    await fetch(`${API}/api/featured/lists`, {
+    await myFetch(`${API}/api/featured/lists`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -68,7 +68,7 @@ const FeaturedManagerView = () => {
 
   // ---------------- ADD ITEM ----------------
   const addItem = async (listId, productId, order) => {
-    await fetch(
+    await myFetch(
       `${API}/api/featured/list/${listId}/add?productId=${productId}&order=${order}`,
       {
         method: "POST",
@@ -85,7 +85,7 @@ const FeaturedManagerView = () => {
   // ---------------- DELETE ITEM ----------------
   const removeItem = (listId, itemId) => {
     askConfirm("Remove this item?", async () => {
-      await fetch(`${API}/api/featured/list/${listId}/item/${itemId}`, {
+      await myFetch(`${API}/api/featured/list/${listId}/item/${itemId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -97,7 +97,7 @@ const FeaturedManagerView = () => {
 
   const deleteList = (listId) => {
     askConfirm("Delete this list?", async () => {
-      await fetch(`${API}/api/featured/list/${listId}/clear`, {
+      await myFetch(`${API}/api/featured/list/${listId}/clear`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -145,7 +145,7 @@ const FeaturedManagerView = () => {
   try {
     await Promise.all(
       updatedList.items.map((it, index) =>
-        fetch(
+        myFetch(
           `${API}/api/featured/list/${updatedList.id}/item/${it.id}/order?newOrder=${index}`,
           {
             method: "PUT",

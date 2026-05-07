@@ -3,7 +3,7 @@ import { ShoppingCart, DollarSign, Users } from 'lucide-react';
 import StatCard from '../../../components/dashboard/common/StatCard';
 import DashboardTable from '../../../components/dashboard/common/DashboardTable';
 import styles from './DashboardViews.module.css';
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const OverviewView = () => {
   const token = localStorage.getItem("token");
@@ -16,7 +16,7 @@ const OverviewView = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API}/api/users/get`, {
+        const res = await myFetch(`${API}/api/users/get`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

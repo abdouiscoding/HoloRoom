@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Edit, X, Trash2 } from 'lucide-react';
 import DashboardTable from '../../../components/dashboard/common/DashboardTable';
 import styles from './DashboardViews.module.css';
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const UsersManagerView = () => {
   const token = localStorage.getItem("token");
@@ -21,7 +21,7 @@ const UsersManagerView = () => {
 
   // ================= FETCH =================
   const fetchUsers = async () => {
-    const res = await fetch(`${API}/api/users/get`, {
+    const res = await myFetch(`${API}/api/users/get`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -72,7 +72,7 @@ const UsersManagerView = () => {
     try {
       if (editingUser) {
         // update role
-        await fetch(`${API}/api/users/patch/Role/${editingUser.userId}`, {
+        await myFetch(`${API}/api/users/patch/Role/${editingUser.userId}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -82,7 +82,7 @@ const UsersManagerView = () => {
         });
 
         // update status (YOU NEED THIS ENDPOINT IN BACKEND)
-        await fetch(`${API}/api/users/patch/status/${editingUser.userId}`, {
+        await myFetch(`${API}/api/users/patch/status/${editingUser.userId}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -94,7 +94,7 @@ const UsersManagerView = () => {
         showInfo("User updated");
       } else {
         console.log(body);
-        await fetch(`${API}/api/users/create`, {
+        await myFetch(`${API}/api/users/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -118,7 +118,7 @@ const UsersManagerView = () => {
   // ================= DELETE =================
   const deleteUser = (id) => {
     askConfirm("Delete user?", async () => {
-      await fetch(`${API}/api/users/delete/${id}`, {
+      await myFetch(`${API}/api/users/delete/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

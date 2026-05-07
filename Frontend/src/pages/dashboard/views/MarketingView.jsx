@@ -3,7 +3,7 @@ import { Percent, X, Trash2, Star } from 'lucide-react';
 import DashboardTable from '../../../components/dashboard/common/DashboardTable';
 import styles from './DashboardViews.module.css';
 import { color, select } from 'three/tsl';
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const PRODUCTS_API = `${API}/api/products/get`;
 
@@ -32,7 +32,7 @@ const MarketingView = () => {
 
   // ================= FETCH =================
   const fetchDiscounts = async () => {
-    const res = await fetch(`${API}/api/discounts`, {
+    const res = await myFetch(`${API}/api/discounts`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -40,7 +40,7 @@ const MarketingView = () => {
   };
 
   const fetchProducts = async () => {
-    const res = await fetch(`${API}/api/products/get`);
+    const res = await myFetch(`${API}/api/products/get`);
     const data = await res.json();
     setProducts(data);
   };
@@ -54,7 +54,7 @@ const MarketingView = () => {
 
   const createDiscountRequest = async (body) => {
   try {
-    const res = await fetch(`${API}/api/discounts/create`, {
+    const res = await myFetch(`${API}/api/discounts/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +100,7 @@ const MarketingView = () => {
         "This product already has a campaign. Replace it?",
         async () => {
           // delete old one
-          await fetch(`${API}/api/discounts/${existing.id}`, {
+          await myFetch(`${API}/api/discounts/${existing.id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -117,7 +117,7 @@ const MarketingView = () => {
   // ================= DELETE =================
   const deleteDiscount = (id) => {
     askConfirm("Delete this discount?", async () => {
-      await fetch(`${API}/api/discounts/${id}`, {
+      await myFetch(`${API}/api/discounts/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

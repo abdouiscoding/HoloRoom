@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './DashboardViews.module.css';
-import { API, address } from "../../../api";
+import { API, address, myFetch } from "../../../api";
 
 const ARManagerView = () => {
   const [products, setProducts] = useState([]);
@@ -12,7 +12,7 @@ const ARManagerView = () => {
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
-    const res = await fetch(`${API}/api/products/get`);
+    const res = await myFetch(`${API}/api/products/get`);
     setProducts(await res.json());
   };
 
@@ -21,7 +21,7 @@ const ARManagerView = () => {
   }, []);
 
   const toggleAR = async (p) => {
-  await fetch(`${API}/api/products/ar/${p.pId}`, {
+  await myFetch(`${API}/api/products/ar/${p.pId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -42,7 +42,7 @@ const ARManagerView = () => {
   setUploading(true);
   setProgress(10);
 
-  const res = await fetch(`${API}/api/products/upload-model/${editingModel.pId}`, {
+  const res = await myFetch(`${API}/api/products/upload-model/${editingModel.pId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: fd

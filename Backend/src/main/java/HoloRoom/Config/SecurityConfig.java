@@ -120,29 +120,27 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration config = new CorsConfiguration();
+    CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://192.168.1.3:5173",
-            "http://172.20.10.9:5173",
-            "https://control-parole-grandkid.ngrok-free.dev"
-        ));
+    config.setAllowedOriginPatterns(List.of("*"));
 
-        config.setAllowedMethods(List.of(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS" , "PATCH"
-        ));
+    config.setAllowedMethods(List.of(
+        "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+    ));
 
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+    config.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+    config.setExposedHeaders(List.of("*"));
 
-        source.registerCorsConfiguration("/**", config);
+    config.setAllowCredentials(true);
 
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source =
+        new UrlBasedCorsConfigurationSource();
+
+    source.registerCorsConfiguration("/**", config);
+
+    return source;
+}
 }

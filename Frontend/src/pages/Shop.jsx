@@ -9,7 +9,7 @@ import {
 import { Sparkles } from 'lucide-react';
 
 import styles from './Shop.module.css';
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 const Shop = () => {
   const [minPrice, setMinPrice] = useState('');
@@ -39,8 +39,13 @@ const Shop = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `${API}/api/products/get`
+      const response = await myFetch(
+        `${API}/api/products/get`, {
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true', 
+          'Content-Type': 'application/json'
+        }}
       );
 
       if (!response.ok) {
@@ -287,7 +292,7 @@ const toproductpage = (name, id) => {
 
 const fetchDiscounts = async () => {
   try {
-    const res = await fetch(`${API}/api/discounts/active`);
+    const res = await myFetch(`${API}/api/discounts/active`);
     const data = await res.json();
 
     setDiscounts(data || []);
