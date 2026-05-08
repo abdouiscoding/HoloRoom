@@ -5,7 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 /* =========================
    CONFIG
 ========================= */
-const address = "192.168.1.3";
+const API = "https://control-parole-grandkid.ngrok-free.dev";
 
 /* =========================
    AUTH / URL PARAMS
@@ -200,7 +200,7 @@ function showXRUnsupportedPopup() {
   const show3dBtn = overlay.querySelector("#show3dBtn");
 
   goBackBtn.onclick = () => {
-    window.location.href = `http://${address}:5173/shop`;
+    window.location.href = `${API}/shop`;
   };
 
   show3dBtn.onclick = () => {
@@ -215,7 +215,7 @@ const closeViewerBtn = document.getElementById("closeViewerBtn");
 const modelViewer = document.getElementById("modelViewer");
 
 closeViewerBtn.onclick = () => {
-    window.location.href = `http://${address}:5173/shop`;
+    window.location.href = `${API}/shop`;
   };
 
 async function checkWebXR() {
@@ -521,7 +521,7 @@ function roundRect(ctx, x, y, w, h, r) {
 async function fetchProducts() {
   try {
     const res = await fetch(
-      `http://${address}:8080/api/products/get`
+      `${API}/api/products/get`
     );
 
     const data = await res.json();
@@ -564,7 +564,7 @@ async function loadProduct(id = currentProductId) {
     setLoading(10, "Fetching product...");
 
     const res = await fetch(
-      `http://${address}:8080/api/products/get/${id}`
+      `${API}/api/products/get/${id}`
     );
 
     if (!res.ok) throw new Error("Failed fetch");
@@ -767,7 +767,7 @@ async function addWishlist() {
   if (!userId || !token) return popup("Login required");
 
   await fetch(
-    `http://${address}:8080/api/wishlist/add/${userId}/${productData.pId}`,
+    `${API}/api/wishlist/add/${userId}/${productData.pId}`,
     {
       method: "POST",
       headers: authHeaders
@@ -781,7 +781,7 @@ async function addCart() {
   if (!userId || !token) return popup("Login required");
 
   const cartRes = await fetch(
-    `http://${address}:8080/api/cart/getbyuser/${userId}`,
+    `${API}/api/cart/getbyuser/${userId}`,
     { headers: authHeaders }
   );
 
@@ -799,7 +799,7 @@ async function addCart() {
   };
 
   await fetch(
-    `http://${address}:8080/api/cart/additem/${cartData.pCartId}`,
+    `${API}/api/cart/additem/${cartData.pCartId}`,
     {
       method: "POST",
       headers: {
