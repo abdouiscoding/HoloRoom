@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { myFetch } from "./api";
 
 /* =========================
    CONFIG
@@ -516,11 +517,11 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /* =========================
-   FETCH PRODUCTS
+   fetch PRODUCTS
 ========================= */
 async function fetchProducts() {
   try {
-    const res = await fetch(
+    const res = await myFetch(
       `${API}/api/products/get`
     );
 
@@ -563,11 +564,11 @@ async function loadProduct(id = currentProductId) {
   try {
     setLoading(10, "Fetching product...");
 
-    const res = await fetch(
+    const res = await myFetch(
       `${API}/api/products/get/${id}`
     );
 
-    if (!res.ok) throw new Error("Failed fetch");
+    if (!res.ok) throw new Error("Failed myFetch");
 
     productData = await res.json();
 
@@ -766,7 +767,7 @@ productsBtn.onclick = () => {
 async function addWishlist() {
   if (!userId || !token) return popup("Login required");
 
-  await fetch(
+  await myFetch(
     `${API}/api/wishlist/add/${userId}/${productData.pId}`,
     {
       method: "POST",
@@ -780,7 +781,7 @@ async function addWishlist() {
 async function addCart() {
   if (!userId || !token) return popup("Login required");
 
-  const cartRes = await fetch(
+  const cartRes = await myFetch(
     `${API}/api/cart/getbyuser/${userId}`,
     { headers: authHeaders }
   );
@@ -798,7 +799,7 @@ async function addCart() {
     quantity: "1"
   };
 
-  await fetch(
+  await myFetch(
     `${API}/api/cart/additem/${cartData.pCartId}`,
     {
       method: "POST",

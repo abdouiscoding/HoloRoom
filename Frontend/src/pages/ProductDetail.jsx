@@ -488,7 +488,7 @@ const openAR = () => {
   const userId = localStorage.getItem("userId");
 
   const arUrl =
-    `https://control-parole-grandkid.ngrok-free.dev/` +
+    `https://holo-room.vercel.app/` +
     `?token=${encodeURIComponent(token)}` +
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;
