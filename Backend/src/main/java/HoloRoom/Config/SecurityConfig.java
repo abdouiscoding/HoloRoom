@@ -104,11 +104,6 @@ public class SecurityConfig {
 
 
                 // =====================================
-                // ADMIN ONLY
-                // =====================================
-                .requestMatchers("/api/**").hasRole("ADMIN")
-
-                // =====================================
                 // FALLBACK
                 // =====================================
                 .anyRequest().authenticated()
@@ -124,7 +119,11 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOriginPatterns(List.of("*"));
+    config.setAllowedOrigins(List.of(
+        "http://localhost:5173",
+        "https://holoroom-ar.vercel.app",
+        "https://holoroom-front.vercel.app"
+    ));
 
     config.setAllowedMethods(List.of(
         "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"

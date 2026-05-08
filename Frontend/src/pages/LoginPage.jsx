@@ -113,68 +113,50 @@ export const LoginPage = () => {
     }, []);
 
     const handleLogin = async (e) => {
-    e.preventDefault();
-
-    try {
-        const response = await myFetch(`${API}/api/auth/login`, {
-            method: "POST",
-            body: JSON.stringify({ info, userPassword })
-        });
-
-        // READ RAW TEXT FIRST
-        const text = await response.text();
-
-        console.log("RAW RESPONSE:", text);
-
-        let data = {};
-
+        e.preventDefault();
         try {
-            data = text ? JSON.parse(text) : {};
-        } catch (err) {
-            console.log("Response is not JSON");
-        }
+            const response = await myFetch(`${API}/api/auth/login`, {
+                method: "POST",
+                body: JSON.stringify({ info, userPassword })
+            });
 
-        if (!response.ok) {
-            showToast(data.message || "Login failed", "error");
-            return;
-        }
-
-        const token = data.token;
-
-        localStorage.setItem("userPassword", userPassword);
-
-        const userDetailsResponse = await myFetch(
-            `${API}/api/users/getbyinfo/${info}`,
-            {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+            const data = await response.json();
+            if (!response.ok) {
+                showToast(data.message, "error");
+                return;
             }
-        );
 
-        const userData = await userDetailsResponse.json();
+            const token = data.token;
+            localStorage.setItem("userPassword", userPassword);
 
-        localStorage.setItem("token", token);
-        localStorage.setItem("userId", userData.userId);
-        localStorage.setItem("userEmail", userData.userEmail);
-        localStorage.setItem("userName", userData.userName);
-        localStorage.setItem("shipping", userData.shipping);
-        localStorage.setItem("userImage", userData.userImage);
-        localStorage.setItem("role", userData.userRole);
-        localStorage.setItem("loggedin", "true");
+            const userDetailsResponse = await myFetch(`${API}/api/users/getbyinfo/${info}`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
 
-        showToast("Login successful", "success");
+            if (userDetailsResponse.ok) {
+                const userData = await userDetailsResponse.json();
+                localStorage.setItem("token", token);
+                localStorage.setItem("userId", userData.userId);
+                localStorage.setItem("userEmail", userData.userEmail);
+                localStorage.setItem("userName", userData.userName);
+                localStorage.setItem("shipping", userData.shipping);
+                localStorage.setItem("userImage", userData.userImage);
+                localStorage.setItem("role", userData.userRole);
+                localStorage.setItem("loggedin", "true");
 
-        navigate(-1);
-
-        setTimeout(() => window.location.reload(), 1000);
-
-    } catch (error) {
-        console.log(error);
-        showToast("Login unsuccessful", "error");
-    }
-};
+                showToast("Login successful", "success");
+                navigate(-1);
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                localStorage.setItem("token", token);
+                showToast("Login successful", "success");
+                setTimeout(() => navigate("/"), 1500);
+            }
+        } catch (error) {
+            showToast("Login unsuccessful", "error");
+        }
+    };
     
 
     // --- STEP 1: START REGISTRATION ---
