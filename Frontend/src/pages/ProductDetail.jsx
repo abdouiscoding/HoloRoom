@@ -479,7 +479,10 @@ const openAR = () => {
   const isLoggedIn = localStorage.getItem("loggedin");
 
   if (!isLoggedIn || isLoggedIn === "false") {
-    window.location.href = "/login";
+    setShowPopup(true);
+    setPopupTitle("Please Log In to use AR");
+    setPopupMessage("To preview this product in AR, please log in to your account.");
+    setPopupMode("login");
     return;
   }
 
@@ -488,7 +491,7 @@ const openAR = () => {
   const userId = localStorage.getItem("userId");
 
   const arUrl =
-    `https://holo-room.vercel.app/` +
+    `https://holoroom-ar.vercel.app` +
     `?token=${encodeURIComponent(token)}` +
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;
