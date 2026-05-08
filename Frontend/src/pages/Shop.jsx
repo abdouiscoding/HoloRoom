@@ -199,7 +199,6 @@ const toproductpage = (name, id) => {
   const safeName = encodeURIComponent(name);
 
   localStorage.setItem("selectedProductId", id);
-
   window.location.href = `/product/${safeName}`;
 };
 

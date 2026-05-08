@@ -12,7 +12,7 @@ import {
 import styles from './ProductDetail.module.css';
 import { useReviews } from '../context/ReviewsContext';
 import ReviewModal from '../components/product/ReviewModal';
-import { API, address } from "../api";
+import { API, address, myFetch } from "../api";
 
 
 const ProductDetail = () => {
