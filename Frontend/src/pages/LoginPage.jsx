@@ -117,7 +117,6 @@ export const LoginPage = () => {
         try {
             const response = await myFetch(`${API}/api/auth/login`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ info, userPassword })
             });
 
@@ -155,6 +154,7 @@ export const LoginPage = () => {
                 setTimeout(() => navigate("/"), 1500);
             }
         } catch (error) {
+            console.log(error);
             showToast("Login unsuccessful", "error");
         }
     };
