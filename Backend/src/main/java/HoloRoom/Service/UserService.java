@@ -62,6 +62,8 @@ public class UserService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
 
 
     @Autowired
@@ -72,14 +74,6 @@ public class UserService {
     private final Map<String, String> registrationCodes = new ConcurrentHashMap<>();
 
     private final Map<Long, Map<String, VerificationEntry>> verificationCodes = new ConcurrentHashMap<>();
-
-
-
-    private static final String UPLOAD_DIR =
-
-        "C:\\Users\\abder\\Desktop\\HoloRoom\\Backend\\src\\main\\java\\HoloRoom\\Uploads\\Uimages";
-
-
 
 
     // =====================================
@@ -93,8 +87,6 @@ public class UserService {
     public List<User> getAllUsers() {
 
         List<User> users = userrepo.findAll();
-
-        users.forEach(this::buildUserImage);
 
         return users;
 
@@ -122,7 +114,7 @@ public class UserService {
 
         User user = userrepo.findById(id).orElse(null);
 
-        return buildUserImage(user);
+        return user;
 
     }
 
@@ -142,7 +134,7 @@ public class UserService {
 
 
 
-        return buildUserImage(user);
+        return user;
 
     }
 
@@ -352,7 +344,7 @@ public class UserService {
     String username = user.getUserName(); 
 
     if ("email".equals(type)) {
-        link = "http://" + getCurrentIp() + ":5173/changeemail?email=" + user.getUserEmail();
+        link = "holoroom-front.vercel.app/changeemail?email=" + user.getUserEmail();
         message.setSubject("HoloRoom Email Change Verification");
 
         message.setText(
@@ -365,7 +357,7 @@ public class UserService {
         );
 
     } else {
-        link = "http://" + getCurrentIp() + ":5173/changepassword?email=" + user.getUserEmail();
+        link = "holoroom-front.vercel.app/changepassword?email=" + user.getUserEmail();
         message.setSubject("HoloRoom Password Change Verification");
 
         message.setText(
@@ -406,76 +398,6 @@ public class UserService {
 
     // =====================================
 
-    // IMAGE URL BUILDING
-
-    // =====================================
-
-
-
-    private String getCurrentIp() {
-
-        try {
-
-            return InetAddress
-
-                .getLocalHost()
-
-                .getHostAddress();
-
-        } catch (Exception e) {
-
-            return "localhost";
-
-        }
-
-    }
-
-
-
-    private String getBaseUrl() {
-
-        return "http://" +
-
-            getCurrentIp() +
-
-            ":8080/api/uploads/uimages/";
-
-    }
-
-
-
-public User buildUserImage(User user) {
-
-    if (user == null)
-        return null;
-
-    if (user.getUserImage() != null &&
-        !user.getUserImage().equals("null")) {
-
-        String image = user.getUserImage();
-
-        // keep only filename
-        if (image.contains("/")) {
-            image = image.substring(image.lastIndexOf("/") + 1);
-        }
-
-        String encodedFileName = URLEncoder.encode(
-            image,
-            StandardCharsets.UTF_8
-        ).replace("+", "%20");
-
-        user.setUserImage(
-            getBaseUrl() + encodedFileName
-        );
-    }
-
-    return user;
-}
-
-
-
-    // =====================================
-
     // CREATE DEFAULT IMAGE
 
     // =====================================
@@ -492,7 +414,9 @@ public User buildUserImage(User user) {
 
 
 
-            user.setUserImage("default.png");
+            user.setUserImage(
+                "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Users_Images/default.png"
+            );
 
         }
 
@@ -665,77 +589,22 @@ public User buildUserImage(User user) {
 
 
     public User updateUserImage(
-
             Long userId,
-
             MultipartFile file) throws Exception {
 
-
-
         User user =
-
             userrepo.findById(userId).orElse(null);
 
-
-
         if (user == null)
-
             return null;
 
+        String imageUrl =
+            supabaseStorageService.uploadFile(file, "Users_Images");
 
+        // save FULL URL
+        user.setUserImage(imageUrl);
 
-        String fileName =
-
-            System.currentTimeMillis() +
-
-            "_" +
-
-            file.getOriginalFilename();
-
-
-
-        Path uploadPath =
-
-            Paths.get(UPLOAD_DIR);
-
-
-
-        if (!Files.exists(uploadPath)) {
-
-            Files.createDirectories(uploadPath);
-
-        }
-
-
-
-        Path path =
-
-            uploadPath.resolve(fileName);
-
-
-
-        Files.copy(
-
-            file.getInputStream(),
-
-            path,
-
-            StandardCopyOption.REPLACE_EXISTING
-
-        );
-
-
-
-        user.setUserImage(fileName);
-
-
-
-        userrepo.save(user);
-
-
-
-        return buildUserImage(user);
-
+        return userrepo.save(user);
     }
 
     private static class VerificationEntry {

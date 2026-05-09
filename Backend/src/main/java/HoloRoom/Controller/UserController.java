@@ -288,11 +288,14 @@ public class UserController {
 
             return ResponseEntity.ok(user);
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to upload image");
+                .body(Map.of("message", e.getMessage()));
         }
     }
 

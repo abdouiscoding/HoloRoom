@@ -36,31 +36,42 @@ const ARManagerView = () => {
   const uploadModelFile = async () => {
   if (!modelFile) return;
 
-  const fd = new FormData();
-  fd.append("file", modelFile);
+  try {
+    const fd = new FormData();
+    fd.append("file", modelFile);
 
-  setUploading(true);
-  setProgress(10);
+    setUploading(true);
+    setProgress(10);
 
-  const res = await myFetch(`${API}/api/products/upload-model/${editingModel.pId}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: fd
-  });
+    const res = await myFetch(`${API}/api/products/upload-model/${editingModel.pId}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd
+    });
 
-  setProgress(80);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to upload model: ${errorText}`);
+    }
 
-  await res.json();
+    setProgress(80);
 
-  setProgress(100);
+    await res.json();
 
-  setTimeout(() => {
+    setProgress(100);
+
+    setTimeout(() => {
+      setUploading(false);
+      setProgress(0);
+      setEditingModel(null);
+      setModelFile(null);
+      fetchProducts();
+    }, 300);
+  } catch (err) {
+    alert(err.message || "Failed to upload model");
     setUploading(false);
     setProgress(0);
-    setEditingModel(null);
-    setModelFile(null);
-    fetchProducts();
-  }, 300);
+  }
 };
 
   return (

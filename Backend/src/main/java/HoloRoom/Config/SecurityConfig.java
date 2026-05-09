@@ -73,8 +73,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/chat").permitAll()
                 .requestMatchers("/api/chat/**").permitAll()
 
-                
-                .requestMatchers("/api/users/update/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+                // =====================================
+                // USER UPDATES
+                // =====================================
                 .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")

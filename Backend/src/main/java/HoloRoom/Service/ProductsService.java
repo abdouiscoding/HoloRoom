@@ -1,28 +1,18 @@
 package HoloRoom.Service;
 
-import java.net.InetAddress;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.nio.file.Path;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import HoloRoom.Model.Discounts;
 import HoloRoom.Model.PCategories;
 import HoloRoom.Model.PImages;
 import HoloRoom.Model.PSizeColorStock;
 import HoloRoom.Model.Products;
-import HoloRoom.Repository.DiscountsRepository;
 import HoloRoom.Repository.PCategoriesRepository;
-import HoloRoom.Repository.PImagesRepository;
 import HoloRoom.Repository.ProductsRepository;
 
 @Service
@@ -37,11 +27,8 @@ public class ProductsService {
     @Autowired
     private DiscountsService discountsService; 
 
-    private static final String IMAGE_DIR =
-    "C:\\Users\\abder\\Desktop\\HoloRoom\\Backend\\src\\main\\java\\HoloRoom\\Uploads\\Pimages";
-
-    private static final String MODEL_DIR =
-    "C:\\Users\\abder\\Desktop\\HoloRoom\\Backend\\src\\main\\java\\HoloRoom\\Uploads\\Pmodels";
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
 
 
     //upload services
@@ -49,15 +36,15 @@ public class ProductsService {
 
         Products product = getProductById(id);
 
-        String cleanName = URLEncoder.encode(file.getOriginalFilename(), StandardCharsets.UTF_8);
-        String filename = System.currentTimeMillis() + "_" + cleanName;
-        Path path = Paths.get(IMAGE_DIR, filename);
-
-        Files.write(path, file.getBytes());
+        String imageUrl =
+            supabaseStorageService.uploadFile(file, "Products_Images");
 
         PImages img = new PImages();
+
         img.setProduct(product);
-        img.setProductImage(filename);
+
+        // save FULL URL now
+        img.setProductImage(imageUrl);
 
         product.getImages().add(img);
 
@@ -68,83 +55,15 @@ public class ProductsService {
 
         Products product = getProductById(id);
 
-        String cleanName = URLEncoder.encode(file.getOriginalFilename(), StandardCharsets.UTF_8);
-        String filename = System.currentTimeMillis() + "_" + cleanName;
-        Path path = Paths.get(MODEL_DIR, filename);
+        String modelUrl =
+            supabaseStorageService.uploadFile(file, "Products_Models");
 
-        Files.write(path, file.getBytes());
-
-        product.setProduct3DModel(filename);
+        // save FULL URL now
+        product.setProduct3DModel(modelUrl);
 
         return productsRepository.save(product);
     }
 
-    // =========================
-    // GET CURRENT IP
-    // =========================
-    private String getCurrentIp() {
-        try {
-            return InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception e) {
-            return "localhost";
-        }
-    }
-
-    private String getBaseUrl() {
-        return "http://" + getCurrentIp() + ":8080/api/uploads/";
-    }
-
-   // =========================
-    // BUILD URLS
-    // =========================
-    private Products buildUrls(Products product) {
-
-        String baseUrl = getBaseUrl();
-
-        // =========================
-        // 3D MODEL
-        // =========================
-        if (product.getProduct3DModel() != null &&
-            !product.getProduct3DModel().equals("null")) {
-
-            String model = product.getProduct3DModel();
-
-            // keep only filename
-            if (model.contains("/")) {
-                model = model.substring(model.lastIndexOf("/") + 1);
-            }
-
-            product.setProduct3DModel(
-                baseUrl + "models/" + model
-            );
-        }
-
-        // =========================
-        // IMAGES
-        // =========================
-        if (product.getImages() != null) {
-
-            for (PImages img : product.getImages()) {
-
-                if (img.getProductImage() != null &&
-                    !img.getProductImage().equals("null")) {
-
-                    String image = img.getProductImage();
-
-                    // keep only filename
-                    if (image.contains("/")) {
-                        image = image.substring(image.lastIndexOf("/") + 1);
-                    }
-
-                    img.setProductImage(
-                        baseUrl + "images/" + image
-                    );
-                }
-            }
-        }
-
-        return product;
-    }
 
     public List<Products> applyalldiscounts(List<Products> products) {
 
@@ -248,8 +167,6 @@ public Products applypdiscounts(Products product) {
         List<Products> products = productsRepository.findAll();
         products = applyalldiscounts(products);
 
-        products.forEach(this::buildUrls);
-
         return products;
     }
 
@@ -263,7 +180,7 @@ public Products applypdiscounts(Products product) {
         if (product == null) return null;
         product = applypdiscounts(product);
 
-        return buildUrls(product);
+        return product;
     }
 
     // =========================

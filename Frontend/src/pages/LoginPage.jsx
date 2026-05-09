@@ -117,8 +117,9 @@ export const LoginPage = () => {
         try {
             const response = await myFetch(`${API}/api/auth/login`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ info, userPassword })
-            });
+            }); 
 
             const data = await response.json();
             if (!response.ok) {

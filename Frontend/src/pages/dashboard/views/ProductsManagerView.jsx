@@ -20,7 +20,7 @@ const ProductsManagerView = () => {
   const token = localStorage.getItem("token");
   // fetch categories
   const fetchCategories = async () => {
-  const res = await myFetch(`${address}/api/categories/get`, {
+  const res = await myFetch(`${API}/api/categories/get`, {
       headers: { Authorization: `Bearer ${token}` }
     });
   const data = await res.json();
@@ -38,7 +38,7 @@ const ProductsManagerView = () => {
   const [name, setName] = useState("");
 
   const add = async () => {
-    const res = await myFetch(`${address}/api/categories/create`, {
+    const res = await myFetch(`${API}/api/categories/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json",  
       Authorization: `Bearer ${token}` },
@@ -126,7 +126,7 @@ const ProductsManagerView = () => {
     const deleteCategory = async (id) => {
   try {
 
-    const res = await myFetch(`${address}/api/categories/delete/${id}`, {
+    const res = await myFetch(`${API}/api/categories/delete/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -217,11 +217,16 @@ const ProductsManagerView = () => {
           const fd = new FormData();
           fd.append("file", img.file);
 
-          await myFetch(`${API}/api/products/upload-image/${productId}`, {
+          const uploadRes = await myFetch(`${API}/api/products/upload-image/${productId}`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: fd
           });
+
+          if (!uploadRes.ok) {
+            const errorText = await uploadRes.text();
+            throw new Error(`Failed to upload image: ${errorText}`);
+          }
         }
       }
 

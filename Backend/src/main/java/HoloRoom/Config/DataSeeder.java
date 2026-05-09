@@ -26,7 +26,7 @@ public class DataSeeder implements CommandLineRunner {
             admin.setUserName("admin");
             admin.setUserEmail("abderahim.ferdi1@gmail.com");
             admin.setUserPassword(encoder.encode("admin123"));
-            admin.setUserImage("default.png");
+            admin.setUserImage("https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Users_Images/default.png");
             admin.setActive(true);
             admin.setUserRole("ADMIN");
 

@@ -74,7 +74,6 @@ const ProfilePage = () => {
 
     reader.onloadend = () => {
       setProfileImage(reader.result);
-      localStorage.setItem("userImage", reader.result);
     };
 
     reader.readAsDataURL(file);
@@ -203,6 +202,18 @@ const updateshipping = async () => {
 // ===============================
 // UPDATE IMAGE
 // ===============================
+const getResponseError = async (res) => {
+  const text = await res.text();
+  if (!text) return res.statusText || "Failed to update image";
+
+  try {
+    const json = JSON.parse(text);
+    return json.message || json.error || text;
+  } catch {
+    return text;
+  }
+};
+
 const updateimage = async (file) => {
   try {
     const formData = new FormData();
@@ -216,15 +227,18 @@ const updateimage = async (file) => {
       body: formData,
     });
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const errorMessage = await getResponseError(res);
+      throw new Error(errorMessage || "Failed to update image");
+    }
 
     const data = await res.json();
 
+    setProfileImage(data.userImage);
     localStorage.setItem("userImage", data.userImage);
-    console.log(data.userImage);
 
   } catch (err) {
-    alert("Failed to update image");
+    alert(err.message || "Failed to update image");
   }
 };
 
@@ -251,7 +265,7 @@ const dashboardbtn = () => {
             <div className={styles.avatar}>
               <img
                 className={styles.avatar}
-                src={localStorage.getItem("userImage")}
+                src={profileImage}
                 alt="Profile"
               />
             </div>
