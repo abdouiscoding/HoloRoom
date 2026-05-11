@@ -109,4 +109,34 @@ public class SupabaseStorageService {
             "/" +
             fileName;
     }
+
+    public void deleteFile(String fileUrl) {
+
+        if (fileUrl == null || fileUrl.isBlank()) {
+            return;
+        }
+
+        try {
+
+            // extract path after /object/public/
+            String path = fileUrl.substring(
+                fileUrl.indexOf("/object/public/") + "/object/public/".length()
+            );
+
+            webClient.delete()
+                .uri(supabaseUrl + "/storage/v1/object/" + path)
+                .header("apikey", supabaseKey)
+                .header("Authorization", "Bearer " + supabaseKey)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .block();
+
+        } catch (Exception ex) {
+            throw new RuntimeException(
+                "Failed deleting file from Supabase: " + ex.getMessage(),
+                ex
+            );
+        }
+    }
+
 }

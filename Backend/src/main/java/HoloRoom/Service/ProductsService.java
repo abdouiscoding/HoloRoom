@@ -218,9 +218,38 @@ public Products applypdiscounts(Products product) {
     // Delete
     // =========================
     public void deleteProduct(Long id) {
+
+        Products product = getProductById(id);
+
+        if (product == null) {
+            return;
+        }
+
+        // delete all images from supabase
+        if (product.getImages() != null) {
+
+            for (PImages img : product.getImages()) {
+
+                if (img.getProductImage() != null) {
+                    supabaseStorageService.deleteFile(
+                        img.getProductImage()
+                    );
+                }
+            }
+        }
+
+        // delete 3d model from supabase
+        if (product.getProduct3DModel() != null) {
+
+            supabaseStorageService.deleteFile(
+                product.getProduct3DModel()
+            );
+        }
+
+        // delete db product
         productsRepository.deleteById(id);
     }
-
+    
     public PCategories getCategoryById(Long pcId) {
     return pCategoriesRepository.findById(pcId)
             .orElseThrow(() -> new RuntimeException("Category not found with id: " + pcId));

@@ -169,17 +169,25 @@ const ProductsManagerView = () => {
     const form = e.target;
 
     const body = {
-      pName: form.name.value,
-      pPrice: form.price.value,
-      pBrand: form.brand.value,
-      pDescription: form.description.value,
-      categories: categories,
-      sizecolorstock: pscs.map(v => ({
+    pName: form.name.value,
+    pPrice: form.price.value,
+    pBrand: form.brand.value,
+    pDescription: form.description.value,
+
+    categories: categories,
+
+    images: images
+      .filter(img => img.pImageUrl)
+      .map(img => ({
+        pImageUrl: img.pImageUrl
+      })),
+
+    sizecolorstock: pscs.map(v => ({
       pSize: v.size,
       pColor: v.color,
       pStock: parseInt(v.stock) || 0
     }))
-    };
+  };
 
     let productId;
 

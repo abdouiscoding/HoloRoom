@@ -27,10 +27,12 @@ import HoloRoom.Model.Products;
 import HoloRoom.Repository.PCategoriesRepository;
 import HoloRoom.Repository.PImagesRepository;
 import HoloRoom.Repository.PSizeColorStockRepository;
+import HoloRoom.Service.FeaturedProductsService;
 import HoloRoom.Service.PCartItemService;
 import HoloRoom.Service.PReviewsService;
 import HoloRoom.Service.PWishlistService;
 import HoloRoom.Service.ProductsService;
+import HoloRoom.Service.SupabaseStorageService;
 
 @RestController
 @RequestMapping("/api/products")
@@ -56,6 +58,12 @@ public class ProductsController {
 
     @Autowired
     private PReviewsService reviewsService;
+
+    @Autowired
+    private FeaturedProductsService featuredService;
+
+    @Autowired
+    private SupabaseStorageService supabaseStorageService;
 
     //upload
     @PostMapping("/upload-model/{id}")
@@ -144,6 +152,7 @@ public class ProductsController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         Products product = productsService.getProductById(id);
         if (product != null) {
+            featuredService.delete(id);
             cartItemService.delete(id);
             wishlistService.removebypId(id);
             reviewsService.removebyId(id);
@@ -164,19 +173,28 @@ public class ProductsController {
             @RequestBody Products body) {
 
         Products p = productsService.getProductById(id);
-        if (p == null) return ResponseEntity.notFound().build();
 
+        if (p == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // =========================
         // BASIC
+        // =========================
         p.setProductName(body.getProductName());
         p.setProductPrice(body.getProductPrice());
         p.setProductBrand(body.getProductBrand());
         p.setProductDescription(body.getProductDescription());
 
-        // CATEGORIES (SAFE)
+        // =========================
+        // CATEGORIES
+        // =========================
         if (body.getCategories() != null) {
+
             List<PCategories> cats = new ArrayList<>();
 
             for (PCategories c : body.getCategories()) {
+
                 PCategories existing = categoriesRepository
                     .findBypCategory(c.getProductCategory())
                     .orElseGet(() -> categoriesRepository.save(c));
@@ -187,20 +205,88 @@ public class ProductsController {
             p.setCategories(cats);
         }
 
-        // ===== PSCS (FULL REPLACE SAFE) =====
+        // =========================
+        // PSCS
+        // =========================
         if (body.getSizeColorStock() != null) {
 
-            // clear old ones
             p.getSizeColorStock().clear();
 
             for (PSizeColorStock scs : body.getSizeColorStock()) {
+
                 scs.setProduct(p);
+
                 p.getSizeColorStock().add(scs);
             }
         }
 
-        return ResponseEntity.ok(productsService.saveProduct(p));
+        // =========================
+        // IMAGES SYNC
+        // =========================
+        if (body.getImages() != null) {
+
+            List<PImages> keptImages = new ArrayList<>();
+
+            for (PImages incoming : body.getImages()) {
+
+                // existing image
+                if (incoming.getProductImage() != null) {
+
+                    Optional<PImages> existingImage =
+                        p.getImages()
+                        .stream()
+                        .filter(img ->
+                            img.getProductImage()
+                            .equals(incoming.getProductImage())
+                        )
+                        .findFirst();
+
+                    existingImage.ifPresent(keptImages::add);
+                }
+            }
+
+            // detect deleted images
+            List<PImages> toDelete = new ArrayList<>();
+
+            for (PImages existing : p.getImages()) {
+
+                boolean stillExists = keptImages.stream()
+                    .anyMatch(k ->
+                        k.getProductImage()
+                        .equals(existing.getProductImage())
+                    );
+
+                if (!stillExists) {
+                    toDelete.add(existing);
+                }
+            }
+
+            // delete removed images from supabase
+            for (PImages img : toDelete) {
+
+                if (img.getProductImage() != null) {
+
+                    
+                    supabaseStorageService.deleteFile(img.getProductImage());
+                }
+            }
+
+            // replace images list
+            p.getImages().clear();
+
+            for (PImages img : keptImages) {
+
+                img.setProduct(p);
+
+                p.getImages().add(img);
+            }
+        }
+
+        return ResponseEntity.ok(
+            productsService.saveProduct(p)
+        );
     }
+
     @PatchMapping("/update-basic/{id}")
     public ResponseEntity<Products> updateBasic(
             @PathVariable Long id,

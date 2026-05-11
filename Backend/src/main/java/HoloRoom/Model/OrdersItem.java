@@ -1,10 +1,9 @@
 package HoloRoom.Model;
 
-import java.math.BigDecimal;
+import java.util.List;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -22,12 +22,9 @@ public class OrdersItem {
     @JsonProperty("oItemId")
     private Long oItemId;
 
-    @ManyToOne
-    @JoinColumn(name = "cart_id")
-    private PCart cart;
-    
-    @JsonProperty("pCartId")
-    private Long pCartId;
+    @JsonProperty("Items")
+    @OneToMany(mappedBy = "ordersItem", cascade = jakarta.persistence.CascadeType.ALL)
+    private List<Item> items;
 
     @JsonProperty("price")
     private float price;
@@ -49,9 +46,14 @@ public class OrdersItem {
     // Constructors
     public OrdersItem() {}
 
-    public OrdersItem(PCart cart, Long userId) {
-        this.cart = cart;
-        this.price = cart.getTotal();
+    public OrdersItem(List<Item> items, Long userId) {
+        this.items = items;
+        if (items != null) {
+            for (Item item : items) {
+                item.setOrdersItem(this);
+            }
+        }
+        this.price = items.stream().map(item -> item.getTotalPrice()).reduce(0f, Float::sum);
         this.Status = "Pending";
         this.userId = userId;
         this.orderDate = LocalDateTime.now();
@@ -72,12 +74,14 @@ public class OrdersItem {
 
     public LocalDateTime getOrderDate() { return orderDate; }
 
-    public PCart getCart() { return cart; } // Added getter for cart
-    public void setCart(PCart cart) { this.cart = cart; } // Added setter for cart
-
-    @JsonProperty("cId")
-    public Long getCartId() {
-        return cart != null ? cart.getCartId() : null;
+    public List<Item> getItems() { return items; }
+    public void setItems(List<Item> items) { 
+        this.items = items;
+        if (items != null) {
+            for (Item item : items) {
+                item.setOrdersItem(this);
+            }
+        }
     }
     
 }

@@ -39,6 +39,22 @@ public class FeaturedProductsService {
         return listRepo.findAll();
     }
 
+    // ---------------- DELETE ITEM --------------
+    public void delete(Long productId) {
+        // First, remove items from all featured lists (cascade doesn't handle join tables well)
+        List<FeaturedList> allLists = listRepo.findAll();
+        for (FeaturedList list : allLists) {
+            list.getItems().removeIf(item -> item.getProduct().getProductId().equals(productId));
+            listRepo.save(list);
+        }
+        
+        // Then delete the items themselves
+        List<FeaturedItem> items = itemRepo.findAll().stream()
+            .filter(item -> item.getProduct().getProductId().equals(productId))
+            .toList();
+        itemRepo.deleteAll(items);
+    }
+
     // ---------------- ADD PRODUCT TO LIST ----------------
     public FeaturedItem addProductToList(Long listId, Long productId, int order) {
 
@@ -74,10 +90,8 @@ public class FeaturedProductsService {
 
         FeaturedList list = listRepo.findById(id).orElse(null);
 
-        // remove from list
         list.getItems().remove(item);
 
-        // DELETE from DB (important)
         itemRepo.delete(item);
 
         return true;
@@ -89,7 +103,6 @@ public class FeaturedProductsService {
         FeaturedList list = listRepo.findById(listId).orElse(null);
         if (list == null) return false;
 
-        // delete all items from DB
         itemRepo.deleteAll(list.getItems());
 
         list.getItems().clear();

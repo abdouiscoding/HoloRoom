@@ -92,6 +92,10 @@ public class SecurityConfig {
                 // =====================================
                 .requestMatchers("/api/products/**")
                     .hasAnyRole("PRODUCT_MANAGER", "ADMIN")
+                .requestMatchers("/api/categories/**")
+                    .hasAnyRole("PRODUCT_MANAGER", "ADMIN")
+                .requestMatchers("/api/products/delete/**")
+                    .hasAnyRole("PRODUCT_MANAGER", "ADMIN")
 
                 // =====================================
                 // MARKETING MANAGER

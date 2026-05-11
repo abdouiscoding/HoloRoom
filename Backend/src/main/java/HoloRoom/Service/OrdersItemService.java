@@ -1,5 +1,6 @@
 package HoloRoom.Service;
 
+import HoloRoom.Model.Item;
 import HoloRoom.Model.OrdersItem;
 import HoloRoom.Model.PCart;
 import HoloRoom.Model.Products;
@@ -30,12 +31,13 @@ public class OrdersItemService {
 
     public OrdersItem saveOrderItem(OrdersItem orderItem) {
 
-    orderItem.getCart()
-        .getItems()
+    orderItem.getItems()
         .forEach(item -> {
-            Products product = item.getProduct();
-            product.addtoPSold(item.getQuantity());
-            productsRepository.save(product); // persist change
+            Products product = item.getPId() != null ? productsRepository.findById(item.getPId()).orElse(null) : null;
+            if (product != null) {
+                product.addtoPSold(item.getQuantity());
+                productsRepository.save(product); // persist change
+            }
         });
 
     return orderItemRepository.save(orderItem);
@@ -56,10 +58,10 @@ public class OrdersItemService {
     }
 
     // get cart items by order id
-    public PCart getCartItemsByOrderId(Long orderId) {
+    public List<Item> getItemsByOrderId(Long orderId) {
         OrdersItem orderItem = getOrderItemById(orderId);
         if (orderItem != null) {
-            return orderItem.getCart();
+            return orderItem.getItems();
         }
         return null;
     }
