@@ -1255,7 +1255,7 @@ async function loadProduct(id = currentProductId) {
       setTimeout(() => {
         hideLoading();
 
-        if (!navigator.xr || !(await navigator.xr.isSessionSupported("immersive-ar"))) {
+        if (!navigator.xr) {
           showXRUnsupportedPopup();
         } else {
           navigator.xr.isSessionSupported("immersive-ar").then(supported => {
