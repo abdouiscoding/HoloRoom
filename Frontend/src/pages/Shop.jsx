@@ -277,8 +277,12 @@ const toproductpage = (name, id) => {
         setSelectedRoom("Most wished for");
       }
 
-      if (action === "most_reviewed") {
+      if (action === "reviews") {
         setSelectedRoom("Reviews");
+      }
+
+      if (action === "discounts") {
+        setSelectedRoom("Discounts");
       }
     };
 

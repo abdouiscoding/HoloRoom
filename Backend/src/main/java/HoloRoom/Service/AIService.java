@@ -24,6 +24,7 @@ public class AIService {
     }
 
     public String askai(String message, List<Message> history) {
+        System.out.println("KEY = " + API_KEY);
 
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -54,13 +55,15 @@ Allowed actions:
 - price
 - top_selling
 - most_wished
+- reviews
+- discounts
 - navigate
 - cancel
 - none
 
 JSON FORMAT:
 {
-  "action": "search|price|top_selling|most_wished|navigate|cancel|none",
+  "action": "search|price|top_selling|most_wished|reviews|discounts|navigate|cancel|none",
   "type": "string or null",
   "min": number or null,
   "max": number or null,
@@ -142,9 +145,14 @@ RULES:
             return content;
 
         } catch (Exception e) {
-            e.printStackTrace();
 
-            return "{\"action\":\"none\",\"type\":\"none\",\"message\":\"Service error\"}";
-        }
+        e.printStackTrace();
+
+        return "{\"action\":\"none\",\"type\":\"none\",\"message\":\""
+            + e.getClass().getSimpleName().replace("\"", "'")
+            + ": "
+            + e.getMessage().replace("\"", "'")
+            + "\"}";
+    }
     }
 }

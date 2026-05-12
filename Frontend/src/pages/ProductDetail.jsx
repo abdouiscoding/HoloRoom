@@ -489,9 +489,18 @@ const openAR = () => {
   const productId = product?.pId;
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
+  const loggedin = localStorage.getItem("loggedin");
+
+  if (!productId || !token || !userId || !loggedin) {
+    setPopupTitle("Please Log In");
+    setPopupMessage("Required information is missing. Please log in to access AR.");
+    setPopupMode("login"); 
+    setShowPopup(true);
+    return;
+  }
 
   const arUrl =
-    `https://holoroom-ar.vercel.app` +
+    `https://holoroom-ar.vercel.app/` +
     `?token=${encodeURIComponent(token)}` +
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;

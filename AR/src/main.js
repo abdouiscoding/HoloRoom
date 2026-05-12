@@ -201,7 +201,7 @@ function showXRUnsupportedPopup() {
   const show3dBtn = overlay.querySelector("#show3dBtn");
 
   goBackBtn.onclick = () => {
-    window.location.href = `${API}/shop`;
+    window.location.href = `https://holoroom-front.vercel.app/shop`;
   };
 
   show3dBtn.onclick = () => {
@@ -216,7 +216,7 @@ const closeViewerBtn = document.getElementById("closeViewerBtn");
 const modelViewer = document.getElementById("modelViewer");
 
 closeViewerBtn.onclick = () => {
-    window.location.href = `${API}/shop`;
+    window.location.href = `https://holoroom-front.vercel.app/shop`;
   };
 
 async function checkWebXR() {
@@ -330,6 +330,7 @@ function makeBtn(txt) {
   return b;
 }
 
+// buttons
 const addBtn = makeBtn("Add");
 addBtn.style.top = "12px";
 addBtn.style.right = "12px";
@@ -341,6 +342,191 @@ removeBtn.style.right = "95px";
 const productsBtn = makeBtn("Products");
 productsBtn.style.top = "12px";
 productsBtn.style.left = "12px";
+
+const exitBtn = makeBtn("Exit AR");
+
+exitBtn.style.bottom = "20px";
+exitBtn.style.right = "20px";
+
+exitBtn.style.display = "none";
+
+exitBtn.onclick = () => {
+  showPopup({
+    mode: "confirm",
+    title: "Exit AR?",
+    text: "Are you sure you want to leave AR mode and return to the shop?",
+    onConfirm: async () => {
+
+      const session = renderer.xr.getSession();
+
+      if (session) {
+        await session.end();
+      }
+
+      window.location.href =
+        "https://holoroom-front.vercel.app/shop";
+    }
+  });
+};
+/* =========================
+   UNIVERSAL POPUP
+========================= */
+function showPopup({
+  mode = "ok", // ok | confirm
+  title = "Popup",
+  text = "",
+  onConfirm = null
+}) {
+  // remove old popup if exists
+  const old = document.getElementById("arPopupOverlay");
+
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "arPopupOverlay";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    backdrop-filter:blur(10px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:99999999;
+    font-family:Arial,sans-serif;
+  `;
+
+  const card = document.createElement("div");
+
+  card.style.cssText = `
+    width:min(420px,90vw);
+    background:#111;
+    border-radius:22px;
+    padding:28px;
+    color:white;
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    animation:popupShow .18s ease;
+  `;
+
+  /* TITLE */
+  const h = document.createElement("h2");
+
+  h.innerText = title;
+
+  h.style.cssText = `
+    margin:0 0 14px;
+    font-size:28px;
+  `;
+
+  /* TEXT */
+  const p = document.createElement("p");
+
+  p.innerText = text;
+
+  p.style.cssText = `
+    margin:0;
+    opacity:.82;
+    line-height:1.5;
+    font-size:16px;
+  `;
+
+  /* ACTIONS */
+  const actions = document.createElement("div");
+
+  actions.style.cssText = `
+    display:flex;
+    gap:12px;
+    margin-top:28px;
+    justify-content:center;
+  `;
+
+  /* BUTTON HELPER */
+  function makePopupBtn(label, bg, color = "#fff") {
+    const btn = document.createElement("button");
+
+    btn.innerText = label;
+
+    btn.style.cssText = `
+      padding:12px 22px;
+      border:none;
+      border-radius:14px;
+      background:${bg};
+      color:${color};
+      font-weight:700;
+      cursor:pointer;
+      min-width:110px;
+      transition:.15s;
+    `;
+
+    btn.onmouseenter = () => {
+      btn.style.transform = "scale(1.04)";
+    };
+
+    btn.onmouseleave = () => {
+      btn.style.transform = "scale(1)";
+    };
+
+    return btn;
+  }
+
+  /* =========================
+     OK MODE
+  ========================= */
+  if (mode === "ok") {
+    const okBtn = makePopupBtn(
+      "OK",
+      "#00ffff",
+      "#000"
+    );
+
+    okBtn.onclick = () => {
+      overlay.remove();
+    };
+
+    actions.appendChild(okBtn);
+  }
+
+  /* =========================
+     CONFIRM MODE
+  ========================= */
+  if (mode === "confirm") {
+    const confirmBtn = makePopupBtn(
+      "Confirm",
+      "#00ffff",
+      "#000"
+    );
+
+    const cancelBtn = makePopupBtn(
+      "Cancel",
+      "#2b2b2b"
+    );
+
+    confirmBtn.onclick = () => {
+      overlay.remove();
+
+      if (onConfirm) {
+        onConfirm();
+      }
+    };
+
+    cancelBtn.onclick = () => {
+      overlay.remove();
+    };
+
+    actions.appendChild(confirmBtn);
+    actions.appendChild(cancelBtn);
+  }
+
+  card.appendChild(h);
+  card.appendChild(p);
+  card.appendChild(actions);
+
+  overlay.appendChild(card);
+
+  document.body.appendChild(overlay);
+}
 
 /* =========================
    TOAST POPUP
@@ -911,10 +1097,18 @@ window.addEventListener("pointerup", () => {
 ========================= */
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
+
+  exitBtn.style.display = "block";
+
+  arBtn.style.display = "none";
 });
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.style.display = "none";
+
+  exitBtn.style.display = "none";
+
+  arBtn.style.display = "block";
 });
 
 /* =========================

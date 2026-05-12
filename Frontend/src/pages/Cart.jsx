@@ -37,6 +37,11 @@ const Cart = () => {
   const [successPopup, setSuccessPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupTitle, setPopupTitle] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupMode, setPopupMode] = useState('ok');
+
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [activeColorPopup, setActiveColorPopup] = useState(null);
   const [stockPopup, setStockPopup] = useState(false);
@@ -81,9 +86,18 @@ const Cart = () => {
   const productId = pId;
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
+  const loggedin = localStorage.getItem("loggedin");
+
+  if (!productId || !token || !userId || !loggedin) {
+    setPopupTitle("Please Log In");
+    setPopupMessage("Required information is missing. Please log in to access AR.");
+    setPopupMode("login"); 
+    setShowPopup(true);
+    return;
+  }
 
   const arUrl =
-    `https://control-parole-grandkid.ngrok-free.dev/` +
+    `https://holoroom-ar.vercel.app/` +
     `?token=${encodeURIComponent(token)}` +
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;
@@ -425,6 +439,119 @@ const Cart = () => {
           </div>
         </div>
       )}
+
+      {showPopup && (
+              <div
+                className={
+                  styles.popupOverlay
+                }
+              >
+                <div
+                  className={
+                    styles.popupCard
+                  }
+                >
+                  <h3
+                    className={
+                      styles.popupTitle
+                    }
+                  >
+                    {popupTitle}
+                  </h3>
+      
+                  <p
+                    className={
+                      styles.popupText
+                    }
+                  >
+                    {popupMessage}
+                  </p>
+      
+                  {popupMode === 'ok' && (
+                    <div
+                      className={
+                        styles.popupActionsSingle
+                      }
+                    >
+                      <button
+                        className={
+                          styles.okBtn
+                        }
+                        onClick={() =>
+                          setShowPopup(false)
+                        }
+                      >
+                        OK
+                      </button>
+                    </div>
+                  )}
+      
+                  {popupMode ===
+                    'login' && (
+                      <div
+                        className={
+                          styles.popupActions
+                        }
+                      >
+                        <button
+                          className={
+                            styles.confirmBtn
+                          }
+                          onClick={() =>
+                            navigate(
+                              '/login'
+                            )
+                          }
+                        >
+                          Log In
+                        </button>
+      
+                        <button
+                          className={
+                            styles.cancelBtn
+                          }
+                          onClick={() =>
+                            setShowPopup(false)
+                          }
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+      
+                  {popupMode ===
+                    'remove' && (
+                      <div
+                        className={
+                          styles.popupActions
+                        }
+                      >
+                        <button
+                          className={
+                            styles.confirmBtn
+                          }
+                          onClick={
+                            removeWishlist
+                          }
+                        >
+                          Remove
+                        </button>
+      
+                        <button
+                          className={
+                            styles.cancelBtn
+                          }
+                          onClick={() =>
+                            setShowPopup(false)
+                          }
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
 
       {/* STOCK POPUP */}
       {stockPopup && (

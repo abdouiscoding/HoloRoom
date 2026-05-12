@@ -159,7 +159,7 @@ const ChatbotWidget = () => {
         return; 
       }
 
-      if (['search', 'price', 'top_selling', 'most_wished'].includes(parsed.action)) {
+      if (['search', 'price', 'top_selling', 'most_wished', 'reviews', 'discounts'].includes(parsed.action)) {
         window.dispatchEvent(new CustomEvent('ai-search', {
           detail: {
             action: parsed.action,
