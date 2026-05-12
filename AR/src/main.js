@@ -2,22 +2,30 @@ import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { myFetch } from "./api";
+import {
+  Box,
+  Settings,
+  RotateCcw,
+  RotateCw,
+  Trash2,
+  Plus
+} from "lucide";
 
 /* =========================
    CONFIG
 ========================= */
 const API = "https://control-parole-grandkid.ngrok-free.dev";
 
-// vars
-let selectedProductId = currentProductId;
-
 /* =========================
-   AUTH / URL PARAMS
+   AUTH / URL PARAMS / OTHER VARS
 ========================= */
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 const userId = params.get("userId");
 let currentProductId = params.get("productId");
+let selectedProductId = currentProductId;
+let cursorMode = "dot";
+let cursorColor = "#ffdd00";
 
 const authHeaders = token
   ? { Authorization: `Bearer ${token}` }
@@ -321,30 +329,58 @@ function makeBtn(txt) {
   b.style.cssText = `
   position:absolute;
   pointer-events:auto;
-  padding:12px 18px;
+  padding:14px 18px;
   border:none;
-  border-radius:14px;
-  background:rgba(0,255,255,.9);
-  color:#000;
+  border-radius:18px;
+  background:rgba(20,20,25,.82);
+  backdrop-filter:blur(14px);
+  color:#fff;
   font-weight:700;
-  box-shadow:0 8px 30px rgba(0,0,0,.3);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:15px;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  transition:.18s;
   `;
+
+b.onmouseenter = () => {
+  b.style.transform = "scale(1.05)";
+};
+
+b.onmouseleave = () => {
+  b.style.transform = "scale(1)";
+};
   ui.appendChild(b);
   return b;
 }
 
 // buttons
 const addBtn = makeBtn("Add");
-addBtn.style.top = "12px";
-addBtn.style.right = "12px";
+addBtn.style.bottom = "22px";
+addBtn.style.left = "50%";
+addBtn.style.transform = "translateX(-50%)";
+
+const rotateLeftBtn = makeBtn("⟲");
+rotateLeftBtn.style.bottom = "22px";
+rotateLeftBtn.style.left = "22px";
+
+const rotateRightBtn = makeBtn("⟳");
+rotateRightBtn.style.bottom = "22px";
+rotateRightBtn.style.left = "90px";
 
 const removeBtn = makeBtn("Remove");
-removeBtn.style.top = "12px";
-removeBtn.style.right = "95px";
+removeBtn.style.bottom = "22px";
+removeBtn.style.right = "22px";
 
-const productsBtn = makeBtn("Products");
-productsBtn.style.top = "12px";
-productsBtn.style.left = "12px";
+const productsBtn = makeBtn("📦 Products");   
+productsBtn.style.top = "18px";
+productsBtn.style.left = "18px";
+
+const menuBtn = makeBtn("☰");
+menuBtn.style.top = "18px";
+menuBtn.style.right = "18px";
 
 const exitBtn = makeBtn("Exit AR");
 
@@ -370,6 +406,18 @@ exitBtn.onclick = () => {
         "https://holoroom-front.vercel.app/shop";
     }
   });
+};
+
+rotateLeftBtn.onclick = () => {
+  if (!selectedObject) return;
+
+  selectedObject.rotation.y += Math.PI / 8;
+};
+
+rotateRightBtn.onclick = () => {
+  if (!selectedObject) return;
+
+  selectedObject.rotation.y -= Math.PI / 8;
 };
 /* =========================
    UNIVERSAL POPUP
@@ -517,6 +565,85 @@ function showPopup({
     cancelBtn.onclick = () => {
       overlay.remove();
     };
+
+    if (mode === "settings") {
+
+  const wrap = document.createElement("div");
+
+  wrap.style.cssText = `
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    margin-top:20px;
+  `;
+
+  // cursor type
+  const cursorTitle = document.createElement("div");
+  cursorTitle.innerText = "Cursor Type";
+  cursorTitle.style.fontWeight = "700";
+
+  const row = document.createElement("div");
+
+  row.style.cssText = `
+    display:flex;
+    gap:10px;
+  `;
+
+  const dotBtn = makePopupBtn("Dot", "#222");
+  const circleBtn = makePopupBtn("Circle", "#222");
+
+  dotBtn.onclick = () => {
+    cursorMode = "dot";
+
+    reticle.geometry.dispose();
+
+    reticle.geometry =
+      new THREE.SphereGeometry(0.01, 32, 32);
+  };
+
+  circleBtn.onclick = () => {
+    cursorMode = "circle";
+
+    reticle.geometry.dispose();
+
+    reticle.geometry =
+      new THREE.RingGeometry(0.014, 0.022, 32);
+  };
+
+  row.appendChild(dotBtn);
+  row.appendChild(circleBtn);
+
+  // color picker
+  const colorInput = document.createElement("input");
+
+  colorInput.type = "color";
+  colorInput.value = cursorColor;
+
+  colorInput.oninput = (e) => {
+
+    cursorColor = e.target.value;
+
+    reticle.material.color.set(cursorColor);
+  };
+
+  wrap.appendChild(cursorTitle);
+  wrap.appendChild(row);
+  wrap.appendChild(colorInput);
+
+  card.appendChild(wrap);
+
+  const closeBtn = makePopupBtn(
+    "Close",
+    "#00ffff",
+    "#000"
+  );
+
+  closeBtn.onclick = () => {
+    overlay.remove();
+  };
+
+  actions.appendChild(closeBtn);
+}
 
     actions.appendChild(confirmBtn);
     actions.appendChild(cancelBtn);
