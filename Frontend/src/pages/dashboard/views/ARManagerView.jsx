@@ -10,6 +10,7 @@ const ARManagerView = () => {
   const [progress, setProgress] = useState(0);
   const [arFilter, setArFilter] = useState("ALL");
   const [placement, setPlacement] = useState("FLOOR");
+  const [previewUrl, setPreviewUrl] = useState(null);
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
@@ -34,35 +35,85 @@ const ARManagerView = () => {
   fetchProducts();
 };
 
-  const uploadModelFile = async () => {
-  if (!modelFile) return;
-
+const uploadModelFile = async () => {
   try {
-    const fd = new FormData();
-    fd.append("file", modelFile);
-    fd.append("placement", placement);
-
     setUploading(true);
     setProgress(10);
 
-    const res = await myFetch(`${API}/api/products/upload-model/${editingModel.pId}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd
-    });
+    const id = editingModel.pId;
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to upload model: ${errorText}`);
+    let hasUpload = false;
+    let hasPlacementUpdate = false;
+
+    // =========================
+    // 1. UPLOAD MODEL (ONLY IF FILE SELECTED)
+    // =========================
+    if (modelFile) {
+      hasUpload = true;
+
+      const fd = new FormData();
+      fd.append("file", modelFile);
+
+      const uploadRes = await myFetch(
+        `${API}/api/products/upload-model/${id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: fd
+        }
+      );
+
+      if (!uploadRes.ok) {
+        const errorText = await uploadRes.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
+      await uploadRes.json();
+      setProgress(60);
     }
 
-    setTimeout(() => setProgress(40), 200);
+    // =========================
+    // 2. UPDATE PLACEMENT (ONLY IF CHANGED)
+    // =========================
+    if (placement && placement !== editingModel.pPlacement) {
+      hasPlacementUpdate = true;
 
-    await res.json();
+      const placementRes = await myFetch(
+        `${API}/api/products/update-placement/${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token}`
+          },
+          body: new URLSearchParams({
+            placement
+          })
+        }
+      );
 
-    setTimeout(() => setProgress(80), 600);
+      if (!placementRes.ok) {
+        const errorText = await placementRes.text();
+        throw new Error(`Placement update failed: ${errorText}`);
+      }
 
-    setTimeout(() => setProgress(100), 900);
+      setProgress(hasUpload ? 80 : 60);
+    }
+
+    // =========================
+    // NOTHING CHANGED
+    // =========================
+    if (!hasUpload && !hasPlacementUpdate) {
+      setUploading(false);
+      setProgress(0);
+      setEditingModel(null);
+      setModelFile(null);
+      return;
+    }
+
+    setProgress(100);
 
     setTimeout(() => {
       setUploading(false);
@@ -71,13 +122,14 @@ const ARManagerView = () => {
       setModelFile(null);
       fetchProducts();
     }, 300);
+
   } catch (err) {
-    alert(err.message || "Failed to upload model");
+    console.error(err);
+    alert(err.message || "Failed to save model");
     setUploading(false);
     setProgress(0);
   }
 };
-
   return (
     <div className={styles.viewContainer}>
     <>
@@ -98,7 +150,15 @@ const ARManagerView = () => {
                 type="file"
                 accept=".glb,.gltf"
                 hidden
-                onChange={(e) => setModelFile(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  setModelFile(file);
+
+                  if (file) {
+                    const url = URL.createObjectURL(file);
+                    setPreviewUrl(url);
+                  }
+                }}
               />
             </label>
 
@@ -145,7 +205,11 @@ const ARManagerView = () => {
           <div className={styles.modelViewer}>
             {editingModel.p3DModel ? (
               <model-viewer
-                src={editingModel.p3DModel}
+                src={
+                  previewUrl
+                    ? previewUrl
+                    : editingModel.p3DModel
+                }
                 auto-rotate
                 camera-controls
                 style={{ width: "100%", height: "300px" }}
@@ -160,7 +224,11 @@ const ARManagerView = () => {
 
             <button
               className={styles.secondaryBtn}
-              onClick={() => setEditingModel(null)}
+              onClick={() => {
+                setEditingModel(null);
+                setPreviewUrl(null);
+                setModelFile(null);
+              }}
             >
               Cancel
             </button>

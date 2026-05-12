@@ -50,7 +50,7 @@ public class ProductsService {
         return productsRepository.save(product);
     }
 
-    public Products uploadModel(Long id, MultipartFile file, String placement) throws Exception {
+    public Products uploadModel(Long id, MultipartFile file) throws Exception {
 
         Products product = getProductById(id);
 
@@ -58,6 +58,14 @@ public class ProductsService {
             supabaseStorageService.uploadFile(file, "Products_Models");
 
         product.setProduct3DModel(modelUrl);
+
+        return productsRepository.save(product);
+    }
+
+    public Products updatePlacement(Long id, String placement) {
+
+        Products product = getProductById(id);
+
         product.setProductPlacement(placement);
 
         return productsRepository.save(product);
