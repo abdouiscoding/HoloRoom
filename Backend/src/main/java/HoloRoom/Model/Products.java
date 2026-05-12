@@ -1,12 +1,9 @@
 package HoloRoom.Model;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,9 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -51,6 +46,9 @@ public class Products {
 
     @JsonProperty("p3DModel")
     private String p3DModel;
+
+    @JsonProperty("pPlacement")
+    private String pPlacement;
 
     @JsonProperty("pARSupport")
     private boolean pARSupport;
@@ -93,7 +91,7 @@ public class Products {
 
     public Products() {}
 
-    public Products(String pName, float pPrice, String pBrand, String p3DModel,
+    public Products(String pName, float pPrice, String pBrand, String p3DModel, String pPlacement,
                     String pDescription, Double pRating) {
         this.pName = pName;
         this.pDiscount = 0;
@@ -157,6 +155,10 @@ private void calculatePrice() {
     @JsonProperty("p3DModel")
     public String getProduct3DModel() { return p3DModel; }
     public void setProduct3DModel(String p3DModel) { this.p3DModel = p3DModel; }
+
+    @JsonProperty("pPlacement")
+    public String getProductPlacement() { return pPlacement; }
+    public void setProductPlacement(String pPlacement) { this.pPlacement = pPlacement; }
 
     @JsonProperty("pARSupport")
     public boolean isProductARSupport() { return pARSupport; }

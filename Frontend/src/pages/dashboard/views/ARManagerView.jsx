@@ -9,6 +9,7 @@ const ARManagerView = () => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [arFilter, setArFilter] = useState("ALL");
+  const [placement, setPlacement] = useState("FLOOR");
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
@@ -39,6 +40,7 @@ const ARManagerView = () => {
   try {
     const fd = new FormData();
     fd.append("file", modelFile);
+    fd.append("placement", placement);
 
     setUploading(true);
     setProgress(10);
@@ -54,11 +56,13 @@ const ARManagerView = () => {
       throw new Error(`Failed to upload model: ${errorText}`);
     }
 
-    setProgress(80);
+    setTimeout(() => setProgress(40), 200);
 
     await res.json();
 
-    setProgress(100);
+    setTimeout(() => setProgress(80), 600);
+
+    setTimeout(() => setProgress(100), 900);
 
     setTimeout(() => {
       setUploading(false);
@@ -100,10 +104,32 @@ const ARManagerView = () => {
 
           </div>
 
+          {/* PLACEMENT SELECTOR */}
+          <div className={styles.placementRow}>
+            <span>Placement:</span>
+
+            <button
+              className={styles.secondaryBtn}
+              onClick={() => {
+                setPlacement(prev =>
+                  prev === "FLOOR"
+                    ? "WALL"
+                    : prev === "WALL"
+                    ? "CEILING"
+                    : "FLOOR"
+                );
+              }}
+            >
+              {placement === "FLOOR" && "GROUND"}
+              {placement === "WALL" && "WALL"}
+              {placement === "CEILING" && "CEILING"}
+            </button>
+          </div>
+
           {/* MODEL INFO */}
           <div className={styles.modelInfo}>
             {!editingModel.p3DModel && !modelFile && (
-              <p>No model to display</p>
+              <p>Please add a model</p>
             )}
 
             {modelFile && (
@@ -152,13 +178,22 @@ const ARManagerView = () => {
       </div>
     )}
 
-    {/*loading bar */}
     {uploading && (
-      <div className={styles.loadingBar}>
-        <div
-          className={styles.loadingFill}
-          style={{ width: `${progress}%` }}
-        />
+      <div className={styles.oomodalOverlay}>
+        <div className={styles.uploadPopup}>
+
+          <h3>Uploading Model...</h3>
+
+          <div className={styles.loadingBar}>
+            <div
+              className={styles.loadingFill}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <p>{progress}%</p>
+
+        </div>
       </div>
     )}
 
@@ -230,7 +265,10 @@ const ARManagerView = () => {
 
             <button
               className={styles.arBtn}
-              onClick={() => setEditingModel(p)}
+              onClick={() => {
+                setEditingModel(p);
+                setPlacement(p.pPlacement || "FLOOR");
+              }}
             >
               Edit Model
             </button>

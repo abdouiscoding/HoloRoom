@@ -43,7 +43,6 @@ public class ProductsService {
 
         img.setProduct(product);
 
-        // save FULL URL now
         img.setProductImage(imageUrl);
 
         product.getImages().add(img);
@@ -51,15 +50,15 @@ public class ProductsService {
         return productsRepository.save(product);
     }
 
-    public Products uploadModel(Long id, MultipartFile file) throws Exception {
+    public Products uploadModel(Long id, MultipartFile file, String placement) throws Exception {
 
         Products product = getProductById(id);
 
         String modelUrl =
             supabaseStorageService.uploadFile(file, "Products_Models");
 
-        // save FULL URL now
         product.setProduct3DModel(modelUrl);
+        product.setProductPlacement(placement);
 
         return productsRepository.save(product);
     }

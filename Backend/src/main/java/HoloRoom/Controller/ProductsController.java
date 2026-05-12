@@ -65,21 +65,28 @@ public class ProductsController {
     @Autowired
     private SupabaseStorageService supabaseStorageService;
 
-    //upload
-    @PostMapping("/upload-model/{id}")
-    public ResponseEntity<?> uploadModel(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
+    // upload
+@PostMapping("/upload-model/{id}")
+public ResponseEntity<?> uploadModel(
+        @PathVariable Long id,
+        @RequestParam("file") MultipartFile file,
+        @RequestParam("placement") String placement) {
 
-        try {
-            Products p = productsService.uploadModel(id, file);
-            return ResponseEntity.ok(p);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
-        }
+    try {
+        Products p = productsService.uploadModel(id, file, placement);
+        return ResponseEntity.ok(p);
+
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", e.getMessage()));
+
+    } catch (Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", e.getMessage()));
     }
+}
 
     @PostMapping("/upload-image/{id}")
     public ResponseEntity<?> uploadImage(
