@@ -8,6 +8,9 @@ import { myFetch } from "./api";
 ========================= */
 const API = "https://control-parole-grandkid.ngrok-free.dev";
 
+// vars
+let selectedProductId = currentProductId;
+
 /* =========================
    AUTH / URL PARAMS
 ========================= */
@@ -644,7 +647,7 @@ function drawMenu() {
     const y = 120 + row * 300;
 
     const active =
-      Number(p.pId) === Number(currentProductId);
+      Number(p.pId) === Number(selectedProductId);
 
     /* card */
     ctx.fillStyle = "#222";
@@ -823,23 +826,6 @@ async function loadProduct(id = currentProductId) {
   }
 }
 
-
-/* =========================
-   MODEL NORMALIZE
-========================= */
-function normalizeModel(model) {
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-
-  const max = Math.max(size.x, size.y, size.z);
-  const scale = 0.7 / max;
-
-  model.scale.setScalar(scale);
-
-  const newBox = new THREE.Box3().setFromObject(model);
-  model.position.y -= newBox.min.y;
-}
-
 /* =========================
    HUD HIGHER ABOVE OBJECT
 ========================= */
@@ -858,8 +844,16 @@ function createHUD(obj) {
     })
   );
 
-  sprite.scale.set(0.75, 0.36, 1);
-  sprite.position.set(0, 1.25, 0); // higher
+  sprite.scale.set(1.5, 0.72, 1);
+  const box = new THREE.Box3().setFromObject(obj);
+
+  const size = box.getSize(new THREE.Vector3());
+
+  sprite.position.set(
+    0,
+    size.y + 1,
+    0
+  );
   obj.add(sprite);
 
   function draw() {
@@ -907,7 +901,6 @@ function addObject() {
   if (!reticle.visible || !productModelTemplate) return;
 
   const obj = productModelTemplate.clone(true);
-  normalizeModel(obj);
 
   obj.position.setFromMatrixPosition(reticle.matrix);
 
@@ -1008,43 +1001,158 @@ const raycaster = new THREE.Raycaster();
 window.addEventListener("click", async () => {
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
 
-  // menu collision
+  /* =========================
+     MENU COLLISION
+  ========================= */
   if (menu.visible) {
+
     const hit = raycaster.intersectObject(menu);
 
     if (hit.length) {
+
       const uv = hit[0].uv;
+
       const x = uv.x * 1024;
       const y = (1 - uv.y) * 768;
 
-      // close
+      /* =========================
+         CLOSE BUTTON
+      ========================= */
       if (x > 920 && y < 80) {
+
         menu.visible = false;
         menuVisible = false;
+
         return;
       }
 
-      const col = Math.floor((x - 40) / 320);
-      const row = Math.floor((y - 120) / 300);
+      /* =========================
+         SCROLL UP
+      ========================= */
+      if (
+        x >= 930 &&
+        x <= 990 &&
+        y >= 150 &&
+        y <= 220
+      ) {
 
-      const index = row * 3 + col;
+        menuScroll = Math.max(
+          0,
+          menuScroll - 1
+        );
 
-      if (index >= 0 && allProducts[index]) {
-        await loadProduct(allProducts[index].pId);
-        popup("Selected " + allProducts[index].pName);
+        drawMenu();
+
+        return;
+      }
+
+      /* =========================
+         SCROLL DOWN
+      ========================= */
+      if (
+        x >= 930 &&
+        x <= 990 &&
+        y >= 250 &&
+        y <= 320
+      ) {
+
+        if (
+          menuScroll <
+          allProducts.length - 6
+        ) {
+          menuScroll++;
+        }
+
+        drawMenu();
+
+        return;
+      }
+
+      /* =========================
+         PRODUCT CARD COLLISION
+      ========================= */
+
+      const visible = allProducts.slice(
+        menuScroll,
+        menuScroll + 6
+      );
+
+      const cardW = 270;
+      const cardH = 250;
+
+      const spacingX = 295;
+      const spacingY = 300;
+
+      const startX = 35;
+      const startY = 120;
+
+      let clickedProduct = null;
+
+      for (let i = 0; i < visible.length; i++) {
+
+        const col = i % 3;
+
+        const row = Math.floor(i / 3);
+
+        const cardX =
+          startX + col * spacingX;
+
+        const cardY =
+          startY + row * spacingY;
+
+        const inside =
+          x >= cardX &&
+          x <= cardX + cardW &&
+          y >= cardY &&
+          y <= cardY + cardH;
+
+        if (inside) {
+
+          clickedProduct = visible[i];
+
+          break;
+        }
+      }
+
+      if (clickedProduct) {
+
+        selectedProductId =
+          clickedProduct.pId;
+
+        drawMenu();
+
+        await loadProduct(
+          clickedProduct.pId
+        );
+
+        popup(
+          "Selected " +
+          clickedProduct.pName
+        );
       }
 
       return;
     }
   }
 
-  // object / hud collision
-  const hits = raycaster.intersectObjects(objects, true);
+  /* =========================
+     OBJECT / HUD COLLISION
+  ========================= */
+
+  const hits =
+    raycaster.intersectObjects(
+      objects,
+      true
+    );
 
   if (hits.length) {
+
     let root = hits[0].object;
 
-    while (root.parent && !objects.includes(root)) {
+    while (
+      root.parent &&
+      !objects.includes(root)
+    ) {
       root = root.parent;
     }
 
@@ -1052,17 +1160,36 @@ window.addEventListener("click", async () => {
 
     const hitObj = hits[0].object;
 
-    // if sprite hud
+    /* =========================
+       HUD BUTTONS
+    ========================= */
+
     if (hitObj.type === "Sprite") {
+
       const uv = hits[0].uv;
+
       const x = uv.x * 512;
       const y = (1 - uv.y) * 256;
 
-      if (x > 350 && x < 410 && y > 30 && y < 90) {
+      // wishlist
+      if (
+        x > 350 &&
+        x < 410 &&
+        y > 30 &&
+        y < 90
+      ) {
+
         addWishlist();
       }
 
-      if (x > 290 && x < 470 && y > 140 && y < 210) {
+      // cart
+      if (
+        x > 290 &&
+        x < 470 &&
+        y > 140 &&
+        y < 210
+      ) {
+
         addCart();
       }
     }
