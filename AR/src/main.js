@@ -322,8 +322,6 @@ reticle.visible = false;
 
 scene.add(reticle);
 
-reticle.matrixAutoUpdate = false;
-
 /* =========================
    DOM UI
 ========================= */
@@ -1904,97 +1902,41 @@ renderer.setAnimationLoop(async (_, frame) => {
     reticle.scale.set(s, s, s);
   }
 
- /* =========================
-   HIT TEST
+/* =========================
+   FORCED ALWAYS-VISIBLE CURSOR
 ========================= */
 
-const hits = frame.getHitTestResults(hitTestSource);
+// IMPORTANT
+reticle.matrixAutoUpdate = true;
 
-// ALWAYS keep reticle visible
 reticle.visible = true;
 
-snapped = false;
+// put cursor in front of camera
+const dir = new THREE.Vector3();
+camera.getWorldDirection(dir);
 
-if (hits.length > 0) {
+const pos = new THREE.Vector3()
+  .copy(camera.position)
+  .add(dir.multiplyScalar(1.5));
 
-  const hit = hits[0];
+reticle.position.copy(pos);
 
-  const pose = hit.getPose(referenceSpace);
+// make it face camera
+reticle.quaternion.copy(camera.quaternion);
 
-  if (pose) {
+// size
+reticle.scale.setScalar(0.08);
 
-    // apply matrix
-    reticle.matrix.fromArray(pose.transform.matrix);
+// keep yellow
+reticle.material.color.set("#ffdd00");
 
-    reticle.matrix.decompose(
-      reticle.position,
-      reticle.quaternion,
-      reticle.scale
-    );
+// optional rotation if using ring
+reticle.rotation.x = -Math.PI / 2;
 
-    // classify surface
-    const hitMatrix = new THREE.Matrix4().fromArray(
-      pose.transform.matrix
-    );
+// fake ready state so addObject works
+detectedPlacement = requiredPlacement || "FLOOR";
+placementStatus = "READY";
 
-    const normal = new THREE.Vector3(
-      hitMatrix.elements[4],
-      hitMatrix.elements[5],
-      hitMatrix.elements[6]
-    ).normalize();
-
-    detectedPlacement = classifySurface(normal);
-
-    // orient reticle correctly
-    if (
-      detectedPlacement === "FLOOR" ||
-      detectedPlacement === "CEILING"
-    ) {
-
-      reticle.rotation.set(-Math.PI / 2, 0, 0);
-
-    } else {
-
-      // wall
-      reticle.rotation.set(0, 0, 0);
-    }
-
-    // normal scale
-    reticle.scale.setScalar(1);
-
-    snapped = true;
-  }
-}
-
-/* =========================
-   FALLBACK RETICLE
-========================= */
-
-if (!snapped) {
-
-  // keep reticle floating in front of camera
-  const dir = new THREE.Vector3();
-
-  camera.getWorldDirection(dir);
-
-  const fallbackDistance = 1.5;
-
-  const fallbackPos = new THREE.Vector3()
-    .copy(camera.position)
-    .add(dir.multiplyScalar(fallbackDistance));
-
-  reticle.position.copy(fallbackPos);
-
-  // make reticle face camera
-  reticle.quaternion.copy(camera.quaternion);
-
-  // smaller fallback scale
-  reticle.scale.setScalar(0.5);
-
-  reticle.updateMatrix();
-  
-  detectedPlacement = null;
-}
   /* =====================================
      DRAG
   ===================================== */
