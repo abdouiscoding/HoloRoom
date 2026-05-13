@@ -9,38 +9,18 @@ import { myFetch } from "./api";
 const API = "https://control-parole-grandkid.ngrok-free.dev";
 
 /* =========================
-   AUTH / URL PARAMS / OTHER VARS
+   AUTH / URL PARAMS
 ========================= */
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 const userId = params.get("userId");
 let currentProductId = params.get("productId");
-let selectedProductId = currentProductId;
-let cursorMode = "dot";
-let cursorColor = "#ffdd00";
-// for the placement system
-let placementStatus = "SEARCHING"; // SEARCHING | READY
-let requiredPlacement = null; // FLOOR | WALL | CEILING
-let snapped = false;
-
-let detectedPlacement = null;
 
 const authHeaders = token
   ? { Authorization: `Bearer ${token}` }
   : {};
 
-// helper methods
-function classifySurface(normal) {
-  const up = new THREE.Vector3(0, 1, 0);
-
-  const dot = normal.dot(up);
-
-  if (dot > 0.7) return "FLOOR";
-  if (dot < -0.7) return "CEILING";
-  return "WALL";
-}
-
-/* =====================================================
+  /* =====================================================
    LOADING SCREEN
 ===================================================== */
 const loadingScreen = document.createElement("div");
@@ -282,9 +262,6 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.sortObjects = true;
-
 scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
 
 const dir = new THREE.DirectionalLight(0xffffff, 1);
@@ -304,22 +281,21 @@ document.body.appendChild(arBtn);
 /* =========================
    RETICLE (GROUND SNAP)
 ========================= */
-const reticleMaterial = new THREE.MeshBasicMaterial({
-  color: 0xffdd00,
-  transparent: true,
-  opacity: 1,
-  side: THREE.DoubleSide
-});
-
 const reticle = new THREE.Mesh(
-  new THREE.RingGeometry(0.06, 0.08, 64),
-  reticleMaterial
+  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
+  new THREE.MeshBasicMaterial({
+    color: 0xffdd00,
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    depthTest: false
+  })
 );
 
 reticle.rotation.x = -Math.PI / 2;
-
+reticle.renderOrder = 9999;
+reticle.matrixAutoUpdate = true;
 reticle.visible = false;
-
 scene.add(reticle);
 
 /* =========================
@@ -342,87 +318,56 @@ function makeBtn(txt) {
   b.style.cssText = `
   position:absolute;
   pointer-events:auto;
-  padding:14px 18px;
+  padding:12px 18px;
   border:none;
-  border-radius:18px;
-  background:rgba(20,20,25,.82);
-  backdrop-filter:blur(14px);
-  color:#fff;
+  border-radius:14px;
+  background:rgba(0,255,255,.9);
+  color:#000;
   font-weight:700;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:15px;
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-  transition:.18s;
+  box-shadow:0 8px 30px rgba(0,0,0,.3);
   `;
-
-b.onmouseenter = () => {
-  b.style.transform = "scale(1.05)";
-};
-
-b.onmouseleave = () => {
-  b.style.transform = "scale(1)";
-};
   ui.appendChild(b);
   return b;
 }
 
 // buttons
 const addBtn = makeBtn("Add");
-addBtn.style.bottom = "22px";
-addBtn.style.left = "50%";
-addBtn.style.transform = "translateX(-50%)";
-
-const rotateLeftBtn = makeBtn("⟲");
-rotateLeftBtn.style.bottom = "22px";
-rotateLeftBtn.style.left = "22px";
-
-const rotateRightBtn = makeBtn("⟳");
-rotateRightBtn.style.bottom = "22px";
-rotateRightBtn.style.left = "90px";
+addBtn.style.top = "12px";
+addBtn.style.right = "12px";
 
 const removeBtn = makeBtn("Remove");
-removeBtn.style.bottom = "22px";
-removeBtn.style.right = "22px";
+removeBtn.style.top = "12px";
+removeBtn.style.right = "95px";
 
-const productsBtn = makeBtn("📦 Products");   
-productsBtn.style.top = "18px";
-productsBtn.style.left = "18px";
+const productsBtn = makeBtn("Products");
+productsBtn.style.top = "12px";
+productsBtn.style.left = "12px";
 
-const menuBtn = makeBtn("☰");
-menuBtn.style.top = "18px";
-menuBtn.style.right = "18px";
+const exitBtn = makeBtn("Exit AR");
 
-menuBtn.onclick = () => {
-  showMainMenuPopup();
+exitBtn.style.bottom = "20px";
+exitBtn.style.right = "20px";
+
+exitBtn.style.display = "none";
+
+exitBtn.onclick = () => {
+  showPopup({
+    mode: "confirm",
+    title: "Exit AR?",
+    text: "Are you sure you want to leave AR mode and return to the shop?",
+    onConfirm: async () => {
+
+      const session = renderer.xr.getSession();
+
+      if (session) {
+        await session.end();
+      }
+
+      window.location.href =
+        "https://holoroom-front.vercel.app/shop";
+    }
+  });
 };
-
-let rotateLeftHeld = false;
-let rotateRightHeld = false;
-
-function setupHoldRotation(btn, dir) {
-
-  btn.addEventListener("pointerdown", () => {
-    if (dir === "left") rotateLeftHeld = true;
-    else rotateRightHeld = true;
-  });
-
-  btn.addEventListener("pointerup", () => {
-    rotateLeftHeld = false;
-    rotateRightHeld = false;
-  });
-
-  btn.addEventListener("pointerleave", () => {
-    rotateLeftHeld = false;
-    rotateRightHeld = false;
-  });
-}
-
-setupHoldRotation(rotateLeftBtn, "left");
-setupHoldRotation(rotateRightBtn, "right");
-
 /* =========================
    UNIVERSAL POPUP
 ========================= */
@@ -584,358 +529,6 @@ function showPopup({
 }
 
 /* =========================
-    MAIN MENU POPUP
-========================= */
-function showMainMenuPopup() {
-
-  const old = document.getElementById("mainMenuPopup");
-
-  if (old) old.remove();
-
-  const overlay = document.createElement("div");
-
-  overlay.id = "mainMenuPopup";
-
-  overlay.style.cssText = `
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.6);
-    backdrop-filter:blur(10px);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:99999999;
-  `;
-
-  const card = document.createElement("div");
-
-  card.style.cssText = `
-    width:min(340px,90vw);
-    background:#111;
-    border-radius:24px;
-    padding:24px;
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-    border:1px solid rgba(255,255,255,.08);
-  `;
-
-  overlay.onclick = () => {
-    overlay.remove();
-  };
-
-  card.onclick = (e) => {
-    e.stopPropagation();
-  };
-
-  function makeOption(label) {
-
-    const btn = document.createElement("button");
-
-    btn.innerText = label;
-
-    btn.style.cssText = `
-      padding:18px;
-      border:none;
-      border-radius:16px;
-      background:#1f1f1f;
-      color:white;
-      font-size:17px;
-      font-weight:700;
-      cursor:pointer;
-    `;
-
-    return btn;
-  }
-
-  const settingsBtn = makeOption("⚙ Settings");
-  const exitBtn = makeOption("🚪 Exit");
-
-  settingsBtn.onclick = () => {
-    overlay.remove();
-    showSettingsPopup();
-  };
-
-  exitBtn.onclick = () => {
-
-    overlay.remove();
-
-    showPopup({
-      mode: "confirm",
-      title: "Exit AR",
-      text: "Are you sure you want to leave AR mode?",
-      onConfirm: () => {
-        window.location.href =
-          "https://holoroom-front.vercel.app/shop";
-      }
-    });
-  };
-
-  card.appendChild(settingsBtn);
-  card.appendChild(exitBtn);
-
-  overlay.appendChild(card);
-
-  document.body.appendChild(overlay);
-}
-
-/* =========================
-    SETTINGS POPUP
-========================= */
-
-function showSettingsPopup() {
-
-  const old = document.getElementById("settingsPopup");
-
-  if (old) old.remove();
-
-  const overlay = document.createElement("div");
-
-  overlay.id = "settingsPopup";
-
-  overlay.style.cssText = `
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.7);
-    backdrop-filter:blur(12px);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:999999999;
-    font-family:Arial;
-    padding:18px;
-  `;
-
-  overlay.onclick = () => {
-    overlay.remove();
-  };
-
-  const card = document.createElement("div");
-
-  card.style.cssText = `
-    width:min(95vw,520px);
-    background:#111;
-    border-radius:24px;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,.08);
-    color:white;
-  `;
-
-  card.onclick = (e) => {
-    e.stopPropagation();
-  };
-
-  /* =========================
-      TOP BAR
-  ========================= */
-  const topBar = document.createElement("div");
-
-  topBar.style.cssText = `
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:18px;
-    border-bottom:1px solid rgba(255,255,255,.06);
-  `;
-
-  const tabs = document.createElement("div");
-
-  tabs.style.cssText = `
-    display:flex;
-    gap:10px;
-  `;
-
-  function createTab(name) {
-    const btn = document.createElement("button");
-
-    btn.innerText = name;
-
-    btn.style.cssText = `
-      padding:10px 14px;
-      border:none;
-      border-radius:12px;
-      background:#1f1f1f;
-      color:white;
-      cursor:pointer;
-      font-weight:700;
-    `;
-
-    return btn;
-  }
-
-  const cursorTab = createTab("Cursor");
-  const chatbotTab = createTab("Chatbot");
-
-  const closeBtn = document.createElement("button");
-
-  closeBtn.innerText = "✕";
-
-  closeBtn.style.cssText = `
-    width:42px;
-    height:42px;
-    border:none;
-    border-radius:12px;
-    background:#ff4d6d;
-    color:white;
-    font-size:18px;
-    cursor:pointer;
-    font-weight:bold;
-  `;
-
-  closeBtn.onclick = () => {
-    overlay.remove();
-  };
-
-  tabs.appendChild(cursorTab);
-  tabs.appendChild(chatbotTab);
-
-  topBar.appendChild(tabs);
-  topBar.appendChild(closeBtn);
-
-  /* =========================
-      CONTENT
-  ========================= */
-  const content = document.createElement("div");
-
-  content.style.cssText = `
-    padding:22px;
-  `;
-
-  function renderCursorSettings() {
-
-    content.innerHTML = `
-      <h2 style="margin-top:0;">Cursor Settings</h2>
-    `;
-
-    /* CURSOR TYPE */
-    const modeTitle = document.createElement("div");
-
-    modeTitle.innerText = "Cursor";
-
-    modeTitle.style.cssText = `
-      margin-top:20px;
-      margin-bottom:12px;
-      font-weight:bold;
-      opacity:.9;
-    `;
-
-    content.appendChild(modeTitle);
-
-    const modes = document.createElement("div");
-
-    modes.style.cssText = `
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    `;
-
-    function modeBtn(label, mode) {
-
-      const b = document.createElement("button");
-
-      b.innerText = label;
-
-      b.style.cssText = `
-        padding:12px 18px;
-        border:none;
-        border-radius:14px;
-        background:#1f1f1f;
-        color:white;
-        cursor:pointer;
-        font-weight:700;
-      `;
-
-      b.onclick = () => {
-
-        cursorMode = mode;
-
-        reticle.geometry.dispose();
-
-        if (mode === "dot") {
-
-          reticle.geometry =
-            new THREE.SphereGeometry(0.01, 32, 32);
-
-        } else {
-
-          reticle.geometry =
-            new THREE.RingGeometry(0.014, 0.022, 32);
-
-          reticle.rotation.x = -Math.PI / 2;
-        }
-      };
-
-      return b;
-    }
-
-    modes.appendChild(modeBtn("Dot", "dot"));
-    modes.appendChild(modeBtn("Circle", "circle"));
-
-    content.appendChild(modes);
-
-    /* COLOR */
-    const colorTitle = document.createElement("div");
-
-    colorTitle.innerText = "Color";
-
-    colorTitle.style.cssText = `
-      margin-top:24px;
-      margin-bottom:12px;
-      font-weight:bold;
-      opacity:.9;
-    `;
-
-    content.appendChild(colorTitle);
-
-    const colorInput = document.createElement("input");
-
-    colorInput.type = "color";
-
-    colorInput.value = cursorColor;
-
-    colorInput.style.cssText = `
-      width:80px;
-      height:50px;
-      border:none;
-      background:none;
-      cursor:pointer;
-    `;
-
-    colorInput.oninput = (e) => {
-
-      cursorColor = e.target.value;
-
-      reticle.material.color.set(cursorColor);
-    };
-
-    content.appendChild(colorInput);
-  }
-
-  function renderChatbotSettings() {
-
-    content.innerHTML = `
-      <h2 style="margin-top:0;">Chatbot Settings</h2>
-
-      <p style="opacity:.7;">
-        Coming soon...
-      </p>
-    `;
-  }
-
-  cursorTab.onclick = renderCursorSettings;
-  chatbotTab.onclick = renderChatbotSettings;
-
-  card.appendChild(topBar);
-  card.appendChild(content);
-
-  overlay.appendChild(card);
-
-  document.body.appendChild(overlay);
-
-  renderCursorSettings();
-}
-
-/* =========================
    TOAST POPUP
 ========================= */
 function popup(msg) {
@@ -944,7 +537,7 @@ function popup(msg) {
   d.style.cssText = `
   position:absolute;
   left:50%;
-  bottom:100px;
+  bottom:90px;
   transform:translateX(-50%);
   background:rgba(0,0,0,.82);
   color:#fff;
@@ -959,119 +552,6 @@ function popup(msg) {
   setTimeout(() => {
     d.remove();
   }, 2200);
-}
-
-let placementToast = null;
-
-function showPlacementToast(text) {
-  if (placementToast) placementToast.remove();
-
-  placementToast = document.createElement("div");
-  placementToast.innerText = text;
-
-  placementToast.style.cssText = `
-    position:absolute;
-    left:50%;
-    bottom:200px;
-    transform:translateX(-50%);
-    background:rgba(0,0,0,.75);
-    color:#00ffff;
-    padding:12px 18px;
-    border-radius:20px;
-    font-weight:700;
-    z-index:999999999;
-    font-family:Arial;
-    border:1px solid #00ffff;
-  `;
-
-  document.body.appendChild(placementToast);
-}
-
-/* =========================
-    Product Scaler
-========================= */
-function normalizeProductModel(
-  object,
-  targetSize = 0.8
-) {
-  const box = new THREE.Box3().setFromObject(object);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-
-  const maxAxis = Math.max(size.x, size.y, size.z);
-
-  const scale = targetSize / maxAxis * 1.2;
-
-  object.scale.setScalar(scale);
-
-  // re-center after scaling
-  const box2 = new THREE.Box3().setFromObject(object);
-  const center = box2.getCenter(new THREE.Vector3());
-
-  object.position.sub(center);
-}
-
-/* =========================
-    Selected Object Glow
-========================= */
-function createSelectionRing(obj) {
-
-  // remove old
-  if (obj.userData.selectionRing) {
-    obj.remove(obj.userData.selectionRing);
-  }
-
-  const texCanvas = document.createElement("canvas");
-
-  texCanvas.width = 256;
-  texCanvas.height = 256;
-
-  const ctx = texCanvas.getContext("2d");
-
-  const gradient = ctx.createRadialGradient(
-    128,
-    128,
-    30,
-    128,
-    128,
-    120
-  );
-
-  gradient.addColorStop(0, "rgba(0,255,255,.9)");
-  gradient.addColorStop(0.5, "rgba(0,255,255,.35)");
-  gradient.addColorStop(1, "rgba(0,255,255,0)");
-
-  ctx.fillStyle = gradient;
-
-  ctx.beginPath();
-  ctx.arc(128, 128, 110, 0, Math.PI * 2);
-  ctx.fill();
-
-  const tex = new THREE.CanvasTexture(texCanvas);
-
-  const material = new THREE.SpriteMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: false
-  });
-
-  const sprite = new THREE.Sprite(material);
-
-  sprite.scale.set(1.2, 1.2, 1.2);
-
-  const box = new THREE.Box3().setFromObject(obj);
-
-  const size = box.getSize(new THREE.Vector3());
-
-  sprite.position.set(
-    0,
-    size.y + 0.4,
-    0
-  );
-
-  obj.add(sprite);
-
-  obj.userData.selectionRing = sprite;
 }
 
 /* =========================
@@ -1164,7 +644,7 @@ function drawMenu() {
     const y = 120 + row * 300;
 
     const active =
-      Number(p.pId) === Number(selectedProductId);
+      Number(p.pId) === Number(currentProductId);
 
     /* card */
     ctx.fillStyle = "#222";
@@ -1306,7 +786,6 @@ async function loadProduct(id = currentProductId) {
       }, 400);
     },
 
-
       // PROGRESS
       (xhr) => {
         if (xhr.total && xhr.total > 0) {
@@ -1344,6 +823,23 @@ async function loadProduct(id = currentProductId) {
   }
 }
 
+
+/* =========================
+   MODEL NORMALIZE
+========================= */
+function normalizeModel(model) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+
+  const max = Math.max(size.x, size.y, size.z);
+  const scale = 0.7 / max;
+
+  model.scale.setScalar(scale);
+
+  const newBox = new THREE.Box3().setFromObject(model);
+  model.position.y -= newBox.min.y;
+}
+
 /* =========================
    HUD HIGHER ABOVE OBJECT
 ========================= */
@@ -1362,16 +858,8 @@ function createHUD(obj) {
     })
   );
 
-  sprite.scale.set(1.5, 0.72, 1);
-  const box = new THREE.Box3().setFromObject(obj);
-
-  const size = box.getSize(new THREE.Vector3());
-
-  sprite.position.set(
-    0,
-    size.y - 1,
-    0
-  );
+  sprite.scale.set(0.75, 0.36, 1);
+  sprite.position.set(0, 1.25, 0); // higher
   obj.add(sprite);
 
   function draw() {
@@ -1386,7 +874,7 @@ function createHUD(obj) {
     ctx.fillText(productData.pName, 20, 50);
 
     ctx.fillStyle = "#00ffff";
-    ctx.fillText(`${productData.pFinalPrice} DZD`, 20, 95);
+    ctx.fillText(`${productData.pPrice} DZD`, 20, 95);
 
     // heart
     ctx.fillStyle = "#ff4d6d";
@@ -1418,58 +906,17 @@ function createHUD(obj) {
 function addObject() {
   if (!reticle.visible || !productModelTemplate) return;
 
-  if (placementStatus !== "READY") {
-    popup("Still detecting placement surface...");
-    return;
-  }
+  const obj = productModelTemplate.clone(true);
+  normalizeModel(obj);
 
-  const typeMatch =
-    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
-    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
-    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING");
+  obj.position.setFromMatrixPosition(reticle.matrix);
 
-  if (!typeMatch) {
-    popup(`Place only on ${requiredPlacement.toLowerCase()}`);
-    return;
-  }
+  scene.add(obj);
+  objects.push(obj);
 
+  createHUD(obj);
 
-  // pivot holder
-  const holder = new THREE.Group();
-
-  holder.position.setFromMatrixPosition(reticle.matrix);
-
-  // clone model
-  const model = productModelTemplate.clone(true);
-
-  normalizeProductModel(model, 0.8);
-
-  // center model
-  const box = new THREE.Box3().setFromObject(model);
-  const center = box.getCenter(new THREE.Vector3());
-
-  model.position.sub(center);
-
-  holder.add(model);
-
-  scene.add(holder);
-
-  objects.push(holder);
-
-  createHUD(holder);
-
-  selectedObject = holder;
-
-  createSelectionRing(holder);
-
-  objects.forEach(o => {
-
-    if (o.userData.selectionRing) {
-      o.userData.selectionRing.visible = false;
-    }
-  });
-
-  holder.userData.selectionRing.visible = true;
+  selectedObject = obj;
 }
 
 addBtn.onclick = addObject;
@@ -1561,206 +1008,61 @@ const raycaster = new THREE.Raycaster();
 window.addEventListener("click", async () => {
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
 
-  /* =========================
-     MENU COLLISION
-  ========================= */
+  // menu collision
   if (menu.visible) {
-
     const hit = raycaster.intersectObject(menu);
 
     if (hit.length) {
-
       const uv = hit[0].uv;
-
       const x = uv.x * 1024;
       const y = (1 - uv.y) * 768;
 
-      /* =========================
-         CLOSE BUTTON
-      ========================= */
+      // close
       if (x > 920 && y < 80) {
-
         menu.visible = false;
         menuVisible = false;
-
         return;
       }
 
-      /* =========================
-         SCROLL UP
-      ========================= */
-      if (
-        x >= 930 &&
-        x <= 990 &&
-        y >= 150 &&
-        y <= 220
-      ) {
+      const col = Math.floor((x - 40) / 320);
+      const row = Math.floor((y - 120) / 300);
 
-        menuScroll = Math.max(
-          0,
-          menuScroll - 1
-        );
+      const index = row * 3 + col;
 
-        drawMenu();
-
-        return;
-      }
-
-      /* =========================
-         SCROLL DOWN
-      ========================= */
-      if (
-        x >= 930 &&
-        x <= 990 &&
-        y >= 250 &&
-        y <= 320
-      ) {
-
-        if (
-          menuScroll <
-          allProducts.length - 6
-        ) {
-          menuScroll++;
-        }
-
-        drawMenu();
-
-        return;
-      }
-
-      /* =========================
-         PRODUCT CARD COLLISION
-      ========================= */
-
-      const visible = allProducts.slice(
-        menuScroll,
-        menuScroll + 6
-      );
-
-      const cardW = 270;
-      const cardH = 250;
-
-      const spacingX = 295;
-      const spacingY = 300;
-
-      const startX = 35;
-      const startY = 120;
-
-      let clickedProduct = null;
-
-      for (let i = 0; i < visible.length; i++) {
-
-        const col = i % 3;
-
-        const row = Math.floor(i / 3);
-
-        const cardX =
-          startX + col * spacingX;
-
-        const cardY =
-          startY + row * spacingY;
-
-        const inside =
-          x >= cardX &&
-          x <= cardX + cardW &&
-          y >= cardY &&
-          y <= cardY + cardH;
-
-        if (inside) {
-
-          clickedProduct = visible[i];
-
-          break;
-        }
-      }
-
-      if (clickedProduct) {
-
-        selectedProductId =
-          clickedProduct.pId;
-
-        drawMenu();
-
-        await loadProduct(
-          clickedProduct.pId
-        );
-
-        popup(
-          "Selected " +
-          clickedProduct.pName
-        );
+      if (index >= 0 && allProducts[index]) {
+        await loadProduct(allProducts[index].pId);
+        popup("Selected " + allProducts[index].pName);
       }
 
       return;
     }
   }
 
-  /* =========================
-     OBJECT / HUD COLLISION
-  ========================= */
-
-  const hits =
-    raycaster.intersectObjects(
-      objects,
-      true
-    );
+  // object / hud collision
+  const hits = raycaster.intersectObjects(objects, true);
 
   if (hits.length) {
-
     let root = hits[0].object;
 
-    while (
-      root.parent &&
-      !objects.includes(root)
-    ) {
+    while (root.parent && !objects.includes(root)) {
       root = root.parent;
     }
 
     selectedObject = root;
 
-    objects.forEach(o => {
-
-    if (o.userData.selectionRing) {
-      o.userData.selectionRing.visible = false;
-    }
-  });
-
-  if (selectedObject.userData.selectionRing) {
-    selectedObject.userData.selectionRing.visible = true;
-  }
-
     const hitObj = hits[0].object;
 
-    /* =========================
-       HUD BUTTONS
-    ========================= */
-
+    // if sprite hud
     if (hitObj.type === "Sprite") {
-
       const uv = hits[0].uv;
-
       const x = uv.x * 512;
       const y = (1 - uv.y) * 256;
 
-      // wishlist
-      if (
-        x > 350 &&
-        x < 410 &&
-        y > 30 &&
-        y < 90
-      ) {
-
+      if (x > 350 && x < 410 && y > 30 && y < 90) {
         addWishlist();
       }
 
-      // cart
-      if (
-        x > 290 &&
-        x < 470 &&
-        y > 140 &&
-        y < 210
-      ) {
-
+      if (x > 290 && x < 470 && y > 140 && y < 210) {
         addCart();
       }
     }
@@ -1796,26 +1098,15 @@ window.addEventListener("pointerup", () => {
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
 
-        requiredPlacement = productData.pPlacement || "FLOOR";
-        placementStatus = "SEARCHING";
-
-        if (requiredPlacement === "FLOOR") {
-          showPlacementToast("Detecting floor...");
-        }
-
-        if (requiredPlacement === "WALL") {
-          showPlacementToast("Detecting walls...");
-        }
-
-        if (requiredPlacement === "CEILING") {
-          showPlacementToast("Detecting ceiling...");
-        }
+  exitBtn.style.display = "block";
 
   arBtn.style.display = "none";
 });
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.style.display = "none";
+
+  exitBtn.style.display = "none";
 
   arBtn.style.display = "block";
 });
@@ -1825,28 +1116,6 @@ renderer.xr.addEventListener("sessionend", () => {
 ========================= */
 renderer.setAnimationLoop(async (_, frame) => {
   const session = renderer.xr.getSession();
-
-  if (detectedPlacement) {
-
-  if (
-    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
-    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
-    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING")
-  ) {
-    placementStatus = "READY";
-  }
-  }
-
-  if (selectedObject) {
-
-    if (rotateLeftHeld) {
-      selectedObject.rotation.y += 0.03;
-    }
-
-    if (rotateRightHeld) {
-      selectedObject.rotation.y -= 0.03;
-    }
-  }
 
   if (!session || !frame) {
     renderer.render(scene, camera);
@@ -1902,95 +1171,165 @@ renderer.setAnimationLoop(async (_, frame) => {
     reticle.scale.set(s, s, s);
   }
 
-/* =========================
-   REAL HIT TEST CURSOR
-========================= */
-
-const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-if (hitTestResults.length > 0) {
-
-  const hit = hitTestResults[0];
-
-  const pose = hit.getPose(referenceSpace);
-
   reticle.visible = true;
+  let snapped = false;
 
-  reticle.matrix.fromArray(
-    pose.transform.matrix
-  );
+  /* =====================================
+     MENU PRIORITY
+  ===================================== */
+  if (menu.visible) {
+    const menuHits =
+      raycaster.intersectObject(menu);
 
-  reticle.matrix.decompose(
-    reticle.position,
-    reticle.quaternion,
-    reticle.scale
-  );
+    if (menuHits.length) {
+      const hit = menuHits[0];
 
-  // detect surface type
-  const normal = new THREE.Vector3(0, 1, 0)
-    .applyQuaternion(reticle.quaternion);
+      reticle.position.copy(hit.point);
+      reticle.position.add(
+        forward.clone().multiplyScalar(
+          0.01
+        )
+      );
 
-  detectedPlacement =
-    classifySurface(normal);
+      reticle.quaternion.copy(
+        menu.quaternion
+      );
 
-  if (
-    detectedPlacement === requiredPlacement
-  ) {
+      applyDynamicScale(
+        reticle.position,
+        0.028
+      );
 
-    placementStatus = "READY";
-
-    reticle.material.color.set("#00ff88");
-
-  } else {
-
-    placementStatus = "SEARCHING";
-
-    reticle.material.color.set("#ff0000");
+      snapped = true;
+    }
   }
 
-} else {
+  /* =====================================
+     OBJECT PRIORITY
+  ===================================== */
+  if (!snapped) {
+    const objHits =
+      raycaster.intersectObjects(
+        objects,
+        true
+      );
 
-  reticle.visible = false;
+    if (objHits.length) {
+      const hit = objHits[0];
 
-  placementStatus = "SEARCHING";
-}
+      reticle.position.copy(hit.point);
+
+      if (hit.face) {
+        const normal = hit.face.normal
+          .clone()
+          .transformDirection(
+            hit.object.matrixWorld
+          )
+          .normalize();
+
+        reticle.position.add(
+          normal.clone().multiplyScalar(
+            0.01
+          )
+        );
+
+        reticle.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 0, 1),
+          normal
+        );
+      }
+
+      applyDynamicScale(
+        reticle.position,
+        0.032
+      );
+
+      snapped = true;
+    }
+  }
+
+  /* =====================================
+     GROUND HIT TEST
+  ===================================== */
+  if (!snapped) {
+    const hits =
+      frame.getHitTestResults(
+        hitTestSource
+      );
+
+    if (hits.length) {
+      const pose =
+        hits[0].getPose(
+          referenceSpace
+        );
+
+      const matrix =
+        new THREE.Matrix4().fromArray(
+          pose.transform.matrix
+        );
+
+      reticle.position.setFromMatrixPosition(
+        matrix
+      );
+
+      reticle.rotation.set(
+        -Math.PI / 2,
+        0,
+        0
+      );
+
+      applyDynamicScale(
+        reticle.position,
+        0.032
+      );
+
+      snapped = true;
+    }
+  }
+
+  /* =====================================
+     SKY / NO SURFACE FALLBACK
+     always visible in front of camera
+  ===================================== */
+  if (!snapped) {
+    reticle.position.copy(camPos).add(
+      forward.clone().multiplyScalar(
+        1.5
+      )
+    );
+
+    reticle.quaternion.copy(
+      camera.quaternion
+    );
+
+    applyDynamicScale(
+      reticle.position,
+      0.03
+    );
+  }
+
+  reticle.updateMatrix();
+  reticle.updateMatrixWorld(true);
 
   /* =====================================
      DRAG
   ===================================== */
-  if (dragging && selectedObject) {
+  if (
+    dragging &&
+    selectedObject
+  ) {
+    selectedObject.position.x +=
+      (reticle.position.x -
+        selectedObject.position.x) *
+      0.25;
 
-  const nextX =
-    selectedObject.position.x +
-    (reticle.position.x - selectedObject.position.x) * 0.25;
-
-  const nextZ =
-    selectedObject.position.z +
-    (reticle.position.z - selectedObject.position.z) * 0.25;
-
-  const nextY = selectedObject.position.y;
-
-  // simple collision clamp based on placement type
-  if (requiredPlacement === "FLOOR") {
-    // prevent going below floor
-    selectedObject.position.x = nextX;
-    selectedObject.position.z = nextZ;
-  }
-
-  if (requiredPlacement === "WALL") {
-    // lock Y plane + prevent crossing wall plane (approx)
-    selectedObject.position.x = nextX;
-    selectedObject.position.y = nextY;
-    selectedObject.position.z = nextZ;
-  }
-
-  if (requiredPlacement === "CEILING") {
-    selectedObject.position.x = nextX;
-    selectedObject.position.z = nextZ;
+    selectedObject.position.z +=
+      (reticle.position.z -
+        selectedObject.position.z) *
+      0.25;
   }
 
   renderer.render(scene, camera);
-}
 });
 
 /* =========================
