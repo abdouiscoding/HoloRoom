@@ -378,7 +378,13 @@ rotateLeftBtn.style.left = "82px";
 
 const rotateRightBtn = makeBtn("⟳");
 rotateRightBtn.style.bottom = "22px";
-rotateRightBtn.style.left = "150px";
+rotateRightBtn.style.left = "142px";
+
+const dragBtn = makeBtn("Drag");
+dragBtn.style.bottom = "22px";
+dragBtn.style.right = "110px";
+
+dragBtn.title = "Hold to drag the selected product";
 
 const removeBtn = makeBtn("Remove");
 removeBtn.style.bottom = "22px";
@@ -388,16 +394,11 @@ const productsBtn = makeBtn("📦 Products");
 productsBtn.style.top = "18px";
 productsBtn.style.left = "18px";
 
-const dragBtn = makeBtn("Drag");
-dragBtn.style.right = "22px";
-dragBtn.style.top = "50%";
-dragBtn.style.transform = "translateY(-50%)";
-
-dragBtn.title = "Hold to drag the selected product";
-
 const menuBtn = makeBtn("☰");
 menuBtn.style.top = "18px";
 menuBtn.style.right = "18px";
+
+setTimeout(() => startTutorial(), 200);
 
 menuBtn.onclick = () => {
   showMainMenuPopup();
@@ -415,6 +416,118 @@ toggleCardsBtn.onclick = () => {
 
 let rotateLeftHeld = false;
 let rotateRightHeld = false;
+let tutorialActive = false;
+let tutorialStep = -1;
+let tutorialWaitingForAdd = false;
+let tutorialHighlightedButton = null;
+
+function setTutorialHighlight(button) {
+  if (tutorialHighlightedButton) {
+    tutorialHighlightedButton.style.boxShadow = "0 10px 30px rgba(0,0,0,.35)";
+    tutorialHighlightedButton.style.borderColor = "rgba(255,255,255,.08)";
+  }
+  tutorialHighlightedButton = button;
+  if (button) {
+    button.style.boxShadow = "0 0 0 3px rgba(0,255,255,.65)";
+    button.style.borderColor = "#00ffff";
+  }
+}
+
+function clearTutorialHighlight() {
+  setTutorialHighlight(null);
+}
+
+function updateHUDVisibility() {
+  objects.forEach((o) => {
+    if (o.userData.hudSprite) {
+      o.userData.hudSprite.visible = productCardsVisible;
+    }
+  });
+}
+
+function startTutorial() {
+  tutorialActive = true;
+  tutorialStep = -1;
+  tutorialWaitingForAdd = false;
+  nextTutorialStep();
+}
+
+function nextTutorialStep() {
+  tutorialStep += 1;
+
+  if (tutorialStep === 0) {
+    setTutorialHighlight(productsBtn);
+    showPopup({
+      title: "Tutorial",
+      text: "This button opens the product selection menu.",
+      onConfirm: nextTutorialStep
+    });
+    return;
+  }
+
+  if (tutorialStep === 1) {
+    setTutorialHighlight(menuBtn);
+    showPopup({
+      title: "Tutorial",
+      text: "This button opens the AR menu where you can exit and access settings.",
+      onConfirm: nextTutorialStep
+    });
+    return;
+  }
+
+  if (tutorialStep === 2) {
+    setTutorialHighlight(addBtn);
+    showPopup({
+      title: "Tutorial",
+      text: "Click Add to place the selected product in the scene. When the item appears, the tutorial will continue.",
+      onConfirm: () => {
+        tutorialWaitingForAdd = true;
+        clearTutorialHighlight();
+      }
+    });
+    return;
+  }
+
+  if (tutorialStep === 3) {
+    setTutorialHighlight(rotateLeftBtn);
+    showPopup({
+      title: "Tutorial",
+      text: "Now you can rotate, drag, remove placed products, and toggle the info cards.",
+      onConfirm: nextTutorialStep
+    });
+    return;
+  }
+
+  if (tutorialStep === 4) {
+    clearTutorialHighlight();
+    showPopup({
+      title: "Tutorial",
+      text: "Product cards show information and action buttons for each placed item.",
+      onConfirm: nextTutorialStep
+    });
+    return;
+  }
+
+  if (tutorialStep === 5) {
+    clearTutorialHighlight();
+    showPopup({
+      title: "Tutorial Complete",
+      text: "That is all for the tutorial. Enjoy HoloRoom AR!"
+    });
+    tutorialActive = false;
+    tutorialStep = -1;
+    tutorialWaitingForAdd = false;
+    return;
+  }
+}
+
+function completeTutorialAddStep() {
+  if (tutorialActive && tutorialWaitingForAdd) {
+    tutorialWaitingForAdd = false;
+    tutorialStep = 2;
+    nextTutorialStep();
+  }
+}
 
 function setupHoldRotation(btn, dir) {
 
@@ -969,14 +1082,6 @@ function showSettingsPopup() {
 /* =========================
    TOAST POPUP
 ========================= */
-function updateHUDVisibility() {
-  objects.forEach((o) => {
-    if (o.userData.hudSprite) {
-      o.userData.hudSprite.visible = productCardsVisible;
-    }
-  });
-}
-
 function popup(msg) {
   const d = document.createElement("div");
   d.innerText = msg;
@@ -1076,14 +1181,13 @@ function createSelectionRing(obj) {
 
   const tex = new THREE.CanvasTexture(texCanvas);
 
-  const material = new THREE.SpriteMaterial({
+  const material = new THREE.MeshBasicMaterial({
     map: tex,
     transparent: true,
     depthWrite: false,
-    opacity: 0.42
+    opacity: 0.42,
+    side: THREE.DoubleSide
   });
-
-  const sprite = new THREE.Sprite(material);
 
   const target =
     obj.children.find(
@@ -1097,17 +1201,19 @@ function createSelectionRing(obj) {
   const wrapperWidth = Math.max(size.x, size.z, 0.5);
   const wrapperHeight = Math.max(size.y, 0.5);
 
-  sprite.scale.set(
+  const geometry = new THREE.PlaneGeometry(
     wrapperWidth * 1.45,
-    wrapperHeight * 1.45,
-    1
+    wrapperHeight * 1.45
   );
 
-  sprite.position.copy(center);
-  obj.add(sprite);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.copy(center);
+  mesh.renderOrder = 9998;
 
-  obj.userData.selectionWrapper = sprite;
-  sprite.visible = false;
+  obj.add(mesh);
+
+  obj.userData.selectionWrapper = mesh;
+  mesh.visible = false;
 }
 
 function updateSelectionVisuals(selected) {
@@ -1405,6 +1511,11 @@ async function loadProduct(id = currentProductId) {
    HUD HIGHER ABOVE OBJECT
 ========================= */
 function createHUD(obj) {
+  const productInfo = obj.userData.productInfo || {
+    pName: productData?.pName || "",
+    pFinalPrice: productData?.pFinalPrice || ""
+  };
+
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 256;
@@ -1433,6 +1544,9 @@ function createHUD(obj) {
   sprite.visible = productCardsVisible;
 
   function draw() {
+    const addedCart = obj.userData.addedToCart;
+    const addedWishlist = obj.userData.addedToWishlist;
+
     ctx.clearRect(0, 0, 512, 256);
 
     ctx.fillStyle = "rgba(0,0,0,.78)";
@@ -1441,26 +1555,26 @@ function createHUD(obj) {
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 30px Arial";
-    ctx.fillText(productData.pName, 20, 50);
+    ctx.fillText(productInfo.pName, 20, 50);
 
     ctx.fillStyle = "#00ffff";
-    ctx.fillText(`${productData.pFinalPrice} DZD`, 20, 95);
+    ctx.fillText(`${productInfo.pFinalPrice} DZD`, 20, 95);
 
     // heart
-    ctx.fillStyle = "#ff4d6d";
+    ctx.fillStyle = addedWishlist ? "rgba(50,50,50,.95)" : "#ff4d6d";
     roundRect(ctx, 350, 30, 60, 60, 18);
     ctx.fill();
 
     ctx.fillStyle = "#fff";
-    ctx.fillText("♥", 366, 70);
+    ctx.fillText(addedWishlist ? "Added" : "♥", 358, 70);
 
     // cart
-    ctx.fillStyle = "#00ffff";
+    ctx.fillStyle = addedCart ? "rgba(50,50,50,.95)" : "#00ffff";
     roundRect(ctx, 290, 140, 180, 70, 18);
     ctx.fill();
 
-    ctx.fillStyle = "#000";
-    ctx.fillText("ADD CART", 314, 184);
+    ctx.fillStyle = addedCart ? "#ccc" : "#000";
+    ctx.fillText(addedCart ? "Added" : "ADD CART", 314, 184);
 
     tex.needsUpdate = true;
   }
@@ -1468,6 +1582,7 @@ function createHUD(obj) {
   draw();
 
   obj.userData.hudSprite = sprite;
+  obj.userData.updateHUD = draw;
 }
 
 /* =========================
@@ -1492,6 +1607,18 @@ function addObject() {
 
   holder.position.setFromMatrixPosition(reticle.matrix);
 
+  const variant = productData?.sizecolorstock?.[0] || {};
+  holder.userData.productInfo = {
+    pName: productData?.pName || "",
+    pFinalPrice: productData?.pFinalPrice || "",
+    pId: productData?.pId || "",
+    pscsId: variant?.pscsId?.toString?.() || "0",
+    pImageId:
+      productData?.images?.[0]?.pImageId?.toString?.() || "0"
+  };
+  holder.userData.addedToCart = false;
+  holder.userData.addedToWishlist = false;
+
   // clone model
   const model = productModelTemplate.clone(true);
 
@@ -1515,6 +1642,10 @@ function addObject() {
 
   createSelectionRing(holder);
   updateSelectionVisuals(holder);
+
+  if (tutorialActive && tutorialWaitingForAdd) {
+    completeTutorialAddStep();
+  }
 }
 
 addBtn.onclick = addObject;
@@ -1599,13 +1730,71 @@ async function addCart() {
   popup("Added to cart");
 }
 
+async function addWishlistForObject(obj) {
+  if (!userId || !token) return popup("Login required");
+  if (!obj?.userData || obj.userData.addedToWishlist) return;
+
+  const id = obj.userData.productInfo?.pId;
+  if (!id) return popup("Product information missing");
+
+  await myFetch(
+    `${API}/api/wishlist/add/${userId}/${id}`,
+    {
+      method: "POST",
+      headers: authHeaders
+    }
+  );
+
+  obj.userData.addedToWishlist = true;
+  obj.userData.updateHUD?.();
+  popup("Added to wishlist");
+}
+
+async function addCartForObject(obj) {
+  if (!userId || !token) return popup("Login required");
+  if (!obj?.userData || obj.userData.addedToCart) return;
+
+  const productInfo = obj.userData.productInfo;
+  if (!productInfo?.pId) return popup("Product information missing");
+
+  const cartRes = await myFetch(
+    `${API}/api/cart/getbyuser/${userId}`,
+    { headers: authHeaders }
+  );
+
+  const cartData = await cartRes.json();
+
+  const body = {
+    pId: productInfo.pId.toString(),
+    pscsId: productInfo.pscsId.toString(),
+    pImageId: productInfo.pImageId.toString(),
+    quantity: "1"
+  };
+
+  await myFetch(
+    `${API}/api/cart/additem/${cartData.pCartId}`,
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    }
+  );
+
+  obj.userData.addedToCart = true;
+  obj.userData.updateHUD?.();
+  popup("Added to cart");
+}
+
 /* =========================
    POINTER TAP
 ========================= */
 const raycaster = new THREE.Raycaster();
 
 window.addEventListener("click", async (event) => {
-  if (event.target.closest("#arUi")) return;
+  if (event.target.closest("button, #arPopupOverlay, #mainMenuPopup, #settingsPopup, #viewerOverlay")) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -1772,7 +1961,7 @@ window.addEventListener("click", async (event) => {
     }
     updateSelectionVisuals(root);
 
-    const hitObj = hits[0].object;
+      const hitObj = hits[0].object;
 
     /* =========================
        HUD BUTTONS
@@ -1785,15 +1974,19 @@ window.addEventListener("click", async (event) => {
       const x = uv.x * 512;
       const y = (1 - uv.y) * 256;
 
+      const root = selectedObject;
+      const canWishlist = root?.userData && !root.userData.addedToWishlist;
+      const canCart = root?.userData && !root.userData.addedToCart;
+
       // wishlist
       if (
         x > 350 &&
         x < 410 &&
         y > 30 &&
-        y < 90
+        y < 90 &&
+        canWishlist
       ) {
-
-        addWishlist();
+        await addWishlistForObject(root);
       }
 
       // cart
@@ -1801,10 +1994,10 @@ window.addEventListener("click", async (event) => {
         x > 290 &&
         x < 470 &&
         y > 140 &&
-        y < 210
+        y < 210 &&
+        canCart
       ) {
-
-        addCart();
+        await addCartForObject(root);
       }
     }
   } else {
@@ -1817,7 +2010,7 @@ window.addEventListener("click", async (event) => {
    DRAG FIXED (X/Z ONLY)
 ========================= */
 window.addEventListener("pointerdown", (event) => {
-  if (event.target.closest("#arUi")) return;
+  if (event.target.closest("button, #arPopupOverlay, #mainMenuPopup, #settingsPopup, #viewerOverlay")) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -1883,6 +2076,12 @@ renderer.setAnimationLoop(async (_, frame) => {
       selectedObject.rotation.y -= 0.03;
     }
   }
+
+  objects.forEach((o) => {
+    if (o.userData.selectionWrapper) {
+      o.userData.selectionWrapper.quaternion.copy(camera.quaternion);
+    }
+  });
 
   if (!session || !frame) {
     renderer.render(scene, camera);
@@ -1986,7 +2185,9 @@ renderer.setAnimationLoop(async (_, frame) => {
 
       reticle.position.copy(hit.point);
 
-      if (hit.face) {
+      if (hit.object.type === "Sprite") {
+        reticle.quaternion.copy(hit.object.quaternion);
+      } else if (hit.face) {
         const normal = hit.face.normal
           .clone()
           .transformDirection(
