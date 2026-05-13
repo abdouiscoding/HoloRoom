@@ -302,7 +302,7 @@ document.body.appendChild(arBtn);
    RETICLE (GROUND SNAP)
 ========================= */
 const reticle = new THREE.Mesh(
-  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
+  new THREE.SphereGeometry(0.01, 32, 32),
   new THREE.MeshBasicMaterial({
     color: cursorColor,
     transparent: true,
@@ -616,6 +616,14 @@ function showMainMenuPopup() {
     border:1px solid rgba(255,255,255,.08);
   `;
 
+  overlay.onclick = () => {
+    overlay.remove();
+  };
+
+  card.onclick = (e) => {
+    e.stopPropagation();
+  };
+
   function makeOption(label) {
 
     const btn = document.createElement("button");
@@ -691,63 +699,105 @@ function showSettingsPopup() {
     align-items:center;
     z-index:999999999;
     font-family:Arial;
+    padding:18px;
   `;
+
+  // CLOSE WHEN CLICKING OUTSIDE
+  overlay.onclick = () => {
+    overlay.remove();
+  };
 
   const card = document.createElement("div");
 
   card.style.cssText = `
-    width:min(850px,92vw);
-    height:min(540px,85vh);
+    width:min(95vw,520px);
     background:#111;
-    border-radius:28px;
+    border-radius:24px;
     overflow:hidden;
-    display:flex;
     border:1px solid rgba(255,255,255,.08);
-  `;
-
-  /* LEFT SIDEBAR */
-  const sidebar = document.createElement("div");
-
-  sidebar.style.cssText = `
-    width:220px;
-    background:#0d0d0d;
-    border-right:1px solid rgba(255,255,255,.06);
-    padding:20px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  `;
-
-  /* RIGHT PANEL */
-  const content = document.createElement("div");
-
-  content.style.cssText = `
-    flex:1;
-    padding:30px;
     color:white;
-    overflow:auto;
+  `;
+
+  // STOP OUTSIDE CLICK
+  card.onclick = (e) => {
+    e.stopPropagation();
+  };
+
+  /* =========================
+      TOP BAR
+  ========================= */
+  const topBar = document.createElement("div");
+
+  topBar.style.cssText = `
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+  `;
+
+  const tabs = document.createElement("div");
+
+  tabs.style.cssText = `
+    display:flex;
+    gap:10px;
   `;
 
   function createTab(name) {
-
     const btn = document.createElement("button");
 
     btn.innerText = name;
 
     btn.style.cssText = `
-      padding:14px;
+      padding:10px 14px;
       border:none;
-      border-radius:14px;
-      background:#1a1a1a;
+      border-radius:12px;
+      background:#1f1f1f;
       color:white;
-      text-align:left;
       cursor:pointer;
       font-weight:700;
-      font-size:15px;
     `;
 
     return btn;
   }
+
+  const cursorTab = createTab("Cursor");
+  const chatbotTab = createTab("Chatbot");
+
+  const closeBtn = document.createElement("button");
+
+  closeBtn.innerText = "✕";
+
+  closeBtn.style.cssText = `
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:12px;
+    background:#ff4d6d;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+    font-weight:bold;
+  `;
+
+  closeBtn.onclick = () => {
+    overlay.remove();
+  };
+
+  tabs.appendChild(cursorTab);
+  tabs.appendChild(chatbotTab);
+
+  topBar.appendChild(tabs);
+  topBar.appendChild(closeBtn);
+
+  /* =========================
+      CONTENT
+  ========================= */
+  const content = document.createElement("div");
+
+  content.style.cssText = `
+    padding:22px;
+  `;
 
   function renderCursorSettings() {
 
@@ -755,12 +805,26 @@ function showSettingsPopup() {
       <h2 style="margin-top:0;">Cursor Settings</h2>
     `;
 
+    /* CURSOR TYPE */
+    const modeTitle = document.createElement("div");
+
+    modeTitle.innerText = "Cursor";
+
+    modeTitle.style.cssText = `
+      margin-top:20px;
+      margin-bottom:12px;
+      font-weight:bold;
+      opacity:.9;
+    `;
+
+    content.appendChild(modeTitle);
+
     const modes = document.createElement("div");
 
     modes.style.cssText = `
       display:flex;
       gap:10px;
-      margin-top:20px;
+      flex-wrap:wrap;
     `;
 
     function modeBtn(label, mode) {
@@ -772,10 +836,11 @@ function showSettingsPopup() {
       b.style.cssText = `
         padding:12px 18px;
         border:none;
-        border-radius:12px;
+        border-radius:14px;
         background:#1f1f1f;
         color:white;
         cursor:pointer;
+        font-weight:700;
       `;
 
       b.onclick = () => {
@@ -806,17 +871,33 @@ function showSettingsPopup() {
 
     content.appendChild(modes);
 
-    const colorTitle = document.createElement("h3");
+    /* COLOR */
+    const colorTitle = document.createElement("div");
 
-    colorTitle.innerText = "Cursor Color";
+    colorTitle.innerText = "Color";
 
-    colorTitle.style.marginTop = "28px";
+    colorTitle.style.cssText = `
+      margin-top:24px;
+      margin-bottom:12px;
+      font-weight:bold;
+      opacity:.9;
+    `;
+
+    content.appendChild(colorTitle);
 
     const colorInput = document.createElement("input");
 
     colorInput.type = "color";
 
     colorInput.value = cursorColor;
+
+    colorInput.style.cssText = `
+      width:80px;
+      height:50px;
+      border:none;
+      background:none;
+      cursor:pointer;
+    `;
 
     colorInput.oninput = (e) => {
 
@@ -825,7 +906,6 @@ function showSettingsPopup() {
       reticle.material.color.set(cursorColor);
     };
 
-    content.appendChild(colorTitle);
     content.appendChild(colorInput);
   }
 
@@ -840,37 +920,10 @@ function showSettingsPopup() {
     `;
   }
 
-  const cursorTab = createTab("Cursor");
-  const chatbotTab = createTab("Chatbot");
-
   cursorTab.onclick = renderCursorSettings;
   chatbotTab.onclick = renderChatbotSettings;
 
-  sidebar.appendChild(cursorTab);
-  sidebar.appendChild(chatbotTab);
-
-  const closeBtn = document.createElement("button");
-
-  closeBtn.innerText = "Close";
-
-  closeBtn.style.cssText = `
-    margin-top:auto;
-    padding:14px;
-    border:none;
-    border-radius:14px;
-    background:#00ffff;
-    color:black;
-    font-weight:700;
-    cursor:pointer;
-  `;
-
-  closeBtn.onclick = () => {
-    overlay.remove();
-  };
-
-  sidebar.appendChild(closeBtn);
-
-  card.appendChild(sidebar);
+  card.appendChild(topBar);
   card.appendChild(content);
 
   overlay.appendChild(card);
@@ -966,57 +1019,26 @@ function createSelectionRing(obj) {
     obj.remove(obj.userData.selectionRing);
   }
 
-  const texCanvas = document.createElement("canvas");
-
-  texCanvas.width = 256;
-  texCanvas.height = 256;
-
-  const ctx = texCanvas.getContext("2d");
-
-  const gradient = ctx.createRadialGradient(
-    128,
-    128,
-    30,
-    128,
-    128,
-    120
-  );
-
-  gradient.addColorStop(0, "rgba(0,255,255,.9)");
-  gradient.addColorStop(0.5, "rgba(0,255,255,.35)");
-  gradient.addColorStop(1, "rgba(0,255,255,0)");
-
-  ctx.fillStyle = gradient;
-
-  ctx.beginPath();
-  ctx.arc(128, 128, 110, 0, Math.PI * 2);
-  ctx.fill();
-
-  const tex = new THREE.CanvasTexture(texCanvas);
-
-  const material = new THREE.SpriteMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: false
-  });
-
-  const sprite = new THREE.Sprite(material);
-
-  sprite.scale.set(1.2, 1.2, 1.2);
-
   const box = new THREE.Box3().setFromObject(obj);
-
   const size = box.getSize(new THREE.Vector3());
 
-  sprite.position.set(
-    0,
-    size.y + 0.4,
-    0
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(size.x * 0.6, size.x * 0.8, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.5,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    })
   );
 
-  obj.add(sprite);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(0, -size.y / 2, 0);
 
-  obj.userData.selectionRing = sprite;
+  obj.add(ring);
+
+  obj.userData.selectionRing = ring;
 }
 
 /* =========================
@@ -1223,21 +1245,6 @@ async function loadProduct(id = currentProductId) {
 
     productData = await res.json();
 
-    requiredPlacement = productData.pPlacement || "FLOOR";
-    placementStatus = "SEARCHING";
-
-    if (requiredPlacement === "FLOOR") {
-      showPlacementToast("Detecting floor...");
-    }
-
-    if (requiredPlacement === "WALL") {
-      showPlacementToast("Detecting walls...");
-    }
-
-    if (requiredPlacement === "CEILING") {
-      showPlacementToast("Detecting ceiling...");
-    }
-
     setLoading(25, "Preparing model...");
 
     const modelUrl = encodeURI(productData.p3DModel);
@@ -1261,6 +1268,21 @@ async function loadProduct(id = currentProductId) {
           navigator.xr.isSessionSupported("immersive-ar").then(supported => {
             if (!supported) showXRUnsupportedPopup();
           });
+        }
+
+        requiredPlacement = productData.pPlacement || "FLOOR";
+        placementStatus = "SEARCHING";
+
+        if (requiredPlacement === "FLOOR") {
+          showPlacementToast("Detecting floor...");
+        }
+
+        if (requiredPlacement === "WALL") {
+          showPlacementToast("Detecting walls...");
+        }
+
+        if (requiredPlacement === "CEILING") {
+          showPlacementToast("Detecting ceiling...");
         }
 
       }, 400);
@@ -1755,15 +1777,11 @@ window.addEventListener("pointerup", () => {
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
 
-  exitBtn.style.display = "block";
-
   arBtn.style.display = "none";
 });
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.style.display = "none";
-
-  exitBtn.style.display = "none";
 
   arBtn.style.display = "block";
 });
@@ -1782,6 +1800,10 @@ renderer.setAnimationLoop(async (_, frame) => {
     (requiredPlacement === "CEILING" && detectedPlacement === "CEILING")
   ) {
     placementStatus = "READY";
+    if (placementToast) {
+      placementToast.remove();
+      placementToast = null;
+    }
   }
   }
 
@@ -1951,13 +1973,17 @@ renderer.setAnimationLoop(async (_, frame) => {
         matrix
       );
 
-      reticle.rotation.set(
-        -Math.PI / 2,
-        0,
-        0
-      );
+      // Get normal from matrix (local Y is normal)
+      const normal = new THREE.Vector3(0, 1, 0).applyMatrix4(matrix).normalize();
 
-      detectedPlacement = "FLOOR";
+      const type = classifySurface(normal);
+      detectedPlacement = type;
+
+      // Set rotation to align with surface
+      reticle.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1),
+        normal
+      );
 
       applyDynamicScale(
         reticle.position,
