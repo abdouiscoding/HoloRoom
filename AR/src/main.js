@@ -383,6 +383,36 @@ function makeBtn(txt) {
   ui.appendChild(b);
   return b;
 }
+// chatbotbtn
+const chatbotBtn = document.createElement("button");
+
+chatbotBtn.innerHTML = "★";
+
+chatbotBtn.style.cssText = `
+position:absolute;
+bottom:180px;
+right:18px;
+width:64px;
+height:64px;
+border:none;
+border-radius:50%;
+background:#ffd400;
+color:white;
+font-size:30px;
+font-weight:bold;
+cursor:pointer;
+pointer-events:auto;
+display:flex;
+justify-content:center;
+align-items:center;
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+z-index:9999;
+`;
+
+ui.appendChild(chatbotBtn);
+
+// does nothing for now
+chatbotBtn.onclick = () => {};
 
 // buttons
 const addBtn = makeBtn("Add");
@@ -438,139 +468,6 @@ toggleCardsBtn.onclick = () => {
 
 let rotateLeftHeld = false;
 let rotateRightHeld = false;
-let tutorialActive = false;
-let tutorialStep = 0;
-let tutorialState = {
-  waitingPlacement: false,
-  placedObject: false
-};
-let tutorialHighlightedButton = null;
-
-function setTutorialHighlight(button) {
-  if (tutorialHighlightedButton) {
-    tutorialHighlightedButton.style.boxShadow = "0 10px 30px rgba(0,0,0,.35)";
-    tutorialHighlightedButton.style.borderColor = "rgba(255,255,255,.08)";
-  }
-  tutorialHighlightedButton = button;
-  if (button) {
-    button.style.boxShadow = "0 0 0 3px rgba(0,255,255,.65)";
-    button.style.borderColor = "#00ffff";
-  }
-}
-
-function clearTutorialHighlight() {
-  setTutorialHighlight(null);
-}
-
-function updateHUDVisibility() {
-  objects.forEach((o) => {
-    if (o.userData.hudSprite) {
-      o.userData.hudSprite.visible = productCardsVisible;
-    }
-  });
-}
-
-function startTutorial() {
-  tutorialActive = true;
-  tutorialStep = -1;
-  tutorialWaitingForAdd = false;
-  nextTutorialStep();
-}
-
-function nextTutorialStep() {
-  if (!tutorialActive) return;
-
-  switch (tutorialStep) {
-
-    case 0:
-      setTutorialHighlight(productsBtn);
-      showPopup({
-        title: "Products Menu",
-        text: "Open here to browse products.",
-        onConfirm: () => {
-          tutorialStep++;
-          nextTutorialStep();
-        }
-      });
-      break;
-
-    case 1:
-      setTutorialHighlight(menuBtn);
-      showPopup({
-        title: "Main Menu",
-        text: "Settings & exit AR are here.",
-        onConfirm: () => {
-          tutorialStep++;
-          nextTutorialStep();
-        }
-      });
-      break;
-
-    case 2:
-      setTutorialHighlight(addBtn);
-      showPopup({
-        title: "Place Product",
-        text: "Tap Add to place the selected product in AR.",
-        onConfirm: () => {
-          tutorialState.waitingPlacement = true;
-          tutorialStep++;
-          clearTutorialHighlight();
-          showPlacementToast("Now aim at the floor to place object");
-        }
-      });
-      break;
-
-    case 3:
-      showPopup({
-        title: "Placement System",
-        text: "You can ONLY place objects on valid surfaces (floor detected).",
-        onConfirm: () => {
-          tutorialStep++;
-          nextTutorialStep();
-        }
-      });
-      break;
-
-    case 4:
-      showPopup({
-        title: "Object Controls",
-        text: "After placing, tap an object to select it.",
-        onConfirm: () => {
-          tutorialStep++;
-          nextTutorialStep();
-        }
-      });
-      break;
-
-    case 5:
-      showPopup({
-        title: "Controls Explained",
-        text: "Rotate, drag, remove and HUD buttons appear after selection.",
-        onConfirm: () => {
-          tutorialStep++;
-          nextTutorialStep();
-        }
-      });
-      break;
-
-    case 6:
-      showPopup({
-        title: "Done",
-        text: "You're ready to use HoloRoom AR!",
-      });
-      tutorialActive = false;
-      clearTutorialHighlight();
-      break;
-  }
-}
-
-function completeTutorialAddStep() {
-  if (tutorialActive && tutorialWaitingForAdd) {
-    tutorialWaitingForAdd = false;
-    tutorialStep = 2;
-    nextTutorialStep();
-  }
-}
 
 function setupHoldRotation(btn, dir) {
 
@@ -1660,15 +1557,6 @@ function addObject() {
 
   selectedObject = holder;
 
-  if (tutorialActive && tutorialState.waitingPlacement) {
-    tutorialState.waitingPlacement = false;
-    tutorialState.placedObject = true;
-
-    setTimeout(() => {
-      tutorialStep = 4; 
-      nextTutorialStep();
-    }, 500);
-  }
 }
 
 addBtn.onclick = addObject;
@@ -2072,15 +1960,6 @@ renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
 
   interactionEnabled = true;
-
-  showPopup({
-  title: "Welcome",
-  text: "Start AR experience?",
-  mode: "confirm",
-  onConfirm: () => {
-    startTutorial();
-  }
-  });
   
   arBtn.style.display = "none";
 });
