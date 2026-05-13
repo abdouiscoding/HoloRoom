@@ -383,6 +383,7 @@ function makeBtn(txt) {
   ui.appendChild(b);
   return b;
 }
+
 // chatbotbtn
 const chatbotBtn = document.createElement("button");
 
@@ -390,10 +391,10 @@ chatbotBtn.innerHTML = "★";
 
 chatbotBtn.style.cssText = `
 position:absolute;
-bottom:180px;
+top:36px;
 right:18px;
-width:64px;
-height:64px;
+width:40px;
+height:40px;
 border:none;
 border-radius:50%;
 background:#ffd400;
