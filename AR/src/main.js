@@ -1011,7 +1011,7 @@ function normalizeProductModel(
 
 /* =========================
     Selected Object Glow
-========================= */
+=========================. */
 function createSelectionRing(obj) {
 
   // remove old
