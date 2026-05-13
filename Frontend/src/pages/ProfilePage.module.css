@@ -931,3 +931,111 @@
   display: grid;
   grid-template-columns: 90% 10%;
 }
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.orderCard {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 20px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.orderCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orderDate {
+  opacity: 0.7;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.orderStatus {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0,255,150,0.12);
+  border: 1px solid rgba(0,255,150,0.3);
+  font-size: 14px;
+}
+
+.orderItemsPreview {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.orderPreviewItem {
+  background: rgba(255,255,255,0.06);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.orderExpanded {
+  margin-top: 25px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 20px;
+}
+
+.expandedItems {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.expandedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.trackingSection {
+  margin-top: 30px;
+}
+
+.trackingSteps {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  opacity: 0.5;
+  transition: 0.25s;
+}
+
+.active {
+  background: rgba(255,180,0,0.18);
+  border: 1px solid rgba(255,180,0,0.4);
+  opacity: 1;
+}
+
+.completed {
+  background: rgba(0,255,120,0.18);
+  border: 1px solid rgba(0,255,120,0.4);
+  opacity: 1;
+}

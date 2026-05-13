@@ -1,5 +1,3 @@
-// ReviewsContext.jsx
-
 import React, {
   createContext,
   useContext,

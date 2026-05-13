@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
+import { OrdersProvider } from "../context/OrdersContext";
 import { Trash2, Eye, EyeOff, Camera } from "lucide-react";
 import { API, address, myFetch } from "../api";
 
@@ -63,6 +64,10 @@ const ProfilePage = () => {
 
   useEffect(() => {
     fetchWishlist();
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
 
   const handleImageUpload = (e) => {
@@ -355,17 +360,140 @@ const dashboardbtn = () => {
             <div className={styles.tabPanel}>
               <h2>Recent Orders</h2>
 
-              <div className={styles.emptyState}>
-                <i className="fas fa-box-open"></i>
-                <p>You haven't placed any orders yet.</p>
+              {ordersLoading ? (
+                <div className={styles.emptyState}>
+                  <p>Loading orders...</p>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <i className="fas fa-box-open"></i>
 
-                <button
-                  className="btn-primary"
-                  onClick={() => navigate("/shop")}
-                >
-                  Start Shopping
-                </button>
-              </div>
+                  <p>You haven't placed any orders yet.</p>
+
+                  <button
+                    className="btn-primary"
+                    onClick={() => navigate("/shop")}
+                  >
+                    Start Shopping
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.ordersList}>
+                  {orders.map((order) => (
+                    <div
+                      key={order.oItemId}
+                      className={styles.orderCard}
+                      onClick={() =>
+                        setSelectedTrackOrder(
+                          selectedTrackOrder?.oItemId === order.oItemId
+                            ? null
+                            : order
+                        )
+                      }
+                    >
+                      {/* TOP */}
+                      <div className={styles.orderHeader}>
+                        <div>
+                          <h3>Order #{order.oItemId}</h3>
+
+                          <p className={styles.orderDate}>
+                            {new Date(order.orderDate).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        <div className={styles.orderStatus}>
+                          {order.status || order.Status}
+                        </div>
+                      </div>
+
+                      {/* PRICE */}
+                      <div className={styles.orderPrice}>
+                        Total: {order.price} DZD
+                      </div>
+
+                      {/* ITEMS PREVIEW */}
+                      <div className={styles.orderItemsPreview}>
+                        {order.items?.slice(0, 3).map((item) => (
+                          <div
+                            key={item.id}
+                            className={styles.orderPreviewItem}
+                          >
+                            {item.name} x{item.quantity}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* EXPANDED */}
+                      {selectedTrackOrder?.oItemId === order.oItemId && (
+                        <div
+                          className={styles.orderExpanded}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <h4>Purchased Items</h4>
+
+                          <div className={styles.expandedItems}>
+                            {order.items?.map((item) => (
+                              <div
+                                key={item.id}
+                                className={styles.expandedItem}
+                              >
+                                <div>
+                                  <h5>{item.name}</h5>
+
+                                  <p>
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  {item.totalPrice} DZD
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* TRACKING */}
+                          <div className={styles.trackingSection}>
+                            <div className={styles.trackingSteps}>
+                              <div
+                                className={`${styles.step} ${getStatusClass(
+                                  "PLACED"
+                                )}`}
+                              >
+                                <span>Placed</span>
+                              </div>
+
+                              <div
+                                className={`${styles.step} ${getStatusClass(
+                                  "PROCESSING"
+                                )}`}
+                              >
+                                <span>Processing</span>
+                              </div>
+
+                              <div
+                                className={`${styles.step} ${getStatusClass(
+                                  "SHIPPED"
+                                )}`}
+                              >
+                                <span>Shipped</span>
+                              </div>
+
+                              <div
+                                className={`${styles.step} ${getStatusClass(
+                                  "DELIVERED"
+                                )}`}
+                              >
+                                <span>Delivered</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
