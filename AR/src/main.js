@@ -1554,7 +1554,7 @@ function addObject() {
   const holder = new THREE.Group();
 
   holder.position.copy(reticle.position);
-  holder.quaternion.copy(reticle.quaternion);
+  holder.quaternion.identity();
 
   const variant = productData?.sizecolorstock?.[0] || {};
   holder.userData.productInfo = {
