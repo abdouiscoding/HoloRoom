@@ -1916,7 +1916,7 @@ const dir = new THREE.Vector3();
 camera.getWorldDirection(dir);
 
 const pos = new THREE.Vector3()
-  .copy(camera.position)
+  .copy(camPos)
   .add(dir.multiplyScalar(1.5));
 
 reticle.position.copy(pos);
@@ -1970,6 +1970,8 @@ placementStatus = "READY";
     selectedObject.position.x = nextX;
     selectedObject.position.z = nextZ;
   }
+
+  renderer.render(scene, camera);
 }
 });
 
