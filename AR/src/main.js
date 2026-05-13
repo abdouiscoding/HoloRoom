@@ -23,6 +23,8 @@ let placementStatus = "SEARCHING"; // SEARCHING | READY
 let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
 
+let interactionEnabled = false;
+
 let detectedPlacement = null;
 
 let uiBlocked = false;
@@ -437,8 +439,11 @@ toggleCardsBtn.onclick = () => {
 let rotateLeftHeld = false;
 let rotateRightHeld = false;
 let tutorialActive = false;
-let tutorialStep = -1;
-let tutorialWaitingForAdd = false;
+let tutorialStep = 0;
+let tutorialState = {
+  waitingPlacement: false,
+  placedObject: false
+};
 let tutorialHighlightedButton = null;
 
 function setTutorialHighlight(button) {
@@ -473,60 +478,89 @@ function startTutorial() {
 }
 
 function nextTutorialStep() {
-  tutorialStep++;
+  if (!tutorialActive) return;
 
-  if (tutorialStep === 0) {
-    setTutorialHighlight(productsBtn);
-    return showPopup({
-      title: "Products",
-      text: "This opens product selection.",
-      onConfirm: nextTutorialStep
-    });
-  }
+  switch (tutorialStep) {
 
-  if (tutorialStep === 1) {
-    setTutorialHighlight(menuBtn);
-    return showPopup({
-      title: "Menu",
-      text: "Exit AR or open settings.",
-      onConfirm: nextTutorialStep
-    });
-  }
+    case 0:
+      setTutorialHighlight(productsBtn);
+      showPopup({
+        title: "Products Menu",
+        text: "Open here to browse products.",
+        onConfirm: () => {
+          tutorialStep++;
+          nextTutorialStep();
+        }
+      });
+      break;
 
-  if (tutorialStep === 2) {
-    setTutorialHighlight(addBtn);
-    return showPopup({
-      title: "Add Object",
-      text: "Click Add to place the product.",
-      onConfirm: () => {
-        tutorialWaitingForAdd = true;
-        clearTutorialHighlight();
-      }
-    });
-  }
+    case 1:
+      setTutorialHighlight(menuBtn);
+      showPopup({
+        title: "Main Menu",
+        text: "Settings & exit AR are here.",
+        onConfirm: () => {
+          tutorialStep++;
+          nextTutorialStep();
+        }
+      });
+      break;
 
-  if (tutorialStep === 3) {
-    setTutorialHighlight(null);
-    return showPopup({
-      title: "Controls",
-      text: "Rotate, drag, remove, toggle cards.",
-      onConfirm: nextTutorialStep
-    });
-  }
+    case 2:
+      setTutorialHighlight(addBtn);
+      showPopup({
+        title: "Place Product",
+        text: "Tap Add to place the selected product in AR.",
+        onConfirm: () => {
+          tutorialState.waitingPlacement = true;
+          tutorialStep++;
+          clearTutorialHighlight();
+          showPlacementToast("Now aim at the floor to place object");
+        }
+      });
+      break;
 
-  if (tutorialStep === 4) {
-    return showPopup({
-      title: "Info Cards",
-      text: "Each product has a floating info panel with cart & wishlist.",
-      onConfirm: nextTutorialStep
-    });
-  }
+    case 3:
+      showPopup({
+        title: "Placement System",
+        text: "You can ONLY place objects on valid surfaces (floor detected).",
+        onConfirm: () => {
+          tutorialStep++;
+          nextTutorialStep();
+        }
+      });
+      break;
 
-  if (tutorialStep === 5) {
-    return showPopup({
-      title: "Done",
-      text: "Enjoy HoloRoom AR!",
-    });
+    case 4:
+      showPopup({
+        title: "Object Controls",
+        text: "After placing, tap an object to select it.",
+        onConfirm: () => {
+          tutorialStep++;
+          nextTutorialStep();
+        }
+      });
+      break;
+
+    case 5:
+      showPopup({
+        title: "Controls Explained",
+        text: "Rotate, drag, remove and HUD buttons appear after selection.",
+        onConfirm: () => {
+          tutorialStep++;
+          nextTutorialStep();
+        }
+      });
+      break;
+
+    case 6:
+      showPopup({
+        title: "Done",
+        text: "You're ready to use HoloRoom AR!",
+      });
+      tutorialActive = false;
+      clearTutorialHighlight();
+      break;
   }
 }
 
@@ -1175,103 +1209,40 @@ function normalizeProductModel(object, targetHeight = 1.5) {
 /* =========================
     Selected Object Glow
 ========================= */
-function createSelectionRing(obj) {
-  if (obj.userData.selectionWrapper) {
-    obj.remove(obj.userData.selectionWrapper);
+
+const selectorDot = document.createElement("div");
+selectorDot.style.cssText = `
+  position:fixed;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:white;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:999999999;
+  display:none;
+`;
+document.body.appendChild(selectorDot);
+
+function updateSelectorDot(obj, camera) {
+  if (!obj) {
+    selectorDot.style.display = "none";
+    return;
   }
 
-  const texCanvas = document.createElement("canvas");
-  texCanvas.width = 256;
-  texCanvas.height = 256;
+  const pos = new THREE.Vector3();
+  obj.getWorldPosition(pos);
 
-  const ctx = texCanvas.getContext("2d");
-  ctx.clearRect(0, 0, 256, 256);
+  pos.project(camera);
 
-  ctx.fillStyle = "rgba(0,255,255,0.08)";
-  roundRect(ctx, 16, 16, 224, 224, 40);
-  ctx.fill();
+  const x = (pos.x * 0.5 + 0.5) * innerWidth;
+  const y = (-pos.y * 0.5 + 0.5) * innerHeight;
 
-  ctx.strokeStyle = "rgba(0,255,255,0.6)";
-  ctx.lineWidth = 16;
-  roundRect(ctx, 24, 24, 208, 208, 40);
-  ctx.stroke();
-
-  const tex = new THREE.CanvasTexture(texCanvas);
-
-  const material = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: false,
-    opacity: 0.42,
-    side: THREE.DoubleSide
-  });
-
-  const target =
-    obj.children.find(
-      (child) => child.type !== "Sprite"
-    ) || obj;
-
-  const box = new THREE.Box3().setFromObject(target);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3()).sub(obj.position);
-
-  const wrapperWidth = Math.max(size.x, size.z, 0.5);
-  const wrapperHeight = Math.max(size.y, 0.5);
-
-  const geometry = new THREE.PlaneGeometry(
-    wrapperWidth * 1.45,
-    wrapperHeight * 1.45
-  );
-
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.copy(center);
-  mesh.renderOrder = 9998;
-
-  obj.add(mesh);
-
-  obj.userData.selectionWrapper = mesh;
-  mesh.visible = false;
+  selectorDot.style.left = x + "px";
+  selectorDot.style.top = y + "px";
+  selectorDot.style.display = "block";
 }
 
-function updateSelectionVisuals(selected) {
-  objects.forEach((o) => {
-    if (o.userData.selectionWrapper) {
-      o.userData.selectionWrapper.visible = o === selected;
-    }
-  });
-}
-
-// highligher
-function createMeshOutline(obj) {
-  if (obj.userData.selectionWrapper) obj.remove(obj.userData.selectionWrapper);
-
-  const vertices = [];
-
-  obj.traverse((c) => {
-    if (c.isMesh) {
-      const pos = c.geometry.attributes.position;
-
-      for (let i = 0; i < pos.count; i++) {
-        const v = new THREE.Vector3().fromBufferAttribute(pos, i);
-        c.localToWorld(v);
-        obj.worldToLocal(v);
-        vertices.push(v);
-      }
-    }
-  });
-
-  const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-
-  const material = new THREE.PointsMaterial({
-    color: 0x00ffff,
-    size: 0.01,
-  });
-
-  const points = new THREE.Points(geometry, material);
-
-  obj.add(points);
-  obj.userData.selectionWrapper = points;
-}
 
 /* =========================
    PRODUCT MENU (3D CANVAS)
@@ -1689,11 +1660,14 @@ function addObject() {
 
   selectedObject = holder;
 
-  createMeshOutline(holder);
-  updateSelectionVisuals(holder);
+  if (tutorialActive && tutorialState.waitingPlacement) {
+    tutorialState.waitingPlacement = false;
+    tutorialState.placedObject = true;
 
-  if (tutorialActive && tutorialWaitingForAdd) {
-    completeTutorialAddStep();
+    setTimeout(() => {
+      tutorialStep = 4; 
+      nextTutorialStep();
+    }, 500);
   }
 }
 
@@ -1710,7 +1684,6 @@ removeBtn.onclick = () => {
   if (i >= 0) objects.splice(i, 1);
 
   selectedObject = null;
-  updateSelectionVisuals(null);
 };
 
 /* =========================
@@ -1843,11 +1816,11 @@ async function addCartForObject(obj) {
 const raycaster = new THREE.Raycaster();
 
 window.addEventListener("click", async (event) => {
-  if (
-    event.target.closest("button") ||
-    event.target.closest("input") ||
-    event.target.closest("[data-ui]")
-  ) return;
+  if (!interactionEnabled) return;
+  const isUI = event.target.closest("[data-ui]");
+
+  // allow HUD + menu raycast only if NOT UI blocking full scene interaction
+  if (isUI) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -2009,10 +1982,6 @@ window.addEventListener("click", async (event) => {
     }
 
     selectedObject = root;
-    if (!root.userData.selectionWrapper) {
-      createSelectionRing(root);
-    }
-    updateSelectionVisuals(root);
 
       const hitObj = hits[0].object;
 
@@ -2055,7 +2024,6 @@ window.addEventListener("click", async (event) => {
     }
   } else {
     selectedObject = null;
-    updateSelectionVisuals(null);
   }
 });
 
@@ -2063,11 +2031,11 @@ window.addEventListener("click", async (event) => {
    DRAG FIXED (X/Z ONLY)
 ========================= */
 window.addEventListener("pointerdown", (event) => {
-  if (
-    event.target.closest("button") ||
-    event.target.closest("input") ||
-    event.target.closest("[data-ui]")
-  ) return;
+  if (!interactionEnabled) return;
+  const isUI = event.target.closest("[data-ui]");
+
+  // allow HUD + menu raycast only if NOT UI blocking full scene interaction
+  if (isUI) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -2083,13 +2051,10 @@ window.addEventListener("pointerdown", (event) => {
     }
 
     selectedObject = root;
-    createSelectionRing(root);
-    updateSelectionVisuals(root);
     return;
   }
 
   selectedObject = null;
-  updateSelectionVisuals(null);
 });
 
 window.addEventListener("pointerup", () => {
@@ -2105,6 +2070,8 @@ window.addEventListener("pointercancel", () => {
 ========================= */
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
+
+  interactionEnabled = true;
 
   showPopup({
   title: "Welcome",
@@ -2150,6 +2117,7 @@ renderer.setAnimationLoop(async (_, frame) => {
   });
 
   if (!session || !frame) {
+    updateSelectorDot(selectedObject, camera);
     renderer.render(scene, camera);
     return;
   }
