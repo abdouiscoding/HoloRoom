@@ -8,20 +8,37 @@ import { myFetch } from "./api";
 ========================= */
 const API = "https://control-parole-grandkid.ngrok-free.dev";
 
-// vars
-let selectedProductId = currentProductId;
-
 /* =========================
-   AUTH / URL PARAMS
+   AUTH / URL PARAMS / OTHER VARS
 ========================= */
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 const userId = params.get("userId");
 let currentProductId = params.get("productId");
+let selectedProductId = currentProductId;
+let cursorMode = "dot";
+let cursorColor = "#ffdd00";
+// for the placement system
+let placementStatus = "SEARCHING"; // SEARCHING | READY
+let requiredPlacement = null; // FLOOR | WALL | CEILING
+let snapped = false;
+
+let detectedPlacement = null;
 
 const authHeaders = token
   ? { Authorization: `Bearer ${token}` }
   : {};
+
+// helper methods
+function classifySurface(normal) {
+  const up = new THREE.Vector3(0, 1, 0);
+
+  const dot = normal.dot(up);
+
+  if (dot > 0.7) return "FLOOR";
+  if (dot < -0.7) return "CEILING";
+  return "WALL";
+}
 
   /* =====================================================
    LOADING SCREEN
@@ -287,7 +304,7 @@ document.body.appendChild(arBtn);
 const reticle = new THREE.Mesh(
   new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
   new THREE.MeshBasicMaterial({
-    color: 0xffdd00,
+    color: cursorColor,
     transparent: true,
     opacity: 1,
     side: THREE.DoubleSide,
@@ -321,30 +338,86 @@ function makeBtn(txt) {
   b.style.cssText = `
   position:absolute;
   pointer-events:auto;
-  padding:12px 18px;
+  padding:14px 18px;
   border:none;
-  border-radius:14px;
-  background:rgba(0,255,255,.9);
-  color:#000;
+  border-radius:18px;
+  background:rgba(20,20,25,.82);
+  backdrop-filter:blur(14px);
+  color:#fff;
   font-weight:700;
-  box-shadow:0 8px 30px rgba(0,0,0,.3);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:15px;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  transition:.18s;
   `;
+
+b.onmouseenter = () => {
+  b.style.transform = "scale(1.05)";
+};
+
+b.onmouseleave = () => {
+  b.style.transform = "scale(1)";
+};
   ui.appendChild(b);
   return b;
 }
 
 // buttons
 const addBtn = makeBtn("Add");
-addBtn.style.top = "12px";
-addBtn.style.right = "12px";
+addBtn.style.bottom = "22px";
+addBtn.style.left = "50%";
+addBtn.style.transform = "translateX(-50%)";
+
+const rotateLeftBtn = makeBtn("⟲");
+rotateLeftBtn.style.bottom = "22px";
+rotateLeftBtn.style.left = "22px";
+
+const rotateRightBtn = makeBtn("⟳");
+rotateRightBtn.style.bottom = "22px";
+rotateRightBtn.style.left = "90px";
 
 const removeBtn = makeBtn("Remove");
-removeBtn.style.top = "12px";
-removeBtn.style.right = "95px";
+removeBtn.style.bottom = "22px";
+removeBtn.style.right = "22px";
 
-const productsBtn = makeBtn("Products");
-productsBtn.style.top = "12px";
-productsBtn.style.left = "12px";
+const productsBtn = makeBtn("📦 Products");   
+productsBtn.style.top = "18px";
+productsBtn.style.left = "18px";
+
+const menuBtn = makeBtn("☰");
+menuBtn.style.top = "18px";
+menuBtn.style.right = "18px";
+
+menuBtn.onclick = () => {
+  showMainMenuPopup();
+};
+
+let rotateLeftHeld = false;
+let rotateRightHeld = false;
+
+function setupHoldRotation(btn, dir) {
+
+  btn.addEventListener("pointerdown", () => {
+    if (dir === "left") rotateLeftHeld = true;
+    else rotateRightHeld = true;
+  });
+
+  btn.addEventListener("pointerup", () => {
+    rotateLeftHeld = false;
+    rotateRightHeld = false;
+  });
+
+  btn.addEventListener("pointerleave", () => {
+    rotateLeftHeld = false;
+    rotateRightHeld = false;
+  });
+}
+
+setupHoldRotation(rotateLeftBtn, "left");
+setupHoldRotation(rotateRightBtn, "right");
 
 const exitBtn = makeBtn("Exit AR");
 
@@ -532,6 +605,307 @@ function showPopup({
 }
 
 /* =========================
+    MAIN MENU POPUP
+========================= */
+function showMainMenuPopup() {
+
+  const old = document.getElementById("mainMenuPopup");
+
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+
+  overlay.id = "mainMenuPopup";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    backdrop-filter:blur(10px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:99999999;
+  `;
+
+  const card = document.createElement("div");
+
+  card.style.cssText = `
+    width:min(340px,90vw);
+    background:#111;
+    border-radius:24px;
+    padding:24px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    border:1px solid rgba(255,255,255,.08);
+  `;
+
+  function makeOption(label) {
+
+    const btn = document.createElement("button");
+
+    btn.innerText = label;
+
+    btn.style.cssText = `
+      padding:18px;
+      border:none;
+      border-radius:16px;
+      background:#1f1f1f;
+      color:white;
+      font-size:17px;
+      font-weight:700;
+      cursor:pointer;
+    `;
+
+    return btn;
+  }
+
+  const settingsBtn = makeOption("⚙ Settings");
+  const exitBtn = makeOption("🚪 Exit");
+
+  settingsBtn.onclick = () => {
+    overlay.remove();
+    showSettingsPopup();
+  };
+
+  exitBtn.onclick = () => {
+
+    overlay.remove();
+
+    showPopup({
+      mode: "confirm",
+      title: "Exit AR",
+      text: "Are you sure you want to leave AR mode?",
+      onConfirm: () => {
+        window.location.href =
+          "https://holoroom-front.vercel.app/shop";
+      }
+    });
+  };
+
+  card.appendChild(settingsBtn);
+  card.appendChild(exitBtn);
+
+  overlay.appendChild(card);
+
+  document.body.appendChild(overlay);
+}
+
+/* =========================
+    SETTINGS POPUP
+========================= */
+
+function showSettingsPopup() {
+
+  const old = document.getElementById("settingsPopup");
+
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+
+  overlay.id = "settingsPopup";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.7);
+    backdrop-filter:blur(12px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999999999;
+    font-family:Arial;
+  `;
+
+  const card = document.createElement("div");
+
+  card.style.cssText = `
+    width:min(850px,92vw);
+    height:min(540px,85vh);
+    background:#111;
+    border-radius:28px;
+    overflow:hidden;
+    display:flex;
+    border:1px solid rgba(255,255,255,.08);
+  `;
+
+  /* LEFT SIDEBAR */
+  const sidebar = document.createElement("div");
+
+  sidebar.style.cssText = `
+    width:220px;
+    background:#0d0d0d;
+    border-right:1px solid rgba(255,255,255,.06);
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  `;
+
+  /* RIGHT PANEL */
+  const content = document.createElement("div");
+
+  content.style.cssText = `
+    flex:1;
+    padding:30px;
+    color:white;
+    overflow:auto;
+  `;
+
+  function createTab(name) {
+
+    const btn = document.createElement("button");
+
+    btn.innerText = name;
+
+    btn.style.cssText = `
+      padding:14px;
+      border:none;
+      border-radius:14px;
+      background:#1a1a1a;
+      color:white;
+      text-align:left;
+      cursor:pointer;
+      font-weight:700;
+      font-size:15px;
+    `;
+
+    return btn;
+  }
+
+  function renderCursorSettings() {
+
+    content.innerHTML = `
+      <h2 style="margin-top:0;">Cursor Settings</h2>
+    `;
+
+    const modes = document.createElement("div");
+
+    modes.style.cssText = `
+      display:flex;
+      gap:10px;
+      margin-top:20px;
+    `;
+
+    function modeBtn(label, mode) {
+
+      const b = document.createElement("button");
+
+      b.innerText = label;
+
+      b.style.cssText = `
+        padding:12px 18px;
+        border:none;
+        border-radius:12px;
+        background:#1f1f1f;
+        color:white;
+        cursor:pointer;
+      `;
+
+      b.onclick = () => {
+
+        cursorMode = mode;
+
+        reticle.geometry.dispose();
+
+        if (mode === "dot") {
+
+          reticle.geometry =
+            new THREE.SphereGeometry(0.01, 32, 32);
+
+        } else {
+
+          reticle.geometry =
+            new THREE.RingGeometry(0.014, 0.022, 32);
+
+          reticle.rotation.x = -Math.PI / 2;
+        }
+      };
+
+      return b;
+    }
+
+    modes.appendChild(modeBtn("Dot", "dot"));
+    modes.appendChild(modeBtn("Circle", "circle"));
+
+    content.appendChild(modes);
+
+    const colorTitle = document.createElement("h3");
+
+    colorTitle.innerText = "Cursor Color";
+
+    colorTitle.style.marginTop = "28px";
+
+    const colorInput = document.createElement("input");
+
+    colorInput.type = "color";
+
+    colorInput.value = cursorColor;
+
+    colorInput.oninput = (e) => {
+
+      cursorColor = e.target.value;
+
+      reticle.material.color.set(cursorColor);
+    };
+
+    content.appendChild(colorTitle);
+    content.appendChild(colorInput);
+  }
+
+  function renderChatbotSettings() {
+
+    content.innerHTML = `
+      <h2 style="margin-top:0;">Chatbot Settings</h2>
+
+      <p style="opacity:.7;">
+        Coming soon...
+      </p>
+    `;
+  }
+
+  const cursorTab = createTab("Cursor");
+  const chatbotTab = createTab("Chatbot");
+
+  cursorTab.onclick = renderCursorSettings;
+  chatbotTab.onclick = renderChatbotSettings;
+
+  sidebar.appendChild(cursorTab);
+  sidebar.appendChild(chatbotTab);
+
+  const closeBtn = document.createElement("button");
+
+  closeBtn.innerText = "Close";
+
+  closeBtn.style.cssText = `
+    margin-top:auto;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:#00ffff;
+    color:black;
+    font-weight:700;
+    cursor:pointer;
+  `;
+
+  closeBtn.onclick = () => {
+    overlay.remove();
+  };
+
+  sidebar.appendChild(closeBtn);
+
+  card.appendChild(sidebar);
+  card.appendChild(content);
+
+  overlay.appendChild(card);
+
+  document.body.appendChild(overlay);
+
+  renderCursorSettings();
+}
+
+/* =========================
    TOAST POPUP
 ========================= */
 function popup(msg) {
@@ -555,6 +929,119 @@ function popup(msg) {
   setTimeout(() => {
     d.remove();
   }, 2200);
+}
+
+let placementToast = null;
+
+function showPlacementToast(text) {
+  if (placementToast) placementToast.remove();
+
+  placementToast = document.createElement("div");
+  placementToast.innerText = text;
+
+  placementToast.style.cssText = `
+    position:absolute;
+    left:50%;
+    top:20px;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,.75);
+    color:#00ffff;
+    padding:12px 18px;
+    border-radius:20px;
+    font-weight:700;
+    z-index:999999999;
+    font-family:Arial;
+    border:1px solid #00ffff;
+  `;
+
+  document.body.appendChild(placementToast);
+}
+
+/* =========================
+    Product Scaler
+========================= */
+function normalizeProductModel(
+  object,
+  targetSize = 0.8
+) {
+  const box = new THREE.Box3().setFromObject(object);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+
+  const maxAxis = Math.max(size.x, size.y, size.z);
+
+  const scale = targetSize / maxAxis * 1.2;
+
+  object.scale.setScalar(scale);
+
+  // re-center after scaling
+  const box2 = new THREE.Box3().setFromObject(object);
+  const center = box2.getCenter(new THREE.Vector3());
+
+  object.position.sub(center);
+}
+
+/* =========================
+    Selected Object Glow
+========================= */
+function createSelectionRing(obj) {
+
+  // remove old
+  if (obj.userData.selectionRing) {
+    obj.remove(obj.userData.selectionRing);
+  }
+
+  const texCanvas = document.createElement("canvas");
+
+  texCanvas.width = 256;
+  texCanvas.height = 256;
+
+  const ctx = texCanvas.getContext("2d");
+
+  const gradient = ctx.createRadialGradient(
+    128,
+    128,
+    30,
+    128,
+    128,
+    120
+  );
+
+  gradient.addColorStop(0, "rgba(0,255,255,.9)");
+  gradient.addColorStop(0.5, "rgba(0,255,255,.35)");
+  gradient.addColorStop(1, "rgba(0,255,255,0)");
+
+  ctx.fillStyle = gradient;
+
+  ctx.beginPath();
+  ctx.arc(128, 128, 110, 0, Math.PI * 2);
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(texCanvas);
+
+  const material = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: false
+  });
+
+  const sprite = new THREE.Sprite(material);
+
+  sprite.scale.set(1.2, 1.2, 1.2);
+
+  const box = new THREE.Box3().setFromObject(obj);
+
+  const size = box.getSize(new THREE.Vector3());
+
+  sprite.position.set(
+    0,
+    size.y + 0.4,
+    0
+  );
+
+  obj.add(sprite);
+
+  obj.userData.selectionRing = sprite;
 }
 
 /* =========================
@@ -761,6 +1248,21 @@ async function loadProduct(id = currentProductId) {
 
     productData = await res.json();
 
+    requiredPlacement = productData.pPlacement || "FLOOR";
+    placementStatus = "SEARCHING";
+
+    if (requiredPlacement === "FLOOR") {
+      showPlacementToast("Detecting floor...");
+    }
+
+    if (requiredPlacement === "WALL") {
+      showPlacementToast("Detecting walls...");
+    }
+
+    if (requiredPlacement === "CEILING") {
+      showPlacementToast("Detecting ceiling...");
+    }
+
     setLoading(25, "Preparing model...");
 
     const modelUrl = encodeURI(productData.p3DModel);
@@ -851,7 +1353,7 @@ function createHUD(obj) {
 
   sprite.position.set(
     0,
-    size.y + 1,
+    size.y - 1,
     0
   );
   obj.add(sprite);
@@ -868,7 +1370,7 @@ function createHUD(obj) {
     ctx.fillText(productData.pName, 20, 50);
 
     ctx.fillStyle = "#00ffff";
-    ctx.fillText(`${productData.pPrice} DZD`, 20, 95);
+    ctx.fillText(`${productData.pFinalPrice} DZD`, 20, 95);
 
     // heart
     ctx.fillStyle = "#ff4d6d";
@@ -900,16 +1402,58 @@ function createHUD(obj) {
 function addObject() {
   if (!reticle.visible || !productModelTemplate) return;
 
-  const obj = productModelTemplate.clone(true);
+  if (placementStatus !== "READY") {
+    popup("Still detecting placement surface...");
+    return;
+  }
 
-  obj.position.setFromMatrixPosition(reticle.matrix);
+  const typeMatch =
+    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
+    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
+    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING");
 
-  scene.add(obj);
-  objects.push(obj);
+  if (!typeMatch) {
+    popup(`Place only on ${requiredPlacement.toLowerCase()}`);
+    return;
+  }
 
-  createHUD(obj);
 
-  selectedObject = obj;
+  // pivot holder
+  const holder = new THREE.Group();
+
+  holder.position.setFromMatrixPosition(reticle.matrix);
+
+  // clone model
+  const model = productModelTemplate.clone(true);
+
+  normalizeProductModel(model, 0.8);
+
+  // center model
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+
+  model.position.sub(center);
+
+  holder.add(model);
+
+  scene.add(holder);
+
+  objects.push(holder);
+
+  createHUD(holder);
+
+  selectedObject = holder;
+
+  createSelectionRing(holder);
+
+  objects.forEach(o => {
+
+    if (o.userData.selectionRing) {
+      o.userData.selectionRing.visible = false;
+    }
+  });
+
+  holder.userData.selectionRing.visible = true;
 }
 
 addBtn.onclick = addObject;
@@ -1158,6 +1702,17 @@ window.addEventListener("click", async () => {
 
     selectedObject = root;
 
+    objects.forEach(o => {
+
+    if (o.userData.selectionRing) {
+      o.userData.selectionRing.visible = false;
+    }
+  });
+
+  if (selectedObject.userData.selectionRing) {
+    selectedObject.userData.selectionRing.visible = true;
+  }
+
     const hitObj = hits[0].object;
 
     /* =========================
@@ -1244,6 +1799,28 @@ renderer.xr.addEventListener("sessionend", () => {
 renderer.setAnimationLoop(async (_, frame) => {
   const session = renderer.xr.getSession();
 
+  if (detectedPlacement) {
+
+  if (
+    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
+    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
+    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING")
+  ) {
+    placementStatus = "READY";
+  }
+  }
+
+  if (selectedObject) {
+
+    if (rotateLeftHeld) {
+      selectedObject.rotation.y += 0.03;
+    }
+
+    if (rotateRightHeld) {
+      selectedObject.rotation.y -= 0.03;
+    }
+  }
+
   if (!session || !frame) {
     renderer.render(scene, camera);
     return;
@@ -1299,7 +1876,7 @@ renderer.setAnimationLoop(async (_, frame) => {
   }
 
   reticle.visible = true;
-  let snapped = false;
+  snapped = false;
 
   /* =====================================
      MENU PRIORITY
@@ -1405,6 +1982,8 @@ renderer.setAnimationLoop(async (_, frame) => {
         0
       );
 
+      detectedPlacement = "FLOOR";
+
       applyDynamicScale(
         reticle.position,
         0.032
@@ -1445,15 +2024,34 @@ renderer.setAnimationLoop(async (_, frame) => {
     dragging &&
     selectedObject
   ) {
-    selectedObject.position.x +=
-      (reticle.position.x -
-        selectedObject.position.x) *
-      0.25;
+    const nextX =
+      selectedObject.position.x +
+      (reticle.position.x - selectedObject.position.x) * 0.25;
 
-    selectedObject.position.z +=
-      (reticle.position.z -
-        selectedObject.position.z) *
-      0.25;
+    const nextZ =
+      selectedObject.position.z +
+      (reticle.position.z - selectedObject.position.z) * 0.25;
+
+    const nextY = selectedObject.position.y;
+
+    // simple collision clamp based on placement type
+    if (requiredPlacement === "FLOOR") {
+      // prevent going below floor
+      selectedObject.position.x = nextX;
+      selectedObject.position.z = nextZ;
+    }
+
+    if (requiredPlacement === "WALL") {
+      // lock Y plane + prevent crossing wall plane (approx)
+      selectedObject.position.x = nextX;
+      selectedObject.position.y = nextY;
+      selectedObject.position.z = nextZ;
+    }
+
+    if (requiredPlacement === "CEILING") {
+      selectedObject.position.x = nextX;
+      selectedObject.position.z = nextZ;
+    }
   }
 
   renderer.render(scene, camera);
