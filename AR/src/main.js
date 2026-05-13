@@ -302,7 +302,7 @@ document.body.appendChild(arBtn);
    RETICLE (GROUND SNAP)
 ========================= */
 const reticle = new THREE.Mesh(
-  new THREE.SphereGeometry(0.01, 32, 32),
+  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
   new THREE.MeshBasicMaterial({
     color: cursorColor,
     transparent: true,
@@ -331,6 +331,7 @@ display:none;
 font-family:Arial,sans-serif;
 `;
 document.body.appendChild(ui);
+ui.id = "arUi";
 
 function makeBtn(txt) {
   const b = document.createElement("button");
@@ -387,6 +388,13 @@ const productsBtn = makeBtn("📦 Products");
 productsBtn.style.top = "18px";
 productsBtn.style.left = "18px";
 
+const dragBtn = makeBtn("Drag");
+dragBtn.style.right = "22px";
+dragBtn.style.top = "50%";
+dragBtn.style.transform = "translateY(-50%)";
+
+dragBtn.title = "Hold to drag the selected product";
+
 const menuBtn = makeBtn("☰");
 menuBtn.style.top = "18px";
 menuBtn.style.right = "18px";
@@ -418,6 +426,21 @@ function setupHoldRotation(btn, dir) {
 
 setupHoldRotation(rotateLeftBtn, "left");
 setupHoldRotation(rotateRightBtn, "right");
+
+dragBtn.addEventListener("pointerdown", (event) => {
+  event.stopPropagation();
+  if (!selectedObject) {
+    popup("Select an object first");
+    return;
+  }
+  dragging = true;
+});
+
+["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+  dragBtn.addEventListener(evt, () => {
+    dragging = false;
+  });
+});
 
 /* =========================
    UNIVERSAL POPUP
@@ -644,8 +667,8 @@ function showMainMenuPopup() {
     return btn;
   }
 
-  const settingsBtn = makeOption("⚙ Settings");
-  const exitBtn = makeOption("🚪 Exit");
+  const settingsBtn = makeOption("Settings");
+  const exitBtn = makeOption("Exit");
 
   settingsBtn.onclick = () => {
     overlay.remove();
@@ -970,7 +993,7 @@ function showPlacementToast(text) {
   placementToast.style.cssText = `
     position:absolute;
     left:50%;
-    top:20px;
+    top:50px;
     transform:translateX(-50%);
     background:rgba(0,0,0,.75);
     color:#00ffff;
@@ -990,7 +1013,7 @@ function showPlacementToast(text) {
 ========================= */
 function normalizeProductModel(
   object,
-  targetSize = 0.8
+  targetSize = 1.1
 ) {
   const box = new THREE.Box3().setFromObject(object);
   const size = new THREE.Vector3();
@@ -1011,34 +1034,65 @@ function normalizeProductModel(
 
 /* =========================
     Selected Object Glow
-=========================. */
+========================= */
 function createSelectionRing(obj) {
-
-  // remove old
-  if (obj.userData.selectionRing) {
-    obj.remove(obj.userData.selectionRing);
+  if (obj.userData.selectionWrapper) {
+    obj.remove(obj.userData.selectionWrapper);
   }
+
+  const texCanvas = document.createElement("canvas");
+  texCanvas.width = 256;
+  texCanvas.height = 256;
+
+  const ctx = texCanvas.getContext("2d");
+  ctx.clearRect(0, 0, 256, 256);
+
+  ctx.fillStyle = "rgba(0,255,255,0.08)";
+  roundRect(ctx, 16, 16, 224, 224, 40);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(0,255,255,0.6)";
+  ctx.lineWidth = 16;
+  roundRect(ctx, 24, 24, 208, 208, 40);
+  ctx.stroke();
+
+  const tex = new THREE.CanvasTexture(texCanvas);
+
+  const material = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: false,
+    opacity: 0.42
+  });
+
+  const sprite = new THREE.Sprite(material);
 
   const box = new THREE.Box3().setFromObject(obj);
   const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3()).sub(obj.position);
 
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(size.x * 0.6, size.x * 0.8, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.5,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
+  const wrapperWidth = Math.max(size.x, size.z, 0.5);
+  const wrapperHeight = Math.max(size.y, 0.5);
+
+  sprite.scale.set(
+    wrapperWidth * 1.45,
+    wrapperHeight * 1.45,
+    1
   );
 
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.set(0, -size.y / 2, 0);
+  sprite.position.copy(center);
+  obj.add(sprite);
 
-  obj.add(ring);
+  obj.userData.selectionWrapper = sprite;
+  sprite.visible = false;
+}
 
-  obj.userData.selectionRing = ring;
+function updateSelectionVisuals(selected) {
+  objects.forEach((o) => {
+    if (o.userData.selectionWrapper) {
+      o.userData.selectionWrapper.visible = o === selected;
+    }
+  });
 }
 
 /* =========================
@@ -1270,20 +1324,19 @@ async function loadProduct(id = currentProductId) {
           });
         }
 
-        requiredPlacement = productData.pPlacement || "FLOOR";
-        placementStatus = "SEARCHING";
+        requiredPlacement = "FLOOR";
+      placementStatus = "SEARCHING";
+      showPlacementToast("Detecting floor...");
 
-        if (requiredPlacement === "FLOOR") {
-          showPlacementToast("Detecting floor...");
-        }
-
-        if (requiredPlacement === "WALL") {
-          showPlacementToast("Detecting walls...");
-        }
-
-        if (requiredPlacement === "CEILING") {
-          showPlacementToast("Detecting ceiling...");
-        }
+      if (
+        productData.pPlacement &&
+        productData.pPlacement.toUpperCase() !== "FLOOR"
+      ) {
+        showPopup({
+          title: "Placement Notice",
+          text: "HoloRoom AR only supports placing products on the floor. This product will still be placed on the floor."
+        });
+      }
 
       }, 400);
     },
@@ -1343,14 +1396,14 @@ function createHUD(obj) {
     })
   );
 
-  sprite.scale.set(1.5, 0.72, 1);
+  sprite.scale.set(1.9, 0.9, 1);
   const box = new THREE.Box3().setFromObject(obj);
 
   const size = box.getSize(new THREE.Vector3());
 
   sprite.position.set(
     0,
-    size.y - 1,
+    size.y + 0.42,
     0
   );
   obj.add(sprite);
@@ -1404,13 +1457,8 @@ function addObject() {
     return;
   }
 
-  const typeMatch =
-    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
-    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
-    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING");
-
-  if (!typeMatch) {
-    popup(`Place only on ${requiredPlacement.toLowerCase()}`);
+  if (detectedPlacement !== "FLOOR") {
+    popup("Aim at the floor to place the product");
     return;
   }
 
@@ -1423,7 +1471,7 @@ function addObject() {
   // clone model
   const model = productModelTemplate.clone(true);
 
-  normalizeProductModel(model, 0.8);
+  normalizeProductModel(model, 1.1);
 
   // center model
   const box = new THREE.Box3().setFromObject(model);
@@ -1442,15 +1490,7 @@ function addObject() {
   selectedObject = holder;
 
   createSelectionRing(holder);
-
-  objects.forEach(o => {
-
-    if (o.userData.selectionRing) {
-      o.userData.selectionRing.visible = false;
-    }
-  });
-
-  holder.userData.selectionRing.visible = true;
+  updateSelectionVisuals(holder);
 }
 
 addBtn.onclick = addObject;
@@ -1466,6 +1506,7 @@ removeBtn.onclick = () => {
   if (i >= 0) objects.splice(i, 1);
 
   selectedObject = null;
+  updateSelectionVisuals(null);
 };
 
 /* =========================
@@ -1539,8 +1580,12 @@ async function addCart() {
 ========================= */
 const raycaster = new THREE.Raycaster();
 
-window.addEventListener("click", async () => {
-  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+window.addEventListener("click", async (event) => {
+  if (event.target.closest("#arUi")) return;
+
+  const x = (event.clientX / innerWidth) * 2 - 1;
+  const y = -(event.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera({ x, y }, camera);
 
   /* =========================
      MENU COLLISION
@@ -1698,17 +1743,10 @@ window.addEventListener("click", async () => {
     }
 
     selectedObject = root;
-
-    objects.forEach(o => {
-
-    if (o.userData.selectionRing) {
-      o.userData.selectionRing.visible = false;
+    if (!root.userData.selectionWrapper) {
+      createSelectionRing(root);
     }
-  });
-
-  if (selectedObject.userData.selectionRing) {
-    selectedObject.userData.selectionRing.visible = true;
-  }
+    updateSelectionVisuals(root);
 
     const hitObj = hits[0].object;
 
@@ -1745,14 +1783,22 @@ window.addEventListener("click", async () => {
         addCart();
       }
     }
+  } else {
+    selectedObject = null;
+    updateSelectionVisuals(null);
   }
 });
 
 /* =========================
    DRAG FIXED (X/Z ONLY)
 ========================= */
-window.addEventListener("pointerdown", () => {
-  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+window.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("#arUi")) return;
+
+  const x = (event.clientX / innerWidth) * 2 - 1;
+  const y = -(event.clientY / innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera({ x, y }, camera);
   const hits = raycaster.intersectObjects(objects, true);
 
   if (hits.length) {
@@ -1763,11 +1809,20 @@ window.addEventListener("pointerdown", () => {
     }
 
     selectedObject = root;
-    dragging = true;
+    createSelectionRing(root);
+    updateSelectionVisuals(root);
+    return;
   }
+
+  selectedObject = null;
+  updateSelectionVisuals(null);
 });
 
 window.addEventListener("pointerup", () => {
+  dragging = false;
+});
+
+window.addEventListener("pointercancel", () => {
   dragging = false;
 });
 
@@ -1800,10 +1855,6 @@ renderer.setAnimationLoop(async (_, frame) => {
     (requiredPlacement === "CEILING" && detectedPlacement === "CEILING")
   ) {
     placementStatus = "READY";
-    if (placementToast) {
-      placementToast.remove();
-      placementToast = null;
-    }
   }
   }
 
@@ -1973,17 +2024,13 @@ renderer.setAnimationLoop(async (_, frame) => {
         matrix
       );
 
-      // Get normal from matrix (local Y is normal)
-      const normal = new THREE.Vector3(0, 1, 0).applyMatrix4(matrix).normalize();
-
-      const type = classifySurface(normal);
-      detectedPlacement = type;
-
-      // Set rotation to align with surface
-      reticle.quaternion.setFromUnitVectors(
-        new THREE.Vector3(0, 0, 1),
-        normal
+      reticle.rotation.set(
+        -Math.PI / 2,
+        0,
+        0
       );
+
+      detectedPlacement = "FLOOR";
 
       applyDynamicScale(
         reticle.position,
