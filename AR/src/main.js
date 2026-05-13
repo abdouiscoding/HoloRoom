@@ -1903,39 +1903,57 @@ renderer.setAnimationLoop(async (_, frame) => {
   }
 
 /* =========================
-   FORCED ALWAYS-VISIBLE CURSOR
+   REAL HIT TEST CURSOR
 ========================= */
 
-// IMPORTANT
-reticle.matrixAutoUpdate = true;
+const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-reticle.visible = true;
+if (hitTestResults.length > 0) {
 
-// put cursor in front of camera
-const dir = new THREE.Vector3();
-camera.getWorldDirection(dir);
+  const hit = hitTestResults[0];
 
-const pos = new THREE.Vector3()
-  .copy(camPos)
-  .add(dir.multiplyScalar(1.5));
+  const pose = hit.getPose(referenceSpace);
 
-reticle.position.copy(pos);
+  reticle.visible = true;
 
-// make it face camera
-reticle.quaternion.copy(camera.quaternion);
+  reticle.matrix.fromArray(
+    pose.transform.matrix
+  );
 
-// size
-reticle.scale.setScalar(0.08);
+  reticle.matrix.decompose(
+    reticle.position,
+    reticle.quaternion,
+    reticle.scale
+  );
 
-// keep yellow
-reticle.material.color.set("#ffdd00");
+  // detect surface type
+  const normal = new THREE.Vector3(0, 1, 0)
+    .applyQuaternion(reticle.quaternion);
 
-// optional rotation if using ring
-reticle.rotation.x = -Math.PI / 2;
+  detectedPlacement =
+    classifySurface(normal);
 
-// fake ready state so addObject works
-detectedPlacement = requiredPlacement || "FLOOR";
-placementStatus = "READY";
+  if (
+    detectedPlacement === requiredPlacement
+  ) {
+
+    placementStatus = "READY";
+
+    reticle.material.color.set("#00ff88");
+
+  } else {
+
+    placementStatus = "SEARCHING";
+
+    reticle.material.color.set("#ff0000");
+  }
+
+} else {
+
+  reticle.visible = false;
+
+  placementStatus = "SEARCHING";
+}
 
   /* =====================================
      DRAG
