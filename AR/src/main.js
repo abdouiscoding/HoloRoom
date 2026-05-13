@@ -282,6 +282,9 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.sortObjects = true;
+
 scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
 
 const dir = new THREE.DirectionalLight(0xffffff, 1);
@@ -301,24 +304,23 @@ document.body.appendChild(arBtn);
 /* =========================
    RETICLE (GROUND SNAP)
 ========================= */
+const reticleMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffdd00,
+  transparent: true,
+  opacity: 1,
+  side: THREE.DoubleSide
+});
+
 const reticle = new THREE.Mesh(
-  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
-  new THREE.MeshBasicMaterial({
-    color: 0xffdd00,
-    transparent: true,
-    opacity: 1,
-    side: THREE.DoubleSide,
-    depthTest: false,
-    depthWrite: false
-  })
+  new THREE.RingGeometry(0.06, 0.08, 64),
+  reticleMaterial
 );
 
 reticle.rotation.x = -Math.PI / 2;
-reticle.renderOrder = 9999;
-reticle.matrixAutoUpdate = true;
+
 reticle.visible = false;
+
 scene.add(reticle);
-reticle.visible = true;
 
 /* =========================
    DOM UI
@@ -1301,21 +1303,6 @@ async function loadProduct(id = currentProductId) {
           });
         }
 
-        requiredPlacement = productData.pPlacement || "FLOOR";
-        placementStatus = "SEARCHING";
-
-        if (requiredPlacement === "FLOOR") {
-          showPlacementToast("Detecting floor...");
-        }
-
-        if (requiredPlacement === "WALL") {
-          showPlacementToast("Detecting walls...");
-        }
-
-        if (requiredPlacement === "CEILING") {
-          showPlacementToast("Detecting ceiling...");
-        }
-
       }, 400);
     },
 
@@ -1809,6 +1796,21 @@ window.addEventListener("pointerup", () => {
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
 
+        requiredPlacement = productData.pPlacement || "FLOOR";
+        placementStatus = "SEARCHING";
+
+        if (requiredPlacement === "FLOOR") {
+          showPlacementToast("Detecting floor...");
+        }
+
+        if (requiredPlacement === "WALL") {
+          showPlacementToast("Detecting walls...");
+        }
+
+        if (requiredPlacement === "CEILING") {
+          showPlacementToast("Detecting ceiling...");
+        }
+
   arBtn.style.display = "none";
 });
 
@@ -1900,7 +1902,7 @@ renderer.setAnimationLoop(async (_, frame) => {
     reticle.scale.set(s, s, s);
   }
 
-  reticle.visible = true;
+  reticle.visible = hits.length > 0;
 
   snapped = false;
 
@@ -1908,15 +1910,22 @@ const hits = frame.getHitTestResults(hitTestSource);
 
 if (hits.length) {
 
-  const pose = hits[0].getPose(referenceSpace);
+  const pose = hits[0].getPose(renderer.xr.getReferenceSpace());
 
   const matrix = new THREE.Matrix4().fromArray(
     pose.transform.matrix
   );
 
-  reticle.position.setFromMatrixPosition(matrix);
+  reticle.matrix.fromArray(pose.transform.matrix);
+  reticle.matrix.decompose(
+    reticle.position,
+    reticle.quaternion,
+    reticle.scale
+  );
 
-  reticle.rotation.set(-Math.PI / 2, 0, 0);
+  reticle.rotateX(-Math.PI / 2);
+
+  reticle.scale.setScalar(1);
 
   detectedPlacement = "FLOOR";
 
