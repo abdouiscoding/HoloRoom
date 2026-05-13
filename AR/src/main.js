@@ -419,31 +419,6 @@ function setupHoldRotation(btn, dir) {
 setupHoldRotation(rotateLeftBtn, "left");
 setupHoldRotation(rotateRightBtn, "right");
 
-const exitBtn = makeBtn("Exit AR");
-
-exitBtn.style.bottom = "20px";
-exitBtn.style.right = "20px";
-
-exitBtn.style.display = "none";
-
-exitBtn.onclick = () => {
-  showPopup({
-    mode: "confirm",
-    title: "Exit AR?",
-    text: "Are you sure you want to leave AR mode and return to the shop?",
-    onConfirm: async () => {
-
-      const session = renderer.xr.getSession();
-
-      if (session) {
-        await session.end();
-      }
-
-      window.location.href =
-        "https://holoroom-front.vercel.app/shop";
-    }
-  });
-};
 /* =========================
    UNIVERSAL POPUP
 ========================= */
