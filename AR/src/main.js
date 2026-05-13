@@ -391,9 +391,9 @@ chatbotBtn.innerHTML = "★";
 
 chatbotBtn.style.cssText = `
 position:absolute;
-top:36px;
+top:80px;
 right:18px;
-width:40px;
+width:48px;
 height:40px;
 border:none;
 border-radius:50%;
@@ -405,6 +405,7 @@ cursor:pointer;
 pointer-events:auto;
 display:flex;
 justify-content:center;
+text-align:center;
 align-items:center;
 box-shadow:0 10px 30px rgba(0,0,0,.35);
 z-index:9999;
