@@ -251,6 +251,7 @@ const objects = [];
 let selectedObject = null;
 let dragging = false;
 
+let productCardsVisible = true;
 let productData = null;
 let productModelTemplate = null;
 let currentColorIndex = 0;
@@ -353,15 +354,8 @@ function makeBtn(txt) {
   border:1px solid rgba(255,255,255,.08);
   box-shadow:0 10px 30px rgba(0,0,0,.35);
   transition:.18s;
+  transform-origin:center;
   `;
-
-b.onmouseenter = () => {
-  b.style.transform = "scale(1.05)";
-};
-
-b.onmouseleave = () => {
-  b.style.transform = "scale(1)";
-};
   ui.appendChild(b);
   return b;
 }
@@ -372,13 +366,19 @@ addBtn.style.bottom = "22px";
 addBtn.style.left = "50%";
 addBtn.style.transform = "translateX(-50%)";
 
+const toggleCardsBtn = makeBtn("!");
+toggleCardsBtn.style.bottom = "22px";
+toggleCardsBtn.style.left = "22px";
+
+toggleCardsBtn.title = "Show / hide product cards";
+
 const rotateLeftBtn = makeBtn("⟲");
 rotateLeftBtn.style.bottom = "22px";
-rotateLeftBtn.style.left = "22px";
+rotateLeftBtn.style.left = "82px";
 
 const rotateRightBtn = makeBtn("⟳");
 rotateRightBtn.style.bottom = "22px";
-rotateRightBtn.style.left = "90px";
+rotateRightBtn.style.left = "150px";
 
 const removeBtn = makeBtn("Remove");
 removeBtn.style.bottom = "22px";
@@ -401,6 +401,16 @@ menuBtn.style.right = "18px";
 
 menuBtn.onclick = () => {
   showMainMenuPopup();
+};
+
+toggleCardsBtn.onclick = () => {
+  productCardsVisible = !productCardsVisible;
+  updateHUDVisibility();
+  popup(
+    productCardsVisible
+      ? "Displaying product cards"
+      : "Hiding product cards"
+  );
 };
 
 let rotateLeftHeld = false;
@@ -959,6 +969,14 @@ function showSettingsPopup() {
 /* =========================
    TOAST POPUP
 ========================= */
+function updateHUDVisibility() {
+  objects.forEach((o) => {
+    if (o.userData.hudSprite) {
+      o.userData.hudSprite.visible = productCardsVisible;
+    }
+  });
+}
+
 function popup(msg) {
   const d = document.createElement("div");
   d.innerText = msg;
@@ -993,7 +1011,7 @@ function showPlacementToast(text) {
   placementToast.style.cssText = `
     position:absolute;
     left:50%;
-    top:50px;
+    top:150px;
     transform:translateX(-50%);
     background:rgba(0,0,0,.75);
     color:#00ffff;
@@ -1067,7 +1085,12 @@ function createSelectionRing(obj) {
 
   const sprite = new THREE.Sprite(material);
 
-  const box = new THREE.Box3().setFromObject(obj);
+  const target =
+    obj.children.find(
+      (child) => child.type !== "Sprite"
+    ) || obj;
+
+  const box = new THREE.Box3().setFromObject(target);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3()).sub(obj.position);
 
@@ -1396,17 +1419,18 @@ function createHUD(obj) {
     })
   );
 
-  sprite.scale.set(1.9, 0.9, 1);
+  sprite.scale.set(0.95, 0.45, 1);
   const box = new THREE.Box3().setFromObject(obj);
 
   const size = box.getSize(new THREE.Vector3());
 
   sprite.position.set(
     0,
-    size.y + 0.42,
+    size.y + 0.1,
     0
   );
   obj.add(sprite);
+  sprite.visible = productCardsVisible;
 
   function draw() {
     ctx.clearRect(0, 0, 512, 256);
@@ -1847,19 +1871,10 @@ renderer.xr.addEventListener("sessionend", () => {
 renderer.setAnimationLoop(async (_, frame) => {
   const session = renderer.xr.getSession();
 
-  if (detectedPlacement) {
-
-  if (
-    (requiredPlacement === "FLOOR" && detectedPlacement === "FLOOR") ||
-    (requiredPlacement === "WALL" && detectedPlacement === "WALL") ||
-    (requiredPlacement === "CEILING" && detectedPlacement === "CEILING")
-  ) {
-    placementStatus = "READY";
-  }
-  }
+  detectedPlacement = null;
+  placementStatus = "SEARCHING";
 
   if (selectedObject) {
-
     if (rotateLeftHeld) {
       selectedObject.rotation.y += 0.03;
     }
@@ -2031,6 +2046,7 @@ renderer.setAnimationLoop(async (_, frame) => {
       );
 
       detectedPlacement = "FLOOR";
+      placementStatus = "READY";
 
       applyDynamicScale(
         reticle.position,
@@ -2039,6 +2055,15 @@ renderer.setAnimationLoop(async (_, frame) => {
 
       snapped = true;
     }
+  }
+
+  if (placementStatus === "READY" && placementToast) {
+    placementToast.remove();
+    placementToast = null;
+  }
+
+  if (placementStatus !== "READY" && !placementToast) {
+    showPlacementToast("Detecting floor...");
   }
 
   /* =====================================
