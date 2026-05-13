@@ -25,6 +25,22 @@ let snapped = false;
 
 let detectedPlacement = null;
 
+let uiBlocked = false;
+
+document.addEventListener("pointerdown", () => {
+  uiBlocked = false;
+});
+
+document.addEventListener("pointerup", () => {
+  uiBlocked = false;
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.body.style.userSelect = "none";
+  document.body.style.webkitUserSelect = "none";
+  document.body.style.webkitTouchCallout = "none";
+});
+
 const authHeaders = token
   ? { Authorization: `Bearer ${token}` }
   : {};
@@ -83,6 +99,7 @@ loadingScreen.innerHTML = `
 `;
 
 document.body.appendChild(loadingScreen);
+loadingScreen.setAttribute("data-ui", "true");
 
 const loadingText = document.getElementById("loadingText");
 const loadingBar = document.getElementById("loadingBar");
@@ -159,6 +176,7 @@ viewerOverlay.innerHTML = `
 `;
 
 document.body.appendChild(viewerOverlay);
+viewerOverlay.setAttribute("data-ui", "true");
 
 function showXRUnsupportedPopup() {
   const overlay = document.createElement("div");
@@ -333,6 +351,7 @@ font-family:Arial,sans-serif;
 `;
 document.body.appendChild(ui);
 ui.id = "arUi";
+ui.setAttribute("data-ui", "true");
 
 function makeBtn(txt) {
   const b = document.createElement("button");
@@ -355,6 +374,9 @@ function makeBtn(txt) {
   box-shadow:0 10px 30px rgba(0,0,0,.35);
   transition:.18s;
   transform-origin:center;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action: manipulation;
   `;
   ui.appendChild(b);
   return b;
@@ -362,43 +384,41 @@ function makeBtn(txt) {
 
 // buttons
 const addBtn = makeBtn("Add");
-addBtn.style.bottom = "22px";
+addBtn.style.bottom = "30px";
 addBtn.style.left = "50%";
 addBtn.style.transform = "translateX(-50%)";
 
 const toggleCardsBtn = makeBtn("!");
-toggleCardsBtn.style.bottom = "22px";
-toggleCardsBtn.style.left = "22px";
+toggleCardsBtn.style.bottom = "120px";
+toggleCardsBtn.style.right = "18px";
 
 toggleCardsBtn.title = "Show / hide product cards";
 
 const rotateLeftBtn = makeBtn("⟲");
-rotateLeftBtn.style.bottom = "22px";
-rotateLeftBtn.style.left = "82px";
+rotateLeftBtn.style.bottom = "120px";
+rotateLeftBtn.style.left = "18px";
 
 const rotateRightBtn = makeBtn("⟳");
-rotateRightBtn.style.bottom = "22px";
-rotateRightBtn.style.left = "142px";
+rotateRightBtn.style.bottom = "180px";
+rotateRightBtn.style.left = "18px";
 
 const dragBtn = makeBtn("Drag");
-dragBtn.style.bottom = "22px";
-dragBtn.style.right = "110px";
+dragBtn.style.bottom = "240px";
+dragBtn.style.left = "18px";
 
 dragBtn.title = "Hold to drag the selected product";
 
 const removeBtn = makeBtn("Remove");
-removeBtn.style.bottom = "22px";
-removeBtn.style.right = "22px";
+removeBtn.style.bottom = "300px";
+removeBtn.style.left = "18px";
 
-const productsBtn = makeBtn("📦 Products");   
+const productsBtn = makeBtn("Products");   
 productsBtn.style.top = "18px";
 productsBtn.style.left = "18px";
 
 const menuBtn = makeBtn("☰");
 menuBtn.style.top = "18px";
 menuBtn.style.right = "18px";
-
-setTimeout(() => startTutorial(), 200);
 
 menuBtn.onclick = () => {
   showMainMenuPopup();
@@ -453,71 +473,60 @@ function startTutorial() {
 }
 
 function nextTutorialStep() {
-  tutorialStep += 1;
+  tutorialStep++;
 
   if (tutorialStep === 0) {
     setTutorialHighlight(productsBtn);
-    showPopup({
-      title: "Tutorial",
-      text: "This button opens the product selection menu.",
+    return showPopup({
+      title: "Products",
+      text: "This opens product selection.",
       onConfirm: nextTutorialStep
     });
-    return;
   }
 
   if (tutorialStep === 1) {
     setTutorialHighlight(menuBtn);
-    showPopup({
-      title: "Tutorial",
-      text: "This button opens the AR menu where you can exit and access settings.",
+    return showPopup({
+      title: "Menu",
+      text: "Exit AR or open settings.",
       onConfirm: nextTutorialStep
     });
-    return;
   }
 
   if (tutorialStep === 2) {
     setTutorialHighlight(addBtn);
-    showPopup({
-      title: "Tutorial",
-      text: "Click Add to place the selected product in the scene. When the item appears, the tutorial will continue.",
+    return showPopup({
+      title: "Add Object",
+      text: "Click Add to place the product.",
       onConfirm: () => {
         tutorialWaitingForAdd = true;
         clearTutorialHighlight();
       }
     });
-    return;
   }
 
   if (tutorialStep === 3) {
-    setTutorialHighlight(rotateLeftBtn);
-    showPopup({
-      title: "Tutorial",
-      text: "Now you can rotate, drag, remove placed products, and toggle the info cards.",
+    setTutorialHighlight(null);
+    return showPopup({
+      title: "Controls",
+      text: "Rotate, drag, remove, toggle cards.",
       onConfirm: nextTutorialStep
     });
-    return;
   }
 
   if (tutorialStep === 4) {
-    clearTutorialHighlight();
-    showPopup({
-      title: "Tutorial",
-      text: "Product cards show information and action buttons for each placed item.",
+    return showPopup({
+      title: "Info Cards",
+      text: "Each product has a floating info panel with cart & wishlist.",
       onConfirm: nextTutorialStep
     });
-    return;
   }
 
   if (tutorialStep === 5) {
-    clearTutorialHighlight();
-    showPopup({
-      title: "Tutorial Complete",
-      text: "That is all for the tutorial. Enjoy HoloRoom AR!"
+    return showPopup({
+      title: "Done",
+      text: "Enjoy HoloRoom AR!",
     });
-    tutorialActive = false;
-    tutorialStep = -1;
-    tutorialWaitingForAdd = false;
-    return;
   }
 }
 
@@ -581,6 +590,7 @@ function showPopup({
 
   const overlay = document.createElement("div");
   overlay.id = "arPopupOverlay";
+  overlay.setAttribute("data-ui", "true");
 
   overlay.style.cssText = `
     position:fixed;
@@ -655,6 +665,9 @@ function showPopup({
       cursor:pointer;
       min-width:110px;
       transition:.15s;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
     `;
 
     btn.onmouseenter = () => {
@@ -737,6 +750,7 @@ function showMainMenuPopup() {
   const overlay = document.createElement("div");
 
   overlay.id = "mainMenuPopup";
+  overlay.setAttribute("data-ui", "true");
 
   overlay.style.cssText = `
     position:fixed;
@@ -785,6 +799,9 @@ function showMainMenuPopup() {
       font-size:17px;
       font-weight:700;
       cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
     `;
 
     return btn;
@@ -834,6 +851,7 @@ function showSettingsPopup() {
   const overlay = document.createElement("div");
 
   overlay.id = "settingsPopup";
+  overlay.setAttribute("data-ui", "true");
 
   overlay.style.cssText = `
     position:fixed;
@@ -1134,25 +1152,24 @@ function showPlacementToast(text) {
 /* =========================
     Product Scaler
 ========================= */
-function normalizeProductModel(
-  object,
-  targetSize = 1.1
-) {
+function normalizeProductModel(object, targetHeight = 1.5) {
   const box = new THREE.Box3().setFromObject(object);
   const size = new THREE.Vector3();
   box.getSize(size);
 
-  const maxAxis = Math.max(size.x, size.y, size.z);
-
-  const scale = targetSize / maxAxis * 1.2;
+  const scale = targetHeight / size.y;
 
   object.scale.setScalar(scale);
 
-  // re-center after scaling
+  // re-center on ground
   const box2 = new THREE.Box3().setFromObject(object);
   const center = box2.getCenter(new THREE.Vector3());
 
   object.position.sub(center);
+
+  // force bottom to y=0
+  const box3 = new THREE.Box3().setFromObject(object);
+  object.position.y -= box3.min.y;
 }
 
 /* =========================
@@ -1222,6 +1239,38 @@ function updateSelectionVisuals(selected) {
       o.userData.selectionWrapper.visible = o === selected;
     }
   });
+}
+
+// highligher
+function createMeshOutline(obj) {
+  if (obj.userData.selectionWrapper) obj.remove(obj.userData.selectionWrapper);
+
+  const vertices = [];
+
+  obj.traverse((c) => {
+    if (c.isMesh) {
+      const pos = c.geometry.attributes.position;
+
+      for (let i = 0; i < pos.count; i++) {
+        const v = new THREE.Vector3().fromBufferAttribute(pos, i);
+        c.localToWorld(v);
+        obj.worldToLocal(v);
+        vertices.push(v);
+      }
+    }
+  });
+
+  const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+
+  const material = new THREE.PointsMaterial({
+    color: 0x00ffff,
+    size: 0.01,
+  });
+
+  const points = new THREE.Points(geometry, material);
+
+  obj.add(points);
+  obj.userData.selectionWrapper = points;
 }
 
 /* =========================
@@ -1566,7 +1615,7 @@ function createHUD(obj) {
     ctx.fill();
 
     ctx.fillStyle = "#fff";
-    ctx.fillText(addedWishlist ? "Added" : "♥", 358, 70);
+    ctx.fillText(addedWishlist ? "✓" : "♥", 358, 70);
 
     // cart
     ctx.fillStyle = addedCart ? "rgba(50,50,50,.95)" : "#00ffff";
@@ -1574,7 +1623,7 @@ function createHUD(obj) {
     ctx.fill();
 
     ctx.fillStyle = addedCart ? "#ccc" : "#000";
-    ctx.fillText(addedCart ? "Added" : "ADD CART", 314, 184);
+    ctx.fillText(addedCart ? "✓" : "ADD CART", 314, 184);
 
     tex.needsUpdate = true;
   }
@@ -1640,7 +1689,7 @@ function addObject() {
 
   selectedObject = holder;
 
-  createSelectionRing(holder);
+  createMeshOutline(holder);
   updateSelectionVisuals(holder);
 
   if (tutorialActive && tutorialWaitingForAdd) {
@@ -1794,7 +1843,11 @@ async function addCartForObject(obj) {
 const raycaster = new THREE.Raycaster();
 
 window.addEventListener("click", async (event) => {
-  if (event.target.closest("button, #arPopupOverlay, #mainMenuPopup, #settingsPopup, #viewerOverlay")) return;
+  if (
+    event.target.closest("button") ||
+    event.target.closest("input") ||
+    event.target.closest("[data-ui]")
+  ) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -2010,7 +2063,11 @@ window.addEventListener("click", async (event) => {
    DRAG FIXED (X/Z ONLY)
 ========================= */
 window.addEventListener("pointerdown", (event) => {
-  if (event.target.closest("button, #arPopupOverlay, #mainMenuPopup, #settingsPopup, #viewerOverlay")) return;
+  if (
+    event.target.closest("button") ||
+    event.target.closest("input") ||
+    event.target.closest("[data-ui]")
+  ) return;
 
   const x = (event.clientX / innerWidth) * 2 - 1;
   const y = -(event.clientY / innerHeight) * 2 + 1;
@@ -2049,6 +2106,15 @@ window.addEventListener("pointercancel", () => {
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
 
+  showPopup({
+  title: "Welcome",
+  text: "Start AR experience?",
+  mode: "confirm",
+  onConfirm: () => {
+    startTutorial();
+  }
+  });
+  
   arBtn.style.display = "none";
 });
 
