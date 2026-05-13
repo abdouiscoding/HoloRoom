@@ -946,7 +946,7 @@ function popup(msg) {
   d.style.cssText = `
   position:absolute;
   left:50%;
-  bottom:200px;
+  bottom:100px;
   transform:translateX(-50%);
   background:rgba(0,0,0,.82);
   color:#fff;
@@ -1991,6 +1991,8 @@ if (!snapped) {
   // smaller fallback scale
   reticle.scale.setScalar(0.5);
 
+  reticle.updateMatrix();
+  
   detectedPlacement = null;
 }
   /* =====================================
