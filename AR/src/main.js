@@ -22,6 +22,8 @@ let cursorColor = "#ffdd00";
 let placementStatus = "SEARCHING"; // SEARCHING | READY
 let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
+let dragOffset = new THREE.Vector3();
+let dragPlaneY = 0;
 
 let interactionEnabled = false;
 
@@ -335,7 +337,7 @@ const reticle = new THREE.Mesh(
 
 reticle.rotation.x = -Math.PI / 2;
 reticle.renderOrder = 9999;
-reticle.matrixAutoUpdate = true;
+reticle.matrixAutoUpdate = false;
 reticle.visible = false;
 scene.add(reticle);
 
@@ -474,9 +476,15 @@ let rotateRightHeld = false;
 function setupHoldRotation(btn, dir) {
 
   btn.addEventListener("pointerdown", () => {
-    if (dir === "left") rotateLeftHeld = true;
-    else rotateRightHeld = true;
-  });
+
+  if (!selectedObject) {
+    popup("Select an object first");
+    return;
+  }
+
+  if (dir === "left") rotateLeftHeld = true;
+  else rotateRightHeld = true;
+});
 
   btn.addEventListener("pointerup", () => {
     rotateLeftHeld = false;
@@ -493,11 +501,20 @@ setupHoldRotation(rotateLeftBtn, "left");
 setupHoldRotation(rotateRightBtn, "right");
 
 dragBtn.addEventListener("pointerdown", (event) => {
+
   event.stopPropagation();
+
   if (!selectedObject) {
     popup("Select an object first");
     return;
   }
+
+  dragOffset.set(
+    selectedObject.position.x - reticle.position.x,
+    0,
+    selectedObject.position.z - reticle.position.z
+  );
+
   dragging = true;
 });
 
@@ -1504,6 +1521,18 @@ function createHUD(obj) {
   obj.userData.updateHUD = draw;
 }
 
+function updateHUDVisibility() {
+
+  objects.forEach((obj) => {
+
+    if (obj.userData.hudSprite) {
+
+      obj.userData.hudSprite.visible =
+        productCardsVisible;
+    }
+  });
+}
+
 /* =========================
    ADD OBJECT
 ========================= */
@@ -1524,7 +1553,8 @@ function addObject() {
   // pivot holder
   const holder = new THREE.Group();
 
-  holder.position.setFromMatrixPosition(reticle.matrix);
+  holder.position.copy(reticle.position);
+  holder.quaternion.copy(reticle.quaternion);
 
   const variant = productData?.sizecolorstock?.[0] || {};
   holder.userData.productInfo = {
@@ -1567,7 +1597,11 @@ addBtn.onclick = addObject;
    REMOVE
 ========================= */
 removeBtn.onclick = () => {
-  if (!selectedObject) return;
+
+  if (!selectedObject) {
+    popup("Select an object first");
+    return;
+  }
 
   scene.remove(selectedObject);
   const i = objects.indexOf(selectedObject);
@@ -1978,8 +2012,10 @@ renderer.xr.addEventListener("sessionend", () => {
 renderer.setAnimationLoop(async (_, frame) => {
   const session = renderer.xr.getSession();
 
-  detectedPlacement = null;
-  placementStatus = "SEARCHING";
+  if (!snapped) {
+    placementStatus = "SEARCHING";
+    detectedPlacement = null;
+  }
 
   if (selectedObject) {
     if (rotateLeftHeld) {
@@ -2209,39 +2245,14 @@ renderer.setAnimationLoop(async (_, frame) => {
   /* =====================================
      DRAG
   ===================================== */
-  if (
-    dragging &&
-    selectedObject
-  ) {
-    const nextX =
-      selectedObject.position.x +
-      (reticle.position.x - selectedObject.position.x) * 0.25;
+  if (dragging && selectedObject && detectedPlacement === "FLOOR") {
 
-    const nextZ =
-      selectedObject.position.z +
-      (reticle.position.z - selectedObject.position.z) * 0.25;
+  selectedObject.position.x =
+    reticle.position.x + dragOffset.x;
 
-    const nextY = selectedObject.position.y;
-
-    // simple collision clamp based on placement type
-    if (requiredPlacement === "FLOOR") {
-      // prevent going below floor
-      selectedObject.position.x = nextX;
-      selectedObject.position.z = nextZ;
-    }
-
-    if (requiredPlacement === "WALL") {
-      // lock Y plane + prevent crossing wall plane (approx)
-      selectedObject.position.x = nextX;
-      selectedObject.position.y = nextY;
-      selectedObject.position.z = nextZ;
-    }
-
-    if (requiredPlacement === "CEILING") {
-      selectedObject.position.x = nextX;
-      selectedObject.position.z = nextZ;
-    }
-  }
+  selectedObject.position.z =
+    reticle.position.z + dragOffset.z;
+}
 
   renderer.render(scene, camera);
 });
