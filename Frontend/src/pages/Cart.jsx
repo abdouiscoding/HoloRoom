@@ -13,11 +13,6 @@ import { Link } from "react-router-dom";
 import styles from "./Cart.module.css";
 import { useCart } from "../context/CartContext";
 import { API, address, myFetch } from "../api";
-const [paymentMethod, setPaymentMethod] = useState("cod");
-const [cardNumber, setCardNumber] = useState("");
-const [cardExpiry, setCardExpiry] = useState("");
-const [cardCvv, setCardCvv] = useState("");
-const [cardName, setCardName] = useState("");
 
 const UPLOADS_BASE = `${API}/api/uploads/images/`;
 
@@ -37,6 +32,11 @@ const getImageUrl = (img) => {
 
 const Cart = () => {
   const { cart, fetchCart, removeItem, loading } = useCart();
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [cardName, setCardName] = useState("");
 
   const [popup, setPopup] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);

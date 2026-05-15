@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import HoloRoom.Model.Orders;
 import HoloRoom.Model.OrdersItem;
 import HoloRoom.Repository.OrdersRepository;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 
 @Service
 public class OrdersService {
@@ -41,7 +43,17 @@ public class OrdersService {
 
     public void addorderitemtolist(Long userId, OrdersItem item) {
         Orders orderlist = ordersRepository.findByUserId(userId);
+
+        if (orderlist == null) {
+            orderlist = new Orders(userId, BigDecimal.ZERO);
+            orderlist.setOrderItems(new ArrayList<>());
+        } else if (orderlist.getOrderItems() == null) {
+            orderlist.setOrderItems(new ArrayList<>());
+        }
+
+        item.setOrder(orderlist);       // owning side — this is what actually persists the link
         orderlist.getOrderItems().add(item);
+
         saveOrders(orderlist);
     }
 

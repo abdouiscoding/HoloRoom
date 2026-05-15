@@ -20,12 +20,12 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        if (userRepository.findByUserName("admin").isEmpty()) {
+        if (userRepository.findByUserName("HoloRoomAdmin").isEmpty()) {
 
             User admin = new User();
-            admin.setUserName("admin");
+            admin.setUserName("HoloRoomAdmin");
             admin.setUserEmail("abderahim.ferdi1@gmail.com");
-            admin.setUserPassword(encoder.encode("admin123"));
+            admin.setUserPassword(encoder.encode("HoloRoomAdmin123!"));
             admin.setUserImage("https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Users_Images/default.png");
             admin.setActive(true);
             admin.setUserRole("ADMIN");

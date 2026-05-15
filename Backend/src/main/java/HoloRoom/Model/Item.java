@@ -1,5 +1,7 @@
 package HoloRoom.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,6 +27,7 @@ public class Item {
 
     @ManyToOne
     @JoinColumn(name = "orders_item_id")
+    @JsonIgnore
     private OrdersItem ordersItem;
 
     // Constructors

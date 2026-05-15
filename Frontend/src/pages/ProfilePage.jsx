@@ -442,7 +442,7 @@ const ProfilePage = () => {
               </p>
 
               <div className={styles.detailsItemsList}>
-                {selectedOrder.items?.map((item) => (
+                {selectedOrder.Items?.map((item) => (
                   <div key={item.id} className={styles.detailsItemRow}>
                     <div className={styles.detailsItemName}>
                       <strong>{item.name}</strong>

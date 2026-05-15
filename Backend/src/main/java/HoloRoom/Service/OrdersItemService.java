@@ -13,6 +13,7 @@ import HoloRoom.Repository.ProductsRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,9 @@ public class OrdersItemService {
 
     @Autowired
     private PSizeColorStockRepository pscsRepository;
+
+    @Autowired
+    private PCartRepository cartRepository;
 
     @Autowired
     private OrdersService ordersService;
@@ -104,51 +108,46 @@ public class OrdersItemService {
         return orderItemRepository.save(orderItem);
     }
 
-    @Autowired
-    private PCartRepository cartRepository;
-
+    @Transactional
     public OrdersItem checkoutFromCart(Long userId, Long cartId) {
         PCart cart = cartRepository.findById(cartId).orElse(null);
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
             return null;
         }
 
-        // 1. Convert cart items -> order items
         List<Item> orderItems = new ArrayList<>();
         for (PCartItem ci : cart.getItems()) {
-            Item item = new Item(ci.getProduct().getProductId(), ci.getName(), ci.getPrice(), ci.getQuantity(), ci.getPscs().getPscsId());
+            Item item = new Item(
+                ci.getProduct().getProductId(),
+                ci.getName(),
+                ci.getPrice(),
+                ci.getQuantity(),
+                ci.getPscs().getPscsId()
+            );
             orderItems.add(item);
         }
 
-        // 2. Build the OrdersItem (sets price, status="Pending", date, userId)
         OrdersItem orderItem = new OrdersItem(orderItems, userId);
 
-        // 3. For each item: decrement stock + increment pSold
         for (Item item : orderItems) {
-            // pSold
             Products product = productsRepository.findById(item.getPId()).orElse(null);
             if (product != null) {
                 product.addtoPSold(item.getQuantity());
                 productsRepository.save(product);
             }
 
-            // stock on the specific size/color row
             PSizeColorStock pscs = pscsRepository.findById(item.getPscsId()).orElse(null);
             if (pscs != null) {
                 int newStock = Math.max(0, pscs.getProductStock() - item.getQuantity());
                 pscs.setProductStock(newStock);
-                // PSizeColorStock will be saved as part of Products cascade,
-                // OR if you have a PSizeColorStockRepository, save explicitly
+                pscsRepository.save(pscs); // explicit save
             }
         }
 
-        // 4. Save order item + attach to user's Orders list
         OrdersItem saved = orderItemRepository.save(orderItem);
         ordersService.addorderitemtolist(userId, saved);
 
-        // 5. Clear the cart
         cartRepository.deleteById(cartId);
-
         return saved;
     }
 
