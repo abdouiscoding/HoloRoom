@@ -95,6 +95,20 @@ public class OrdersController {
         return new ResponseEntity<>(items, HttpStatus.OK);
     }
 
+    @PutMapping("/cancel/{orderItemId}")
+    public ResponseEntity<OrdersItem> cancelOrderItem(@PathVariable Long orderItemId) {
+        try {
+            OrdersItem canceled = ordersItemService.cancelOrderItem(orderItemId);
+            return canceled != null
+                    ? new ResponseEntity<>(canceled, HttpStatus.OK)
+                    : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // Request DTO
     public static class UpdateStatusRequest {
         private String status;

@@ -3,6 +3,7 @@ package HoloRoom.Service;
 import HoloRoom.Model.Item;
 import HoloRoom.Model.OrdersItem;
 import HoloRoom.Model.PCart;
+import HoloRoom.Model.PSizeColorStock;
 import HoloRoom.Model.Products;
 import HoloRoom.Repository.OrdersItemRepository;
 import HoloRoom.Repository.ProductsRepository;
@@ -64,6 +65,35 @@ public class OrdersItemService {
             return orderItem.getItems();
         }
         return null;
+    }
+
+    public OrdersItem cancelOrderItem(Long id) {
+        OrdersItem orderItem = orderItemRepository.findById(id).orElse(null);
+        if (orderItem == null) return null;
+
+        String current = orderItem.getStatus() == null ? "" : orderItem.getStatus();
+        if (!"Pending".equalsIgnoreCase(current)) {
+            throw new IllegalStateException("Only pending orders can be canceled");
+        }
+
+        // For each item: decrement pSold (and stock if you have size/color resolution)
+        orderItem.getItems().forEach(item -> {
+            if (item.getPId() == null) return;
+            Products product = productsRepository.findById(item.getPId()).orElse(null);
+            if (product == null) return;
+
+            product.setPSold(product.getPSold() - item.getQuantity());
+
+            PSizeColorStock target = product.getSizeColorStock().stream()
+                .filter(scs -> scs.getProductSize().equals(item.getProductSizeColorStock().getProductSize())
+                            && scs.getProductColor().equals(item.getProductSizeColorStock().getProductColor()))
+                .findFirst().orElse(null);
+            if (target != null) target.setProductStock(target.getProductStock() + item.getQuantity());
+            productsRepository.save(product);
+        });
+
+        orderItem.setStatus("Canceled");
+        return orderItemRepository.save(orderItem);
     }
 
 

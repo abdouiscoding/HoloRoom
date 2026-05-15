@@ -1039,3 +1039,63 @@
   border: 1px solid rgba(0,255,120,0.4);
   opacity: 1;
 }
+
+.ordersTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filtersGroup { display: flex; gap: 0.5rem; }
+
+.filterSelect {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+}
+
+.totalSpending {
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-size: 0.85rem; color: #666;
+}
+.totalSpending strong { font-size: 1.25rem; color: #111; }
+
+.orderCard {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 1.25rem; border: 1px solid #eee; border-radius: 12px;
+  margin-bottom: 0.75rem; cursor: pointer; transition: box-shadow .15s;
+}
+.orderCard:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+
+.orderLeft { display: flex; flex-direction: column; }
+.orderIdSmall { font-size: 0.8rem; color: #888; }
+
+.orderRight { display: flex; align-items: center; gap: 0.75rem; }
+
+.orderStatus { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.8rem; }
+.statusPending { background: #fff3cd; color: #856404; }
+.statusCanceled { background: #f8d7da; color: #721c24; }
+.statusDelivered { background: #d4edda; color: #155724; }
+
+.cancelOrderBtn {
+  background: #fff; color: #c0392b; border: 1px solid #c0392b;
+  padding: 0.35rem 0.7rem; border-radius: 6px; cursor: pointer;
+}
+.cancelOrderBtn:hover { background: #c0392b; color: #fff; }
+
+.detailsItemsList { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.detailsItemRow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 0.8rem; background: #f7f7f9; border-radius: 8px;
+}
+.detailsItemName { display: flex; flex-direction: column; }
+.detailsItemName span { font-size: 0.85rem; color: #666; }
+.detailsTotal {
+  display: flex; justify-content: space-between; padding-top: 0.75rem;
+  border-top: 1px solid #eee; font-size: 1.05rem;
+}
