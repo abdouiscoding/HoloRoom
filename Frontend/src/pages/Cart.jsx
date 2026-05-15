@@ -13,6 +13,11 @@ import { Link } from "react-router-dom";
 import styles from "./Cart.module.css";
 import { useCart } from "../context/CartContext";
 import { API, address, myFetch } from "../api";
+const [paymentMethod, setPaymentMethod] = useState("cod");
+const [cardNumber, setCardNumber] = useState("");
+const [cardExpiry, setCardExpiry] = useState("");
+const [cardCvv, setCardCvv] = useState("");
+const [cardName, setCardName] = useState("");
 
 const UPLOADS_BASE = `${API}/api/uploads/images/`;
 
@@ -54,25 +59,53 @@ const Cart = () => {
   const token = localStorage.getItem("token");
   const cartId = localStorage.getItem("cartId");
 
+  const formatCardNumber = (v) =>
+  v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+
+  const formatExpiry = (v) => {
+    const digits = v.replace(/\D/g, "").slice(0, 4);
+    return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+  };
+
   const Order = async () => {
-  const res = await myFetch (`${API}/api/orders/create/${userId}`, {
+  // basic client-side validation only — card data is NOT sent to backend
+  if (paymentMethod === "card") {
+    if (!cardNumber.trim() || !cardExpiry.trim() || !cardCvv.trim() || !cardName.trim()) {
+      alert("Please fill in all card details");
+      return;
+    }
+  }
+
+  try {
+    const res = await myFetch(`${API}/api/orders/checkout/${userId}`, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-            cartId: cartId,
-            userId: userId
+        cartId: Number(cartId),
+        paymentMethod: paymentMethod,
       }),
     });
 
-    if(!res.ok){
-      alert("transaction failed");
+    if (!res.ok) {
+      alert("Transaction failed");
       return;
     }
+
     setOrderaddedPopup(true);
-  setCheckoutOpen(false);
+    setCheckoutOpen(false);
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+    setCardName("");
+    fetchCart(); // refresh (cart should be empty now)
+  } catch (err) {
+    console.error(err);
+    alert("Transaction failed");
   }
+};
 
   // ---------------- AR NAVIGATION ----------------
   const openAR = (pId) => {
@@ -676,47 +709,32 @@ const Cart = () => {
     {/* CHECKOUT POPUP */}
     {checkoutOpen && (
     <div className={styles.popupOverlay} onClick={() => setCheckoutOpen(false)}>
-      <div
-        className={styles.checkoutCard}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* HEADER */}
+      <div className={styles.checkoutCard} onClick={(e) => e.stopPropagation()}>
+        {/* HEADER (sticky) */}
         <div className={styles.checkoutHeader}>
           <h2>Checkout</h2>
-          <button
-            className={styles.closeBtn}
-            onClick={() => setCheckoutOpen(false)}
-          >
-            ×
-          </button>
+          <button className={styles.closeBtn} onClick={() => setCheckoutOpen(false)}>×</button>
         </div>
 
-        {/* CONTENT */}
+        {/* SCROLLABLE BODY */}
         <div className={styles.checkoutBody}>
           {/* ORDER SUMMARY */}
           <div className={styles.checkoutSection}>
             <h3>Order Summary</h3>
-
             {items.map((item) => (
               <div key={item.cartItemId} className={styles.checkoutRow}>
-                <span>
-                  {item.name} × {item.quantity}
-                </span>
+                <span>{item.name} × {item.quantity}</span>
                 <span>{item.subtotal} DZD</span>
               </div>
             ))}
-
             <div className={styles.checkoutRow}>
-              <span></span>
-              <span>+</span>
+              <span>Subtotal</span>
+              <span>{subtotal} DZD</span>
             </div>
-
             <div className={styles.checkoutRow}>
               <span>Shipping</span>
-              <span>1000 DZD</span>
+              <span>{shipping} DZD</span>
             </div>
-
-
             <div className={styles.checkoutTotal}>
               <span>Total</span>
               <span>{total} DZD</span>
@@ -726,37 +744,110 @@ const Cart = () => {
           {/* SHIPPING */}
           <div className={styles.checkoutSection}>
             <h3>Shipping</h3>
-            <p className={styles.checkoutText}>
-              Standard Delivery (3–5 days)
-            </p>
+            <p className={styles.checkoutText}>Standard Delivery (3–5 days)</p>
             <p className={styles.checkoutHint}>
-              Address: {localStorage.getItem("shipping")}
+              Address: {localStorage.getItem("shipping") || "Not set"}
             </p>
           </div>
 
-          {/* PAYMENT */}
+          {/* PAYMENT METHOD */}
           <div className={styles.checkoutSection}>
             <h3>Payment Method</h3>
 
-            <label className={styles.radioRow}>
-              <input type="radio" defaultChecked />
-              <span>Cash on Delivery</span>
+            <label className={`${styles.payOption} ${paymentMethod === "cod" ? styles.payOptionActive : ""}`}>
+              <input
+                type="radio"
+                name="payment"
+                value="cod"
+                checked={paymentMethod === "cod"}
+                onChange={() => setPaymentMethod("cod")}
+              />
+              <div>
+                <strong>Cash on Delivery</strong>
+                <p>Pay when your order arrives.</p>
+              </div>
             </label>
 
-            <label className={styles.radioRow}>
-              <input type="radio" />
-              <span>Card Payment (coming soon)</span>
+            <label className={`${styles.payOption} ${paymentMethod === "card" ? styles.payOptionActive : ""}`}>
+              <input
+                type="radio"
+                name="payment"
+                value="card"
+                checked={paymentMethod === "card"}
+                onChange={() => setPaymentMethod("card")}
+              />
+              <div>
+                <strong>Card Payment</strong>
+                <p>Visa, Mastercard, CIB / Edahabia.</p>
+              </div>
             </label>
+
+            {/* CARD FORM */}
+            {paymentMethod === "card" && (
+              <div className={styles.cardForm}>
+                <label className={styles.cardLabel}>
+                  Cardholder Name
+                  <input
+                    type="text"
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="Name on card"
+                    className={styles.cardInput}
+                  />
+                </label>
+
+                <label className={styles.cardLabel}>
+                  Card Number
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="1234 5678 9012 3456"
+                    className={styles.cardInput}
+                  />
+                </label>
+
+                <div className={styles.cardRow}>
+                  <label className={styles.cardLabel}>
+                    Expiry
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY"
+                      className={styles.cardInput}
+                    />
+                  </label>
+                  <label className={styles.cardLabel}>
+                    CVV
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
+                      placeholder="•••"
+                      className={styles.cardInput}
+                    />
+                  </label>
+                </div>
+
+                <p className={styles.cardNote}>
+                  🔒 Demo form — for real payments integrate Stripe or a licensed local gateway.
+                </p>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* ACTION */}
+        {/* STICKY FOOTER */}
+        <div className={styles.checkoutFooter}>
           <button onClick={Order} className={styles.payBtn}>
-            Confirm Order
+            Confirm Order · {total} DZD
           </button>
-
-          <p className={styles.secureNote}>
-            🔒 Secure checkout protected
-          </p>
+          <p className={styles.secureNote}>🔒 Secure checkout protected</p>
         </div>
       </div>
     </div>

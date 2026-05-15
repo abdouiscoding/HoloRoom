@@ -261,86 +261,87 @@ const ProfilePage = () => {
         </aside>
 
         <main className={styles.mainContent}>
-          {/* ORDERS */}
-          {activeTab === "orders" && (
-            <div className={styles.tabPanel}>
-              {/* Top bar: total spending + filters */}
-              <div className={styles.ordersTopBar}>
-                <div className={styles.filtersGroup}>
-                  <select
-                    className={styles.filterSelect}
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value="All">All statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Canceled">Canceled</option>
-                    <option value="Delivered">Delivered</option>
-                  </select>
-                  <select
-                    className={styles.filterSelect}
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                  >
-                    <option value="Newest">Newest first</option>
-                    <option value="Oldest">Oldest first</option>
-                  </select>
-                </div>
-                <div className={styles.totalSpending}>
-                  <span>Total Spending</span>
-                  <strong>{totalSpending.toFixed(2)} DZD</strong>
-                </div>
+        {/* ORDERS */}
+        {activeTab === "orders" && (
+          <div className={styles.tabPanel}>
+            <div className={styles.ordersTopBar}>
+              <h2 className={styles.tabTitle}>Orders</h2>
+
+              <div className={styles.filtersGroup}>
+                <select
+                  className={styles.filterSelect}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="All">All statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Canceled">Canceled</option>
+                  <option value="Delivered">Delivered</option>
+                </select>
+                <select
+                  className={styles.filterSelect}
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                >
+                  <option value="Newest">Newest first</option>
+                  <option value="Oldest">Oldest first</option>
+                </select>
               </div>
 
-              {ordersLoading ? (
-                <div className={styles.emptyState}><p>Loading orders...</p></div>
-              ) : filteredOrders.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <i className="fas fa-box-open"></i>
-                  <p>No orders match this filter.</p>
-                  <button className="btn-primary" onClick={() => navigate("/shop")}>Start Shopping</button>
-                </div>
-              ) : (
-                <div className={styles.ordersList}>
-                  {filteredOrders.map((order) => {
-                    const status = order.status || order.Status || "Pending";
-                    const isPending = status.toLowerCase() === "pending";
-                    return (
-                      <div
-                        key={order.oItemId}
-                        className={styles.orderCard}
-                        onClick={() => setSelectedOrder(order)}
-                      >
-                        {/* Left: date */}
-                        <div className={styles.orderLeft}>
-                          <span className={styles.orderDate}>
-                            {new Date(order.orderDate).toLocaleDateString()}
-                          </span>
-                          <span className={styles.orderIdSmall}>#{order.oItemId}</span>
-                        </div>
-
-                        {/* Right: price + status (+ cancel if pending) */}
-                        <div className={styles.orderRight}>
-                          <span className={styles.orderPrice}>{order.price} DZD</span>
-                          <span className={`${styles.orderStatus} ${statusClass(status)}`}>
-                            {status}
-                          </span>
-                          {isPending && (
-                            <button
-                              className={styles.cancelOrderBtn}
-                              onClick={(e) => openCancelConfirm(e, order.oItemId)}
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <div className={styles.totalSpending}>
+                <span>Total Spending</span>
+                <strong>{totalSpending.toFixed(2)} DZD</strong>
+              </div>
             </div>
-          )}
+
+            <hr className={styles.tabDivider} />
+
+            {ordersLoading ? (
+              <div className={styles.emptyState}><p>Loading orders...</p></div>
+            ) : filteredOrders.length === 0 ? (
+              <div className={styles.emptyState}>
+                <i className="fas fa-box-open"></i>
+                <p>No orders match this filter.</p>
+                <button className="btn-primary" onClick={() => navigate("/shop")}>Start Shopping</button>
+              </div>
+            ) : (
+              <div className={styles.ordersList}>
+                {filteredOrders.map((order) => {
+                  const status = order.status || order.Status || "Pending";
+                  const isPending = status.toLowerCase() === "pending";
+                  return (
+                    <div
+                      key={order.oItemId}
+                      className={styles.orderCard}
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <div className={styles.orderLeft}>
+                        <span className={styles.orderDate}>
+                          {new Date(order.orderDate).toLocaleDateString()}
+                        </span>
+                        <span className={styles.orderIdSmall}>#{order.oItemId}</span>
+                      </div>
+                      <div className={styles.orderRight}>
+                        <span className={styles.orderPrice}>{order.price} DZD</span>
+                        <span className={`${styles.orderStatus} ${statusClass(status)}`}>
+                          {status}
+                        </span>
+                        {isPending && (
+                          <button
+                            className={styles.cancelOrderBtn}
+                            onClick={(e) => openCancelConfirm(e, order.oItemId)}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
           {/* WISHLIST (unchanged) */}
           {activeTab === "wishlist" && (

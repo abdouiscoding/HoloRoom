@@ -1099,3 +1099,27 @@
   display: flex; justify-content: space-between; padding-top: 0.75rem;
   border-top: 1px solid #eee; font-size: 1.05rem;
 }
+
+.ordersTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tabTitle {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.filtersGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tabDivider {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1rem 0 1.5rem;
+}

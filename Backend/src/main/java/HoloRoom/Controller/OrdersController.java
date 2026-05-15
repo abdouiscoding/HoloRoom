@@ -109,6 +109,32 @@ public class OrdersController {
         }
     }
 
+    @PostMapping("/checkout/{userId}")
+    public ResponseEntity<OrdersItem> checkoutFromCart(
+            @PathVariable Long userId,
+            @RequestBody CheckoutRequest request) {
+        try {
+            OrdersItem saved = ordersItemService.checkoutFromCart(userId, request.getCartId());
+            return saved != null
+                    ? new ResponseEntity<>(saved, HttpStatus.CREATED)
+                    : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // DTO at the bottom of the class
+    public static class CheckoutRequest {
+        private Long cartId;
+        private String paymentMethod;
+
+        public Long getCartId() { return cartId; }
+        public void setCartId(Long cartId) { this.cartId = cartId; }
+        public String getPaymentMethod() { return paymentMethod; }
+        public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    }
+
     // Request DTO
     public static class UpdateStatusRequest {
         private String status;
