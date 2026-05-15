@@ -8,6 +8,7 @@ import HoloRoom.Model.PSizeColorStock;
 import HoloRoom.Model.Products;
 import HoloRoom.Repository.OrdersItemRepository;
 import HoloRoom.Repository.PCartRepository;
+import HoloRoom.Repository.PSizeColorStockRepository;
 import HoloRoom.Repository.ProductsRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class OrdersItemService {
 
     @Autowired
     private OrdersItemRepository orderItemRepository;
+
+    @Autowired
+    private PSizeColorStockRepository pscsRepository;
 
     @Autowired
     private OrdersService ordersService;
@@ -91,10 +95,7 @@ public class OrdersItemService {
 
             product.setPSold(product.getPSold() - item.getQuantity());
 
-            PSizeColorStock target = product.getSizeColorStock().stream()
-                .filter(scs -> scs.getProductSize().equals(item.getProductSizeColorStock().getProductSize())
-                            && scs.getProductColor().equals(item.getProductSizeColorStock().getProductColor()))
-                .findFirst().orElse(null);
+            PSizeColorStock target = pscsRepository.findById(item.getPscsId()).orElse(null);
             if (target != null) target.setProductStock(target.getProductStock() + item.getQuantity());
             productsRepository.save(product);
         });
@@ -115,7 +116,7 @@ public class OrdersItemService {
         // 1. Convert cart items -> order items
         List<Item> orderItems = new ArrayList<>();
         for (PCartItem ci : cart.getItems()) {
-            Item item = new Item(ci.getProduct().getProductId(), ci.getName(), ci.getPrice(), ci.getQuantity(), ci.getPscs());
+            Item item = new Item(ci.getProduct().getProductId(), ci.getName(), ci.getPrice(), ci.getQuantity(), ci.getPscs().getPscsId());
             orderItems.add(item);
         }
 
@@ -132,7 +133,7 @@ public class OrdersItemService {
             }
 
             // stock on the specific size/color row
-            PSizeColorStock pscs = item.getProductSizeColorStock();
+            PSizeColorStock pscs = pscsRepository.findById(item.getPscsId()).orElse(null);
             if (pscs != null) {
                 int newStock = Math.max(0, pscs.getProductStock() - item.getQuantity());
                 pscs.setProductStock(newStock);

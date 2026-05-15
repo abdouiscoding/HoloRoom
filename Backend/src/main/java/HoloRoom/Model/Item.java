@@ -20,7 +20,7 @@ public class Item {
     private String name;
     private float price;
     private int quantity;
-    private PSizeColorStock productSizeColorStock;
+    private Long pscsId;
     private float totalPrice;
 
     @ManyToOne
@@ -29,12 +29,12 @@ public class Item {
 
     // Constructors
     public Item() {}
-    public Item(Long pId, String name, float price, int quantity, PSizeColorStock productSizeColorStock) {
+    public Item(Long pId, String name, float price, int quantity, Long pscsId) {
         this.pId = pId;
         this.name = name;
         this.price = price;
         this.quantity = quantity;
-        this.productSizeColorStock = productSizeColorStock;
+        this.pscsId = pscsId;
         this.totalPrice = price * quantity;
     }
 
@@ -56,6 +56,6 @@ public class Item {
     public OrdersItem getOrdersItem() { return ordersItem; }
     public void setOrdersItem(OrdersItem ordersItem) { this.ordersItem = ordersItem; }
 
-    public PSizeColorStock getProductSizeColorStock() { return productSizeColorStock; }
-    public void setProductSizeColorStock(PSizeColorStock productSizeColorStock) { this.productSizeColorStock = productSizeColorStock; }
+    public Long getPscsId() { return pscsId; }
+    public void setPscsId(Long pscsId) { this.pscsId = pscsId; }
 } 
