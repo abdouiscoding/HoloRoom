@@ -1,143 +1,116 @@
 package HoloRoom.Service;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import HoloRoom.Model.FeaturedItem;
 import HoloRoom.Model.FeaturedList;
 import HoloRoom.Model.Products;
 import HoloRoom.Repository.FeaturedItemRepository;
 import HoloRoom.Repository.FeaturedListRepository;
-import HoloRoom.Repository.ProductsRepository;
 
 @Service
 public class FeaturedProductsService {
 
-    @Autowired
-    private FeaturedListRepository listRepo;
+    @Autowired private FeaturedListRepository listRepo;
+    @Autowired private FeaturedItemRepository itemRepo;
+    @Autowired private ProductsService productService;
 
-    @Autowired
-    private FeaturedItemRepository itemRepo;
-
-    @Autowired
-    private ProductsService productService;
-
-    // ---------------- GET OR CREATE LIST ----------------
-    public FeaturedList CreateList(String name) {
-            FeaturedList list = new FeaturedList(name);
-            return listRepo.save(list);
+    public FeaturedList createList(String name) {
+        return listRepo.save(new FeaturedList(name));
     }
 
-    // ---------------- GET LIST ----------------
     public FeaturedList getListById(Long id) {
         return listRepo.findById(id).orElse(null);
+    }
+
+    public FeaturedList getListByName(String name) {
+        return listRepo.findByName(name);
     }
 
     public List<FeaturedList> getAllLists() {
         return listRepo.findAll();
     }
-
-    // ---------------- DELETE ITEM --------------
-    public void delete(Long productId) {
-        // First, remove items from all featured lists (cascade doesn't handle join tables well)
-        List<FeaturedList> allLists = listRepo.findAll();
-        for (FeaturedList list : allLists) {
-            list.getItems().removeIf(item -> item.getProduct().getProductId().equals(productId));
+    
+    /** Called when a product is deleted from the catalog. */
+    @Transactional
+    public void deleteByProduct(Long productId) {
+        for (FeaturedList list : listRepo.findAll()) {
+            list.getItems().removeIf(item ->
+                item.getProduct() != null
+                && item.getProduct().getProductId().equals(productId));
             listRepo.save(list);
         }
-        
-        // Then delete the items themselves
-        List<FeaturedItem> items = itemRepo.findAll().stream()
-            .filter(item -> item.getProduct().getProductId().equals(productId))
-            .toList();
-        itemRepo.deleteAll(items);
     }
 
-    // ---------------- ADD PRODUCT TO LIST ----------------
-    public FeaturedItem addProductToList(Long listId, Long productId, int order) {
-
-        FeaturedList list = listRepo.findById(listId).orElse(null);
+    /**
+     * Add/replace product at a spot in a list. One product per spot — if the spot
+     * already has a product, it's swapped out.
+     */
+    @Transactional
+    public FeaturedItem setProductAtSpot(String listName, Long productId, String spot) {
+        FeaturedList list = listRepo.findByName(listName);
         if (list == null) return null;
 
         Products product = productService.getProductById(productId);
         if (product == null) return null;
 
-        // shift items if same order exists
-        list.getItems().forEach(item -> {
-            if (item.getDisplayOrder() >= order) {
-                item.setDisplayOrder(item.getDisplayOrder() + 1);
-            }
-        });
+        if(list.getItems().stream().anyMatch(it -> spot.equalsIgnoreCase(it.getSpot()))) {
+            list.getItems().removeIf(it -> spot.equalsIgnoreCase(it.getSpot()));
+            itemRepo.deleteById(
+                list.getItems().stream()
+                    .filter(it -> spot.equalsIgnoreCase(it.getSpot()))
+                    .findFirst().get().getId());
+        }
+        // remove any existing item at the same spot
+        list.getItems().removeIf(it -> spot.equalsIgnoreCase(it.getSpot()));
 
         FeaturedItem item = new FeaturedItem();
         item.setProduct(product);
-        item.setDisplayOrder(order);
-
+        item.setSpot(spot);
+        itemRepo.save(item);
         list.getItems().add(item);
 
-        listRepo.save(list); // cascades save
-
+        listRepo.save(list);
         return item;
     }
 
-    // ---------------- REMOVE ITEM (DELETE FROM DB) ----------------
-    public boolean removeItem(Long id, Long itemId) {
-
-        FeaturedItem item = itemRepo.findById(itemId).orElse(null);
-        if (item == null) return false;
-
-        FeaturedList list = listRepo.findById(id).orElse(null);
-
-        list.getItems().remove(item);
-
-        itemRepo.delete(item);
-
-        return true;
+    @Transactional
+    public boolean removeItem(String listName, Long itemId) {
+        FeaturedList list = listRepo.findByName(listName);
+        if (list == null) return false;
+        boolean removed = list.getItems().removeIf(it -> it.getId().equals(itemId));
+        if (removed) listRepo.save(list);
+        return removed;
     }
 
-    // ---------------- CLEAR LIST (DELETE ALL ITEMS) ----------------
+    @Transactional
     public boolean clearList(Long listId) {
-
         FeaturedList list = listRepo.findById(listId).orElse(null);
         if (list == null) return false;
-
-        itemRepo.deleteAll(list.getItems());
-
         list.getItems().clear();
-
+        listRepo.save(list);
         return true;
     }
 
-    // ---------------- REORDER ITEM ----------------
-    public boolean updateOrder(Long id, Long itemId, int newOrder) {
+    @Transactional
+    public boolean updateSpot(String listName, Long itemId, String newSpot) {
+        FeaturedList list = listRepo.findByName(listName);
+        if (list == null) return false;
 
-        FeaturedItem item = itemRepo.findById(itemId).orElse(null);
-        if (item == null) return false;
+        FeaturedItem target = list.getItems().stream()
+                .filter(it -> it.getId().equals(itemId))
+                .findFirst().orElse(null);
+        if (target == null) return false;
 
-        FeaturedList list = listRepo.findById(id).orElse(null);
+        // bump out anyone already in newSpot
+        list.getItems().removeIf(it ->
+            !it.getId().equals(itemId) && newSpot.equalsIgnoreCase(it.getSpot()));
 
-        int oldOrder = item.getDisplayOrder();
-
-        for (FeaturedItem i : list.getItems()) {
-            if (newOrder > oldOrder) {
-                // moving down
-                if (i.getDisplayOrder() > oldOrder && i.getDisplayOrder() <= newOrder) {
-                    i.setDisplayOrder(i.getDisplayOrder() - 1);
-                }
-            } else {
-                // moving up
-                if (i.getDisplayOrder() < oldOrder && i.getDisplayOrder() >= newOrder) {
-                    i.setDisplayOrder(i.getDisplayOrder() + 1);
-                }
-            }
-        }
-
-        item.setDisplayOrder(newOrder);
-
+        target.setSpot(newSpot);
         listRepo.save(list);
-
         return true;
     }
 }

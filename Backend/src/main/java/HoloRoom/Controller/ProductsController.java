@@ -167,7 +167,7 @@ public class ProductsController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         Products product = productsService.getProductById(id);
         if (product != null) {
-            featuredService.delete(id);
+            featuredService.deleteByProduct(id);
             cartItemService.delete(id);
             wishlistService.removebypId(id);
             reviewsService.removebyId(id);

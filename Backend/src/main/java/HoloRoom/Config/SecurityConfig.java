@@ -3,6 +3,7 @@ package HoloRoom.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -58,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/discounts/active").permitAll()
                 .requestMatchers("/api/users/update/email/**").permitAll()
                 .requestMatchers("/api/users/update/password/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/featured/**").permitAll()
 
                 // EMAIL CODE APIs
                 .requestMatchers("/api/users/send-code/**").hasAnyRole("USER","ADMIN","MARKETING_MANAGER", "PRODUCT_MANAGER")
@@ -104,7 +106,7 @@ public class SecurityConfig {
                     .hasAnyRole("MARKETING_MANAGER", "ADMIN")
                 .requestMatchers("/api/discounts/**")
                     .hasAnyRole("MARKETING_MANAGER", "ADMIN")
-                .requestMatchers("/api/featured")
+                .requestMatchers("/api/featured/**")
                     .hasAnyRole("MARKETING_MANAGER", "ADMIN")
 
 
@@ -129,6 +131,8 @@ public CorsConfigurationSource corsConfigurationSource() {
         "https://holoroom-ar.vercel.app",
         "https://holoroom-front.vercel.app"
     ));
+
+    config.setAllowedOriginPatterns(List.of("*"));
 
     config.setAllowedMethods(List.of(
         "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"

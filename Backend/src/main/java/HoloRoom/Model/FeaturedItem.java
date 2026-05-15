@@ -1,12 +1,7 @@
 package HoloRoom.Model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "featured_items")
@@ -16,30 +11,21 @@ public class FeaturedItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int displayOrder;
+    @Column(name = "spot")
+    private String spot;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Products product;
 
-    public Long getId() {
-        return id;
-    }
+    public FeaturedItem() {}
 
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
+    public Long getId() { return id; }
 
-    public void setDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
-    }
+    @JsonProperty("spot")
+    public String getSpot() { return spot; }
+    public void setSpot(String spot) { this.spot = spot; }
 
-    public Products getProduct() {
-        return product;
-    }
-
-    public void setProduct(Products product) {
-        this.product = product;
-    }
-
+    public Products getProduct() { return product; }
+    public void setProduct(Products product) { this.product = product; }
 }
