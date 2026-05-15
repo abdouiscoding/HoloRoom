@@ -5,14 +5,17 @@ import App from './App.jsx'
 import { CartProvider } from './context/CartContext'
 import { WishlistProvider } from './context/WishlistContext'
 import { ReviewsProvider } from './context/ReviewsContext'
+import { OrdersProvider } from './context/OrdersContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <CartProvider>
       <WishlistProvider>
-        <ReviewsProvider>
-          <App />
-        </ReviewsProvider>
+        <OrdersProvider>
+          <ReviewsProvider>
+            <App />
+          </ReviewsProvider>
+        </OrdersProvider>
       </WishlistProvider>
     </CartProvider>
   </StrictMode>,
