@@ -652,6 +652,180 @@ function showChatPopup() {
 // hook the existing button
 chatbotBtn.onclick = showChatPopup;
 
+/* =========================
+   MIC PUSH-TO-TALK
+========================= */
+const MIC_SVG = `
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="2" width="6" height="13" rx="3"/>
+    <path d="M19 11v1a7 7 0 0 1-14 0v-1"/>
+    <line x1="12" y1="19" x2="12" y2="23"/>
+    <line x1="8" y1="23" x2="16" y2="23"/>
+  </svg>
+`;
+const STOP_SVG = `
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="6" width="12" height="12" rx="2"/>
+  </svg>
+`;
+
+// pulse animation style
+const micStyle = document.createElement("style");
+micStyle.textContent = `
+  @keyframes micPulse {
+    0%, 100% { box-shadow: 0 6px 18px rgba(255,77,109,.5); }
+    50%      { box-shadow: 0 6px 18px rgba(255,77,109,.95), 0 0 0 8px rgba(255,77,109,.18); }
+  }
+`;
+document.head.appendChild(micStyle);
+
+const micBtn = document.createElement("button");
+micBtn.innerHTML = MIC_SVG;
+micBtn.style.cssText = `
+  position:absolute;
+  top:144px;
+  right:24px;
+  width:42px;
+  height:42px;
+  border:none;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff6b8a 0%,#ff4d6d 100%);
+  color:white;
+  cursor:pointer;
+  pointer-events:auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 6px 18px rgba(255,77,109,.5), 0 2px 4px rgba(0,0,0,.3);
+  z-index:9999;
+  transition:transform .15s, background .15s;
+`;
+ui.appendChild(micBtn);
+
+let recordRecognition = null;
+let isRecording = false;
+let silenceTimer = null;
+let lastSpeechTime = 0;
+let accumulatedText = "";
+
+function setMicState(recording) {
+  isRecording = recording;
+  micBtn.innerHTML = recording ? STOP_SVG : MIC_SVG;
+  if (recording) {
+    micBtn.style.background = "linear-gradient(135deg,#ff0040 0%,#cc0033 100%)";
+    micBtn.style.animation = "micPulse 1.4s infinite";
+  } else {
+    micBtn.style.background = "linear-gradient(135deg,#ff6b8a 0%,#ff4d6d 100%)";
+    micBtn.style.animation = "none";
+  }
+}
+
+function startRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    popup("Voice not supported on this device");
+    return;
+  }
+
+  recordRecognition = new SR();
+  recordRecognition.continuous = true;
+  recordRecognition.interimResults = true;
+  recordRecognition.lang = "en-US";
+
+  accumulatedText = "";
+  lastSpeechTime = Date.now();
+
+  recordRecognition.onresult = (event) => {
+    lastSpeechTime = Date.now();
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        accumulatedText += event.results[i][0].transcript + " ";
+      }
+    }
+  };
+
+  recordRecognition.onerror = (e) => {
+    console.log("rec error:", e.error);
+    if (e.error === "not-allowed") popup("Microphone permission denied");
+    cleanupRecording();
+  };
+
+  recordRecognition.onend = () => {
+    cleanupRecording();
+    const text = accumulatedText.trim();
+    if (text.length > 0) sendVoiceMessage(text);
+  };
+
+  try {
+    recordRecognition.start();
+    setMicState(true);
+
+    // auto-stop after 2.5s of silence
+    silenceTimer = setInterval(() => {
+      if (Date.now() - lastSpeechTime > 2500) {
+        stopRecording();
+      }
+    }, 300);
+  } catch (e) {
+    console.error(e);
+    cleanupRecording();
+  }
+}
+
+function stopRecording() {
+  if (recordRecognition) {
+    try { recordRecognition.stop(); } catch (e) {}
+  }
+}
+
+function cleanupRecording() {
+  setMicState(false);
+  if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null; }
+  recordRecognition = null;
+}
+
+micBtn.onclick = (e) => {
+  e.stopPropagation();
+  if (isRecording) stopRecording();
+  else startRecording();
+};
+
+async function sendVoiceMessage(text) {
+  popup("🎤 " + text);
+  chatHistory.push({ role: "user", text });
+  rerenderChatIfOpen();
+
+  // show typing indicator if popup is open
+  const messagesEl = document.getElementById("arChatMessages");
+  let typing = null;
+  if (messagesEl) {
+    typing = document.createElement("div");
+    typing.style.cssText = `align-self:flex-start;background:#1f1f1f;color:#aaa;padding:10px 14px;border-radius:14px;font-size:15px;`;
+    typing.textContent = "...";
+    messagesEl.appendChild(typing);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  try {
+    const res = await myFetch(`${API}/api/chat/ar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history: chatHistory.slice(-10, -1) }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "Sorry, I didn't get that.";
+    typing?.remove();
+    chatHistory.push({ role: "assistant", text: reply });
+    rerenderChatIfOpen();
+    speak(reply);
+  } catch (e) {
+    console.error(e);
+    typing?.remove();
+    chatHistory.push({ role: "assistant", text: "Couldn't reach the assistant." });
+    rerenderChatIfOpen();
+  }
+}
+
 // buttons
 const addBtn = makeBtn("Add");
 addBtn.style.bottom = "30px";
