@@ -14,6 +14,37 @@ public class ChatController {
     @Autowired
     private AIService aiService;
 
+    @PostMapping("/ar")
+    public ResponseEntity<Map<String, String>> arChat(@RequestBody Map<String, Object> body) {
+        try {
+            String message = (String) body.get("message");
+
+            List<AIService.Message> history = new ArrayList<>();
+            Object rawHistory = body.get("history");
+            if (rawHistory instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof Map<?, ?> map) {
+                        AIService.Message m = new AIService.Message();
+                        String role = (String) map.get("role");
+                        m.role = role == null ? "user" : role;
+                        m.text = (String) map.get("text");
+                        history.add(m);
+                    }
+                }
+            }
+
+            String reply = aiService.askArHelper(message, history);
+            if (reply == null || reply.isBlank()) {
+                reply = "Sorry, I didn't catch that. Could you say it again?";
+            }
+            return ResponseEntity.ok(Map.of("reply", reply));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of("reply", "Something went wrong on my end."));
+        }
+    }
+
     @PostMapping
     public ResponseEntity<Map<String, String>> chat(@RequestBody Map<String, Object> body) {
 

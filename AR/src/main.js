@@ -24,6 +24,7 @@ let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
 let dragOffset = new THREE.Vector3();
 let dragPlaneY = 0;
+let manualReticleHit = null; // THREE.Vector3 | null
 
 let interactionEnabled = false;
 
@@ -415,8 +416,209 @@ z-index:9999;
 
 ui.appendChild(chatbotBtn);
 
-// does nothing for now
-chatbotBtn.onclick = () => {};
+/* =========================
+   AR CHATBOT + TTS
+========================= */
+let chatHistory = []; // [{ role, text }, ...]
+let ttsEnabled = true;
+
+function speak(text) {
+  if (!ttsEnabled || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.05;
+  u.pitch = 1;
+  u.volume = 1;
+  // try to pick an English voice
+  const voices = window.speechSynthesis.getVoices();
+  const en = voices.find(v => v.lang?.startsWith("en"));
+  if (en) u.voice = en;
+  window.speechSynthesis.speak(u);
+}
+
+function showChatPopup() {
+  const existing = document.getElementById("arChatPopup");
+  if (existing) { existing.remove(); return; }
+
+  const overlay = document.createElement("div");
+  overlay.id = "arChatPopup";
+  overlay.setAttribute("data-ui", "true");
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:99999999;
+    background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
+    display:flex; align-items:flex-end; justify-content:center;
+    font-family:Arial,sans-serif;
+  `;
+
+  const card = document.createElement("div");
+  card.style.cssText = `
+    width:min(560px,96vw); height:75vh;
+    background:#111; border-radius:24px 24px 0 0;
+    border:1px solid rgba(255,255,255,.08);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  `;
+  overlay.onclick = () => overlay.remove();
+  card.onclick = (e) => e.stopPropagation();
+
+  /* HEADER */
+  const header = document.createElement("div");
+  header.style.cssText = `
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.06);
+    color:white;
+  `;
+  header.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#ffd400;display:flex;justify-content:center;align-items:center;color:#000;font-weight:bold;">★</div>
+      <div>
+        <div style="font-weight:700;">HoloRoom Assistant</div>
+        <div style="font-size:12px;opacity:.6;">Ask anything about your AR experience</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button id="arTtsToggle" style="
+        padding:8px 12px;border:none;border-radius:10px;
+        background:${ttsEnabled ? "#00ffff" : "#333"};
+        color:${ttsEnabled ? "#000" : "#fff"};font-weight:700;cursor:pointer;
+      ">${ttsEnabled ? "🔊 TTS" : "🔇 TTS"}</button>
+      <button id="arChatClose" style="
+        width:38px;height:38px;border:none;border-radius:10px;
+        background:#ff4d6d;color:white;cursor:pointer;font-weight:bold;
+      ">✕</button>
+    </div>
+  `;
+
+  /* MESSAGES */
+  const messages = document.createElement("div");
+  messages.id = "arChatMessages";
+  messages.style.cssText = `
+    flex:1; overflow-y:auto; padding:18px;
+    display:flex; flex-direction:column; gap:10px;
+    color:white;
+  `;
+
+  function renderMessages() {
+    messages.innerHTML = chatHistory.map(m => {
+      const isUser = m.role === "user";
+      return `
+        <div style="
+          align-self:${isUser ? "flex-end" : "flex-start"};
+          max-width:80%;
+          background:${isUser ? "#00ffff" : "#1f1f1f"};
+          color:${isUser ? "#000" : "#fff"};
+          padding:10px 14px; border-radius:14px;
+          line-height:1.4; font-size:15px;
+          word-wrap:break-word;
+        ">${m.text.replace(/</g, "&lt;")}</div>
+      `;
+    }).join("");
+    messages.scrollTop = messages.scrollHeight;
+  }
+  renderMessages();
+
+  if (chatHistory.length === 0) {
+    messages.innerHTML = `
+      <div style="text-align:center;opacity:.6;padding:40px 20px;">
+        Ask me how to place items, get design tips, or anything about this product.
+      </div>
+    `;
+  }
+
+  /* INPUT */
+  const inputBar = document.createElement("div");
+  inputBar.style.cssText = `
+    padding:14px; border-top:1px solid rgba(255,255,255,.06);
+    display:flex; gap:10px;
+  `;
+  inputBar.innerHTML = `
+    <input id="arChatInput" placeholder="Type your question..." style="
+      flex:1; padding:12px 16px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.1);
+      background:#1a1a1a; color:white; font-size:15px; outline:none;
+    "/>
+    <button id="arChatSend" style="
+      padding:12px 22px; border:none; border-radius:14px;
+      background:#00ffff; color:#000; font-weight:700; cursor:pointer;
+    ">Send</button>
+  `;
+
+  card.appendChild(header);
+  card.appendChild(messages);
+  card.appendChild(inputBar);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const input = document.getElementById("arChatInput");
+  const sendBtn = document.getElementById("arChatSend");
+  const closeBtn = document.getElementById("arChatClose");
+  const ttsBtn = document.getElementById("arTtsToggle");
+
+  closeBtn.onclick = () => {
+    window.speechSynthesis?.cancel();
+    overlay.remove();
+  };
+
+  ttsBtn.onclick = () => {
+    ttsEnabled = !ttsEnabled;
+    ttsBtn.style.background = ttsEnabled ? "#00ffff" : "#333";
+    ttsBtn.style.color = ttsEnabled ? "#000" : "#fff";
+    ttsBtn.textContent = ttsEnabled ? "🔊 TTS" : "🔇 TTS";
+    if (!ttsEnabled) window.speechSynthesis?.cancel();
+  };
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    chatHistory.push({ role: "user", text });
+    input.value = "";
+    renderMessages();
+
+    // typing indicator
+    const typing = document.createElement("div");
+    typing.style.cssText = `
+      align-self:flex-start; background:#1f1f1f; color:#aaa;
+      padding:10px 14px; border-radius:14px; font-size:15px;
+    `;
+    typing.textContent = "...";
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+      const res = await myFetch(`${API}/api/chat/ar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: chatHistory.slice(-10, -1),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "Sorry, I didn't get that.";
+
+      typing.remove();
+      chatHistory.push({ role: "assistant", text: reply });
+      renderMessages();
+      speak(reply);
+    } catch (e) {
+      console.error(e);
+      typing.remove();
+      const errMsg = "Couldn't reach the assistant. Check your connection.";
+      chatHistory.push({ role: "assistant", text: errMsg });
+      renderMessages();
+    }
+  }
+
+  sendBtn.onclick = send;
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") send();
+  });
+  input.focus();
+}
+
+// hook the existing button
+chatbotBtn.onclick = showChatPopup;
 
 // buttons
 const addBtn = makeBtn("Add");
@@ -1129,10 +1331,10 @@ function normalizeProductModel(object, targetHeight = 1.5) {
 const selectorDot = document.createElement("div");
 selectorDot.style.cssText = `
   position:fixed;
-  width:10px;
-  height:10px;
+  width:14px; height:14px;
   border-radius:50%;
-  background:white;
+  background:#00ffff;
+  box-shadow:0 0 12px #00ffff, 0 0 4px #fff inset;
   transform:translate(-50%,-50%);
   pointer-events:none;
   z-index:999999999;
@@ -1589,6 +1791,8 @@ function addObject() {
 
   selectedObject = holder;
 
+  manualReticleHit = null;
+
 }
 
 addBtn.onclick = addObject;
@@ -1608,6 +1812,7 @@ removeBtn.onclick = () => {
   if (i >= 0) objects.splice(i, 1);
 
   selectedObject = null;
+  manualReticleHit = null;  
 };
 
 /* =========================
@@ -1949,6 +2154,13 @@ window.addEventListener("click", async (event) => {
   } else {
     selectedObject = null;
   }
+  // Tap-to-place fallback (no menu, no object hit)
+  const planeY = reticle.position.y;
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
+  const point = new THREE.Vector3();
+  if (raycaster.ray.intersectPlane(groundPlane, point)) {
+    manualReticleHit = point;
+  }
 });
 
 /* =========================
@@ -2034,9 +2246,19 @@ renderer.setAnimationLoop(async (_, frame) => {
   });
 
   if (!session || !frame) {
-    updateSelectorDot(selectedObject, camera);
-    renderer.render(scene, camera);
     return;
+  }
+
+  reticle.visible = true;
+  snapped = false;
+
+  if (manualReticleHit) {
+    reticle.position.copy(manualReticleHit);
+    reticle.rotation.set(-Math.PI / 2, 0, 0);
+    detectedPlacement = "FLOOR";
+    placementStatus = "READY";
+    applyDynamicScale(reticle.position, 0.032);
+    snapped = true;
   }
 
   if (!referenceSpace) {

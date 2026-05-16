@@ -74,7 +74,7 @@ const ROOMS = {
       office_chair: { position: [0,    0,  0],   rotation: 0,         size: 1.2 },
       desk_lamp:    { position: [-0.8, 0.75, -1.8], rotation: 0,      size: 1.0 },
       bookshelf:    { position: [-3.5, 0,  0],   rotation: Math.PI/2, size: 2.2 },
-      monitor:      { position: [0,    0.75, -1.8], rotation: 0,      size: 0.6, decorative: true },
+      monitor:      { position: [0,    0.75, -1.8], rotation: 0,      size: 1.0, decorative: true, model: "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Products_Models/ultrawide_monitor.glb" },
       floor_plant:  { position: [3,    0,  2.5], rotation: 0,         size: 1.5 },
     },
   },
@@ -300,6 +300,23 @@ function SpotProduct({ spotKey, spotConfig, item, onClick }) {
   const [hovered, setHovered] = useState(false);
   const product = item?.product;
   const interactive = !spotConfig.decorative;
+
+    if (spotConfig.model) {
+    return (
+      <Suspense fallback={null}>
+        <ProductModel
+          url={spotConfig.model}
+          position={spotConfig.position}
+          rotation={spotConfig.rotation}
+          targetSize={spotConfig.size}
+          interactive={interactive}
+          hovered={hovered}
+          onHover={setHovered}
+          onClick={() => {}}
+        />
+      </Suspense>
+    );
+  }
 
   // empty spot: always render a placeholder for interactive room positions
   if (!product || !product.p3DModel) {

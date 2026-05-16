@@ -155,4 +155,71 @@ RULES:
             + "\"}";
     }
     }
+
+    public String askArHelper(String message, List<Message> history) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(API_KEY);
+
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("model", MODEL);
+            requestBody.put("temperature", 0.6);
+
+            JSONArray messages = new JSONArray();
+
+            messages.put(new JSONObject()
+                .put("role", "system")
+                .put("content", """
+    You are HoloRoom's AR assistant. Users are looking at furniture
+    in augmented reality on their phone. Be warm, brief, and helpful.
+
+    Keep replies under 50 words. Plain text only — NO JSON, NO markdown,
+    NO bullet lists. Speak naturally because your replies are read aloud.
+
+    You can help users with:
+    - How to use the AR viewer (pointing the camera, placing items, moving them)
+    - Advice on the product they're looking at (materials, dimensions, style fit)
+    - Recommendations and design tips (matching colors, room layout, scale)
+    - General product questions
+
+    If asked something unrelated to furniture or this AR app, politely steer
+    back to what you can help with.
+    """
+                )
+            );
+
+            if (history != null && !history.isEmpty()) {
+                int start = Math.max(0, history.size() - 6);
+                for (Message msg : history.subList(start, history.size())) {
+                    if (msg == null || msg.text == null) continue;
+                    messages.put(new JSONObject()
+                        .put("role", "user".equals(msg.role) ? "user" : "assistant")
+                        .put("content", msg.text));
+                }
+            }
+
+            messages.put(new JSONObject()
+                .put("role", "user")
+                .put("content", message));
+
+            requestBody.put("messages", messages);
+
+            HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(URL, request, String.class);
+
+            JSONObject json = new JSONObject(response.getBody());
+            return json.getJSONArray("choices")
+                .getJSONObject(0)
+                .getJSONObject("message")
+                .getString("content")
+                .trim();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Sorry, I'm having trouble right now. Try again in a moment.";
+        }
+    }
 }
