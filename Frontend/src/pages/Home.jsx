@@ -22,13 +22,14 @@ const ROOMS = {
     floor: "wood_warm",
     wallColor: "#efe6d4",
     accentColor: "#d8c8aa",
-    camera: { position: [6, 4, 6], target: [0, 1, 0] },
+    camera: { position: [6, 4, 6], target: [0, 1, 0] }, 
     spots: { // living_room
     sofa_main:    { position: [0,    0, -1.5], rotation: 0,         size: 2.8 },
     coffee_table: { position: [0,    0,  0.6], rotation: 0,         size: 1.2 },
     floor_lamp:   { position: [-3,   0, -1.2], rotation: 0,         size: 1.8 },
     accent_chair: { position: [2.6,  0,  0.6], rotation: -0.6,      size: 1.2 },
-    tv_stand:     { position: [0,    0,  3],   rotation: Math.PI,   size: 1.6 },
+    tv_stand:     { position: [0,    0,  3],   rotation: 0,   size: 1.8 },
+    tv_screen:    { position: [0,    0.5, 3],   rotation: Math.PI,   size: 1.4, decorative: true, model: "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Products_Models/low_poly_tv.glb" },
     side_table:   { position: [2,    0, -1.5], rotation: 0,         size: 0.7 },
     plant_decor:  { position: [-3,   0,  2.6], rotation: 0,         size: 1.5 },
   },
@@ -703,8 +704,8 @@ const Home = () => {
           <Reveal delay={120}>
             <div className={styles.teamCard}>
               <div className={styles.teamAvatar}>A</div>
-              <h3>Ayoub guermache</h3>
-              <p>Goat · Emotional support</p>
+              <h3>Ayoub Guermache</h3>
+              <p>Chamber · Emotional support</p>
             </div>
           </Reveal>
           <Reveal delay={240}>

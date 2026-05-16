@@ -440,85 +440,8 @@ function speak(text) {
   window.speechSynthesis.speak(u);
 }
 
-/* =========================
-   WAKE-WORD VOICE LISTENER
-========================= */
-let wakeListening = true; // default on
-let recognition = null;
-let isReplyingViaVoice = false;
-
-const WAKE_WORDS = [
-  "hey assistant", "hey ar assistant", "hey holoroom assistant",
-  "hey chatbot", "hey ar chatbot", "hey holoroom chatbot",
-  "hey holoroom", "hey ar", "ok assistant", "okay assistant"
-];
-
-function startWakeListener() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    console.warn("SpeechRecognition not supported");
-    return;
-  }
-
-  recognition = new SR();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = "en-US";
-
-  recognition.onresult = async (event) => {
-    if (isReplyingViaVoice) return; // don't trigger on TTS pickup
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (!event.results[i].isFinal) continue;
-      const transcript = event.results[i][0].transcript.toLowerCase().trim();
-
-      for (const wake of WAKE_WORDS) {
-        const idx = transcript.indexOf(wake);
-        if (idx !== -1) {
-          const question = transcript.substring(idx + wake.length).trim();
-          if (question.length > 1) {
-            await handleVoiceQuestion(question);
-          } else {
-            isReplyingViaVoice = true;
-            speak("Yes, how can I help?");
-            setTimeout(() => (isReplyingViaVoice = false), 2500);
-          }
-          return;
-        }
-      }
-    }
-  };
-
-  recognition.onerror = (e) => {
-    console.log("SR error:", e.error);
-    if (e.error === "not-allowed") {
-      popup("Microphone access denied");
-      wakeListening = false;
-    }
-  };
-
-  recognition.onend = () => {
-    if (wakeListening) {
-      setTimeout(() => {
-        try { recognition.start(); } catch (e) {}
-      }, 300);
-    }
-  };
-
-  try { recognition.start(); } catch (e) {}
-}
-
-function stopWakeListener() {
-  wakeListening = false;
-  if (recognition) {
-    try { recognition.stop(); } catch (e) {}
-    recognition = null;
-  }
-}
-
 async function handleVoiceQuestion(question) {
   popup("🎤 " + question);
-  isReplyingViaVoice = true;
   try {
     const res = await myFetch(`${API}/api/chat/ar`, {
       method: "POST",
@@ -535,19 +458,28 @@ async function handleVoiceQuestion(question) {
     speak(reply);
   } catch (e) {
     console.error(e);
-  } finally {
-    // re-enable wake listening after the bot finishes speaking
-    setTimeout(() => (isReplyingViaVoice = false), 1500);
   }
 }
 
-// auto-start on AR session
-renderer.xr.addEventListener("sessionstart", () => {
-  if (wakeListening) startWakeListener();
-});
-renderer.xr.addEventListener("sessionend", () => {
-  stopWakeListener();
-});
+function rerenderChatIfOpen() {
+  const messagesEl = document.getElementById("arChatMessages");
+  if (!messagesEl) return;
+  messagesEl.innerHTML = chatHistory.map(m => {
+    const isUser = m.role === "user";
+    return `
+      <div style="
+        align-self:${isUser ? "flex-end" : "flex-start"};
+        max-width:80%;
+        background:${isUser ? "#00ffff" : "#1f1f1f"};
+        color:${isUser ? "#000" : "#fff"};
+        padding:10px 14px; border-radius:14px;
+        line-height:1.4; font-size:15px;
+        word-wrap:break-word;
+      ">${m.text.replace(/</g, "&lt;")}</div>
+    `;
+  }).join("");
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
 function showChatPopup() {
   const existing = document.getElementById("arChatPopup");
@@ -563,14 +495,6 @@ function showChatPopup() {
     font-family:Arial,sans-serif;
   `;
 
-  function closePopup() {
-  window.speechSynthesis?.cancel();
-  window.visualViewport?.removeEventListener("resize", syncHeight);
-  window.visualViewport?.removeEventListener("scroll", syncHeight);
-  overlay.remove();
-  }
-  closeBtn.onclick = closePopup;
-
   const card = document.createElement("div");
   card.style.cssText = `
     width:min(560px,96vw);
@@ -582,31 +506,40 @@ function showChatPopup() {
     display:flex; flex-direction:column;
     overflow:hidden;
   `;
-  overlay.onclick = () => closePopup();
   card.onclick = (e) => e.stopPropagation();
 
-  // keyboard-aware height
   function syncHeight() {
     if (!window.visualViewport) return;
     card.style.height = (window.visualViewport.height - 20) + "px";
   }
+  function closePopup() {
+    window.speechSynthesis?.cancel();
+    window.visualViewport?.removeEventListener("resize", syncHeight);
+    window.visualViewport?.removeEventListener("scroll", syncHeight);
+    overlay.remove();
+  }
+  overlay.onclick = closePopup;
+
   window.visualViewport?.addEventListener("resize", syncHeight);
   window.visualViewport?.addEventListener("scroll", syncHeight);
   syncHeight();
 
-  /* HEADER */
   const header = document.createElement("div");
   header.style.cssText = `
     display:flex; justify-content:space-between; align-items:center;
     padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.06);
-    color:white;
+    color:white; flex-shrink:0;
   `;
   header.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:36px;height:36px;border-radius:50%;background:#ffd400;display:flex;justify-content:center;align-items:center;color:#000;font-weight:bold;">★</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00ffff,#0088ff);display:flex;justify-content:center;align-items:center;color:#001218;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
       <div>
         <div style="font-weight:700;">HoloRoom Assistant</div>
-        <div style="font-size:12px;opacity:.6;">Ask anything about your AR experience</div>
+        <div style="font-size:12px;opacity:.6;">Tap the mic to speak, or type below</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;">
@@ -614,7 +547,7 @@ function showChatPopup() {
         padding:8px 12px;border:none;border-radius:10px;
         background:${ttsEnabled ? "#00ffff" : "#333"};
         color:${ttsEnabled ? "#000" : "#fff"};font-weight:700;cursor:pointer;
-      ">${ttsEnabled ? "🔊 TTS" : "🔇 TTS"}</button>
+      ">${ttsEnabled ? "🔊" : "🔇"}</button>
       <button id="arChatClose" style="
         width:38px;height:38px;border:none;border-radius:10px;
         background:#ff4d6d;color:white;cursor:pointer;font-weight:bold;
@@ -622,33 +555,13 @@ function showChatPopup() {
     </div>
   `;
 
-  /* MESSAGES */
   const messages = document.createElement("div");
   messages.id = "arChatMessages";
   messages.style.cssText = `
     flex:1; overflow-y:auto; padding:18px;
     display:flex; flex-direction:column; gap:10px;
-    color:white;
+    color:white; min-height:0;
   `;
-
-  function renderMessages() {
-    messages.innerHTML = chatHistory.map(m => {
-      const isUser = m.role === "user";
-      return `
-        <div style="
-          align-self:${isUser ? "flex-end" : "flex-start"};
-          max-width:80%;
-          background:${isUser ? "#00ffff" : "#1f1f1f"};
-          color:${isUser ? "#000" : "#fff"};
-          padding:10px 14px; border-radius:14px;
-          line-height:1.4; font-size:15px;
-          word-wrap:break-word;
-        ">${m.text.replace(/</g, "&lt;")}</div>
-      `;
-    }).join("");
-    messages.scrollTop = messages.scrollHeight;
-  }
-  renderMessages();
 
   if (chatHistory.length === 0) {
     messages.innerHTML = `
@@ -658,14 +571,10 @@ function showChatPopup() {
     `;
   }
 
-  /* INPUT */
   const inputBar = document.createElement("div");
   inputBar.style.cssText = `
-    padding:14px;
-    border-top:1px solid rgba(255,255,255,.06);
-    display:flex; gap:10px;
-    flex-shrink:0;
-    background:#111;
+    padding:14px; border-top:1px solid rgba(255,255,255,.06);
+    display:flex; gap:10px; flex-shrink:0; background:#111;
   `;
   inputBar.innerHTML = `
     <input id="arChatInput" placeholder="Type your question..." style="
@@ -685,38 +594,33 @@ function showChatPopup() {
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
+  // Now that elements are in DOM, wire them up
   const input = document.getElementById("arChatInput");
   const sendBtn = document.getElementById("arChatSend");
   const closeBtn = document.getElementById("arChatClose");
   const ttsBtn = document.getElementById("arTtsToggle");
 
-  closeBtn.onclick = () => {
-    window.speechSynthesis?.cancel();
-    overlay.remove();
-  };
+  closeBtn.onclick = closePopup;
 
   ttsBtn.onclick = () => {
     ttsEnabled = !ttsEnabled;
     ttsBtn.style.background = ttsEnabled ? "#00ffff" : "#333";
     ttsBtn.style.color = ttsEnabled ? "#000" : "#fff";
-    ttsBtn.textContent = ttsEnabled ? "🔊 TTS" : "🔇 TTS";
+    ttsBtn.textContent = ttsEnabled ? "🔊" : "🔇";
     if (!ttsEnabled) window.speechSynthesis?.cancel();
   };
+
+  rerenderChatIfOpen();
 
   async function send() {
     const text = input.value.trim();
     if (!text) return;
-
     chatHistory.push({ role: "user", text });
     input.value = "";
-    renderMessages();
+    rerenderChatIfOpen();
 
-    // typing indicator
     const typing = document.createElement("div");
-    typing.style.cssText = `
-      align-self:flex-start; background:#1f1f1f; color:#aaa;
-      padding:10px 14px; border-radius:14px; font-size:15px;
-    `;
+    typing.style.cssText = `align-self:flex-start;background:#1f1f1f;color:#aaa;padding:10px 14px;border-radius:14px;font-size:15px;`;
     typing.textContent = "...";
     messages.appendChild(typing);
     messages.scrollTop = messages.scrollHeight;
@@ -725,32 +629,24 @@ function showChatPopup() {
       const res = await myFetch(`${API}/api/chat/ar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          history: chatHistory.slice(-10, -1),
-        }),
+        body: JSON.stringify({ message: text, history: chatHistory.slice(-10, -1) }),
       });
       const data = await res.json();
       const reply = data.reply || "Sorry, I didn't get that.";
-
       typing.remove();
       chatHistory.push({ role: "assistant", text: reply });
-      renderMessages();
+      rerenderChatIfOpen();
       speak(reply);
     } catch (e) {
       console.error(e);
       typing.remove();
-      const errMsg = "Couldn't reach the assistant. Check your connection.";
-      chatHistory.push({ role: "assistant", text: errMsg });
-      renderMessages();
+      chatHistory.push({ role: "assistant", text: "Couldn't reach the assistant." });
+      rerenderChatIfOpen();
     }
   }
 
   sendBtn.onclick = send;
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") send();
-  });
-  input.focus();
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
 }
 
 // hook the existing button
@@ -1489,18 +1385,17 @@ function updateSelectorDot(obj, camera) {
 
   // anchor between the model top and the HUD card
   const h = obj.userData.modelHeight || 1;
-  pos.y += h + 0.05;
+  pos.y += h + 0.01;
 
   pos.project(camera);
 
-  // hide if behind camera or outside view
   if (pos.z > 1 || pos.z < -1 || Math.abs(pos.x) > 1.2 || Math.abs(pos.y) > 1.2) {
     selectorDot.style.display = "none";
     return;
   }
 
-  selectorDot.style.left = ((pos.x * 0.5 + 0.5) * innerWidth) + "px";
-  selectorDot.style.top = ((-pos.y * 0.5 + 0.5) * innerHeight) + "px";
+  selectorDot.style.left = ((pos.x * 0.8 + 0.5) * innerWidth) + "px";
+  selectorDot.style.top = ((-pos.y * 0.8 + 0.5) * innerHeight) + "px";
   selectorDot.style.display = "block";
 }
 
