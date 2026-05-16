@@ -24,13 +24,14 @@ let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
 let dragOffset = new THREE.Vector3();
 let dragPlaneY = 0;
-let manualReticleHit = null; // THREE.Vector3 | null
 
 let interactionEnabled = false;
 
 let detectedPlacement = null;
 
 let uiBlocked = false;
+
+const SURFACE_LABEL = { FLOOR: "floor", WALL: "wall", CEILING: "ceiling" };
 
 document.addEventListener("pointerdown", () => {
   uiBlocked = false;
@@ -331,41 +332,45 @@ document.body.style.cssText = `
   overflow: hidden;
 `;
 
-// intro panel behind the button
+// intro panel
 const intro = document.createElement("div");
 intro.id = "arIntro";
 intro.setAttribute("data-ui", "true");
 intro.style.cssText = `
   position: fixed; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
   pointer-events: none;
   z-index: 5;
   color: white; text-align: center;
 `;
 intro.innerHTML = `
-  <h1 style="font-size:40px;margin:0 0 8px;background:linear-gradient(135deg,#00ffff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">HoloRoom AR</h1>
-  <p style="opacity:.6;margin:0 0 32px;">Tap below to place this product in your room.</p>
+  <h1 style="font-size:clamp(28px,8vw,44px);margin:0 0 12px;background:linear-gradient(135deg,#00ffff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">HoloRoom AR</h1>
+  <p style="opacity:.6;margin:0 0 28px;max-width:320px;line-height:1.5;font-size:15px;">
+    Tap below to place this product in your room.
+  </p>
 `;
 document.body.appendChild(intro);
 
-// restyle the three.js AR button — override its defaults
+// move the AR button INTO the intro container
+intro.appendChild(arBtn);
+
+// flex child — no absolute positioning fight
 arBtn.style.cssText = `
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, 10px) !important;
-  padding: 18px 44px !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: 16px 36px !important;
   border: none !important;
   border-radius: 999px !important;
   background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%) !important;
   color: #001218 !important;
-  font-size: 18px !important;
+  font-size: 17px !important;
   font-weight: 700 !important;
-  letter-spacing: .5px !important;
+  letter-spacing: .3px !important;
   cursor: pointer !important;
-  box-shadow: 0 12px 40px rgba(0,200,255,.5), 0 0 0 10px rgba(0,255,255,.06) !important;
-  z-index: 10 !important;
-  opacity: 1 !important;
+  box-shadow: 0 12px 36px rgba(0,200,255,.45) !important;
+  pointer-events: auto !important;
 `;
 
 /* =========================
@@ -1558,24 +1563,34 @@ function showPlacementToast(text) {
 /* =========================
     Product Scaler
 ========================= */
-function normalizeProductModel(object, targetHeight = 1.5) {
+function applyProductSize(object, targetHeight, targetWidth) {
   const box = new THREE.Box3().setFromObject(object);
   const size = new THREE.Vector3();
   box.getSize(size);
+  if (size.y <= 0) return;
 
-  const scale = targetHeight / size.y;
+  let scale;
+  const wDim = Math.max(size.x, size.z); // model width = bigger of x/z
+
+  if (targetHeight > 0 && targetWidth > 0) {
+    // fit both — pick the smaller scale to honor both constraints
+    scale = Math.min(targetHeight / size.y, targetWidth / wDim);
+  } else if (targetHeight > 0) {
+    scale = targetHeight / size.y;
+  } else if (targetWidth > 0) {
+    scale = targetWidth / wDim;
+  } else {
+    // fallback default — 1m tall, reasonable for most furniture
+    scale = 1.0 / size.y;
+  }
 
   object.scale.setScalar(scale);
 
-  // re-center on ground
-  const box2 = new THREE.Box3().setFromObject(object);
-  const center = box2.getCenter(new THREE.Vector3());
-
-  object.position.sub(center);
-
-  // force bottom to y=0
-  const box3 = new THREE.Box3().setFromObject(object);
-  object.position.y -= box3.min.y;
+  // re-measure, put bottom at y=0, center on xz
+  const newBox = new THREE.Box3().setFromObject(object);
+  object.position.x -= (newBox.max.x + newBox.min.x) / 2;
+  object.position.y -= newBox.min.y;
+  object.position.z -= (newBox.max.z + newBox.min.z) / 2;
 }
 
 /* =========================
@@ -1682,27 +1697,27 @@ function drawMenu() {
   ctx.fillStyle = "#fff";
   ctx.fillText("X", 948, 64);
 
-  /* scroll up */
-  ctx.fillStyle = "#222";
-  roundRect(ctx, 930, 150, 60, 70, 18);
+  /* SCROLLBAR */
+  const totalItems = allProducts.length;
+  const maxScroll = Math.max(0, totalItems - 6);
+  const trackX = 935;
+  const trackY = 100;
+  const trackW = 28;
+  const trackH = 600;
+
+  // track
+  ctx.fillStyle = "rgba(40,40,55,.9)";
+  roundRect(ctx, trackX, trackY, trackW, trackH, 14);
   ctx.fill();
 
-  ctx.fillStyle = "#00ffff";
-  ctx.fillText("↑", 948, 200);
-
-  /* scroll down */
-  ctx.fillStyle = "#222";
-  roundRect(ctx, 930, 250, 60, 70, 18);
-  ctx.fill();
-
-  ctx.fillStyle = "#00ffff";
-  ctx.fillText("↓", 948, 300);
-
-  const start = menuScroll;
-  const visible = allProducts.slice(start, start + 6);
-
-  const cardW = 270;
-  const cardH = 250;
+  if (totalItems > 6) {
+    // thumb
+    const thumbH = Math.max(70, (6 / totalItems) * trackH);
+    const thumbY = trackY + (menuScroll / maxScroll) * (trackH - thumbH);
+    ctx.fillStyle = "#00ffff";
+    roundRect(ctx, trackX + 3, thumbY, trackW - 6, thumbH, 11);
+    ctx.fill();
+  }
 
   visible.forEach((p, i) => {
     const col = i % 3;
@@ -1995,8 +2010,8 @@ function addObject() {
     return;
   }
 
-  if (detectedPlacement !== "FLOOR") {
-    popup("Aim at the floor to place the product");
+  if (detectedPlacement !== requiredPlacement) {
+    popup(`Aim at the ${SURFACE_LABEL[requiredPlacement] || "surface"} to place the product`);
     return;
   }
 
@@ -2022,7 +2037,11 @@ function addObject() {
   // clone model
   const model = productModelTemplate.clone(true);
 
-  normalizeProductModel(model, 1.1);
+  applyProductSize(
+    model,
+    productData?.pHeight || 0,
+    productData?.pWidth || 0
+  );
 
   holder.add(model);
 
@@ -2038,9 +2057,6 @@ function addObject() {
   createHUD(holder);
 
   selectedObject = holder;
-
-  manualReticleHit = null;
-
 }
 
 addBtn.onclick = addObject;
@@ -2060,7 +2076,6 @@ removeBtn.onclick = () => {
   if (i >= 0) objects.splice(i, 1);
 
   selectedObject = null;
-  manualReticleHit = null;  
 };
 
 /* =========================
@@ -2197,9 +2212,7 @@ window.addEventListener("click", async (event) => {
   const isUI = event.target.closest("[data-ui]");
   if (isUI) return;
 
-  const cx = (event.clientX / innerWidth) * 2 - 1;
-  const cy = -(event.clientY / innerHeight) * 2 + 1;
-  raycaster.setFromCamera({ x: cx, y: cy }, camera);
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
 
   /* ===== MENU ===== */
   if (menu.visible) {
@@ -2210,10 +2223,18 @@ window.addEventListener("click", async (event) => {
       const y = (1 - uv.y) * 768;
 
       if (x > 920 && y < 80) { menu.visible = false; menuVisible = false; return; }
-      if (x >= 930 && x <= 990 && y >= 150 && y <= 220) { menuScroll = Math.max(0, menuScroll - 1); drawMenu(); return; }
-      if (x >= 930 && x <= 990 && y >= 250 && y <= 320) {
-        if (menuScroll < allProducts.length - 6) menuScroll++;
-        drawMenu(); return;
+      // SCROLLBAR — tap anywhere on track to jump
+      if (x >= 935 && x <= 963 && y >= 100 && y <= 700) {
+        const totalItems = allProducts.length;
+        const maxScroll = Math.max(0, totalItems - 6);
+        if (maxScroll > 0) {
+          const trackH = 600;
+          const thumbH = Math.max(70, (6 / totalItems) * trackH);
+          const ratio = (y - 100 - thumbH / 2) / (trackH - thumbH);
+          menuScroll = Math.max(0, Math.min(maxScroll, Math.round(ratio * maxScroll)));
+          drawMenu();
+        }
+        return;
       }
 
       const visible = allProducts.slice(menuScroll, menuScroll + 6);
@@ -2256,14 +2277,6 @@ window.addEventListener("click", async (event) => {
     return; // <- key fix: don't fall through to floor projection
   }
 
-  /* ===== EMPTY TAP — pin reticle to floor where tapped ===== */
-  selectedObject = null;
-  const planeY = reticle.position.y;
-  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
-  const point = new THREE.Vector3();
-  if (raycaster.ray.intersectPlane(groundPlane, point)) {
-    manualReticleHit = point;
-  }
 });
 
 /* =========================
@@ -2275,11 +2288,9 @@ window.addEventListener("pointerdown", (event) => {
 
   // allow HUD + menu raycast only if NOT UI blocking full scene interaction
   if (isUI) return;
-
-  const x = (event.clientX / innerWidth) * 2 - 1;
-  const y = -(event.clientY / innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera({ x, y }, camera);
+  
+  // Use the cursor (center screen) — not the tap location
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
   const hits = raycaster.intersectObjects(objects, true);
 
   if (hits.length) {
@@ -2312,8 +2323,17 @@ renderer.xr.addEventListener("sessionstart", () => {
   interactionEnabled = true;
   arBtn.style.display = "none";
   document.getElementById("arIntro")?.style.setProperty("display", "none");
+
   const label = SURFACE_LABEL[requiredPlacement] || "surface";
   showPlacementToast(`Detecting ${label}...`);
+
+  // welcome — only once per session
+  if (chatHistory.length === 0) {
+    const welcome = "Welcome to HoloRoom AR. If you need help placing or moving anything, tap the chat icon, or hold the mic button to ask me by voice.";
+    chatHistory.push({ role: "assistant", text: welcome });
+    rerenderChatIfOpen();
+    speak(welcome);
+  }
 });
 
 renderer.xr.addEventListener("sessionend", () => {
@@ -2356,15 +2376,6 @@ renderer.setAnimationLoop(async (_, frame) => {
     return;
   }
 
-  if (manualReticleHit) {
-    reticle.position.copy(manualReticleHit);
-    reticle.rotation.set(-Math.PI / 2, 0, 0);
-    detectedPlacement = "FLOOR";
-    placementStatus = "READY";
-    applyDynamicScale(reticle.position, 0.032);
-    snapped = true;
-  }
-
   if (!referenceSpace) {
     referenceSpace =
       await renderer.xr.getReferenceSpace();
@@ -2394,23 +2405,10 @@ renderer.setAnimationLoop(async (_, frame) => {
     camera
   );
 
-  function applyDynamicScale(
-    targetPos,
-    base = 0.032
-  ) {
-    const dist =
-      camPos.distanceTo(targetPos);
-
-    let s =
-      base *
-      (1 / Math.max(dist * 0.9, 1));
-
-    s = THREE.MathUtils.clamp(
-      s,
-      0.5,
-      1
-    );
-
+  function applyDynamicScale(targetPos) {
+    const dist = camPos.distanceTo(targetPos);
+    // keep apparent size roughly constant — bigger at distance
+    const s = Math.max(dist, 0.5) * 1.8;
     reticle.scale.set(s, s, s);
   }
 
@@ -2503,9 +2501,7 @@ renderer.setAnimationLoop(async (_, frame) => {
       for (const h of hits) {
         const pose = h.getPose(referenceSpace);
         const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
-        const n = new THREE.Vector3(0, 1, 0).applyMatrix4(m).sub(
-          new THREE.Vector3().setFromMatrixPosition(m)
-        ).normalize();
+        const n = new THREE.Vector3().setFromMatrixColumn(m, 1).normalize();
         const surface = classifySurface(n);
         if (surface === requiredPlacement) {
           matched = { pose, matrix: m };
@@ -2521,7 +2517,7 @@ renderer.setAnimationLoop(async (_, frame) => {
         );
         detectedPlacement = requiredPlacement;
         placementStatus = "READY";
-        applyDynamicScale(reticle.position, 0.032);
+        applyDynamicScale(reticle.position);
         snapped = true;
       }
     }
@@ -2563,15 +2559,19 @@ renderer.setAnimationLoop(async (_, frame) => {
     reticle.position.z + dragOffset.z;
 }
 
-  const SURFACE_LABEL = { FLOOR: "floor", WALL: "wall", CEILING: "ceiling" };
-
   if (placementStatus === "READY" && placementToast) {
     placementToast.remove();
     placementToast = null;
   }
 
   if (placementStatus !== "READY" && !placementToast && interactionEnabled) {
-    showPlacementToast(`Detecting ${SURFACE_LABEL[requiredPlacement] || "surface"}...`);
+    const label = SURFACE_LABEL[requiredPlacement] || "surface";
+    const hint = requiredPlacement === "WALL"
+      ? "Pan the camera slowly across the wall"
+      : requiredPlacement === "CEILING"
+      ? "Look up and pan across the ceiling"
+      : "Aim at a well-lit floor";
+    showPlacementToast(`Detecting ${label}... ${hint}`);
   }
 
   updateSelectorDot(selectedObject, camera);

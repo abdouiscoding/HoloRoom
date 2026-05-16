@@ -522,7 +522,7 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack, calctotald
             {calctotaldis(focused.item.product.pDiscount) > 0 ? (
               <>
                 <span className={styles.priceMain}>
-                  {focused.item.product.pPrice*calctotaldis(focused.item.product.pDiscount)} DZD
+                  {focused.item.product.pPrice - (focused.item.product.pPrice * (calctotaldis(focused.item.product.pDiscount) / 100))} DZD
                 </span>
                 <span className={styles.priceOld}>
                   {focused.item.product.pPrice} DZD

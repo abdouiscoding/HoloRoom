@@ -53,6 +53,12 @@ public class Products {
     @JsonProperty("pARSupport")
     private boolean pARSupport;
 
+    @JsonProperty("pHeight")
+    private float pHeight;
+
+    @JsonProperty("pWidth")
+    private float pWidth;
+
     @ManyToMany
     @JoinTable(
         name = "product_categories",
@@ -127,6 +133,14 @@ private void calculatePrice() {
 }
 
     // ===== Getters / Setters =====
+
+    @JsonProperty("pHeight")
+    public float getPHeight() { return pHeight; }
+    public void setPHeight(float pHeight) { this.pHeight = pHeight; }
+
+    @JsonProperty("pWidth")
+    public float getPWidth() { return pWidth; }
+    public void setPWidth(float pWidth) { this.pWidth = pWidth; }
 
     @JsonProperty("pId")
     public Long getProductId() { return pId; }
