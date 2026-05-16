@@ -71,6 +71,16 @@ public class ProductsService {
         return productsRepository.save(product);
     }
 
+    public Products updateSize(Long id, float width, float height) {
+
+        Products product = getProductById(id);
+
+        product.setPWidth(width);
+        product.setPHeight(height);
+
+        return productsRepository.save(product);
+    }
+
 
     public List<Products> applyalldiscounts(List<Products> products) {
 

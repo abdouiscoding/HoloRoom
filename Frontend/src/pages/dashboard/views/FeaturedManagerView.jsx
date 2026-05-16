@@ -12,6 +12,7 @@ const ROOM_SPOTS = {
     { key: "tv_stand", label: "TV cabinet / media console" },
     { key: "side_table", label: "Small side table" },
     { key: "plant_decor", label: "Floor plant in pot" },
+    { key: "carpet", label: "clean carpet"}
   ],
   bedroom: [
     { key: "bed_main", label: "Queen/king bed" },
@@ -20,6 +21,7 @@ const ROOM_SPOTS = {
     { key: "bedside_lamp", label: "Small table lamp (sits on the nightstand)" },
     { key: "wardrobe", label: "Wardrobe / armoire" },
     { key: "chair_accent", label: "Bedroom accent chair" },
+    { key: "carpet", label: "clean carpet"}
   ],
   kitchen: [
     { key: "dining_table", label: "Dining table" },
@@ -36,6 +38,7 @@ const ROOM_SPOTS = {
     { key: "bookshelf", label: "Tall bookshelf" },
     { key: "monitor", label: "Monitor (sits on the desk)" },
     { key: "floor_plant", label: "Floor plant" },
+    { key: "carpet", label: "clean carpet"}
   ],
 };
 

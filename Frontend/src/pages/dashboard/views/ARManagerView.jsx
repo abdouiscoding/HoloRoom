@@ -10,7 +10,10 @@ const ARManagerView = () => {
   const [progress, setProgress] = useState(0);
   const [arFilter, setArFilter] = useState("ALL");
   const [placement, setPlacement] = useState("FLOOR");
+  const [modelWidth, setModelWidth] = useState("");
+  const [modelHeight, setModelHeight] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
+  let hasSizeUpdate = false;
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
@@ -99,13 +102,40 @@ const uploadModelFile = async () => {
         throw new Error(`Placement update failed: ${errorText}`);
       }
 
+      if (
+        modelWidth !== (editingModel.pWidth || 0) ||
+        modelHeight !== (editingModel.pHeight || 0)
+      ) {
+        hasSizeUpdate = true;
+
+        const sizeRes = await myFetch(
+          `${API}/api/products/update-size/${id}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Bearer ${token}`
+            },
+            body: new URLSearchParams({
+              pWidth: modelWidth,
+              pHeight: modelHeight
+            })
+          }
+        );
+
+        if (!sizeRes.ok) {
+          const errorText = await sizeRes.text();
+          throw new Error(`Size update failed: ${errorText}`);
+        }
+      }
+
       setProgress(hasUpload ? 80 : 60);
     }
 
     // =========================
     // NOTHING CHANGED
     // =========================
-    if (!hasUpload && !hasPlacementUpdate) {
+    if (!hasUpload && !hasPlacementUpdate && !hasSizeUpdate) {
       setUploading(false);
       setProgress(0);
       setEditingModel(null);
@@ -186,6 +216,28 @@ const uploadModelFile = async () => {
             </button>
           </div>
 
+          <div className={styles.sizeRow}>
+            <span>Width:</span>
+            <input
+              type="number"
+              value={modelWidth}
+              onChange={(e) => setModelWidth(e.target.value)}
+              className={styles.input}
+            />
+            <span>Cm</span>
+          </div>
+
+          <div className={styles.sizeRow}>
+            <span>Height:</span>
+            <input
+              type="number"
+              value={modelHeight}
+              onChange={(e) => setModelHeight(e.target.value)}
+              className={styles.input}
+            />
+            <span>Cm</span>
+          </div>
+
           {/* MODEL INFO */}
           <div className={styles.modelInfo}>
             {!editingModel.p3DModel && !modelFile && (
@@ -228,6 +280,8 @@ const uploadModelFile = async () => {
                 setEditingModel(null);
                 setPreviewUrl(null);
                 setModelFile(null);
+                setModelWidth(0);
+                setModelHeight(0);
               }}
             >
               Cancel
@@ -336,6 +390,8 @@ const uploadModelFile = async () => {
               onClick={() => {
                 setEditingModel(p);
                 setPlacement(p.pPlacement || "FLOOR");
+                setModelWidth(p.pWidth || 0);
+                setModelHeight(p.pHeight || 0);
               }}
             >
               Edit Model

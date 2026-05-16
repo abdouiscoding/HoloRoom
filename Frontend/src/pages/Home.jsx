@@ -24,14 +24,15 @@ const ROOMS = {
     accentColor: "#d8c8aa",
     camera: { position: [6, 4, 6], target: [0, 1, 0] }, 
     spots: { // living_room
-    sofa_main:    { position: [0,    0, -1.5], rotation: 0,         size: 2.8 },
-    coffee_table: { position: [0,    0,  0.6], rotation: 0,         size: 1.2 },
+    sofa_main:    { position: [0,    0, -1.5], rotation: Math.PI*0.5,         size: 2.8 },
+    coffee_table: { position: [0.2,    0,  0.6], rotation: 0,         size: 1.2 },
     floor_lamp:   { position: [-3,   0, -1.2], rotation: 0,         size: 1.8 },
-    accent_chair: { position: [2.6,  0,  0.6], rotation: -0.6,      size: 1.2 },
-    tv_stand:     { position: [0,    0,  3],   rotation: 0,   size: 1.8 },
-    tv_screen:    { position: [0,    0.5, 3],   rotation: Math.PI,   size: 1.4, decorative: true, model: "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Products_Models/low_poly_tv.glb" },
+    accent_chair: { position: [2.6,  0,  0.6], rotation: Math.PI * -0.5,      size: 1.2 },
+    tv_stand:     { position: [0.2,    0,  3],   rotation: 0,   size: 1.8 },
+    tv_screen:    { position: [0.2,    0.5, 3],   rotation: Math.PI,   size: 1.4, decorative: true, model: "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Products_Models/low_poly_tv.glb" },
     side_table:   { position: [2,    0, -1.5], rotation: 0,         size: 0.7 },
     plant_decor:  { position: [-3,   0,  2.6], rotation: 0,         size: 1.5 },
+    carpet: { position: [0.8, 0, 0], rotation: Math.PI*0.5, size: 9 },
   },
   },
   bedroom: {
@@ -41,12 +42,13 @@ const ROOMS = {
     accentColor: "#cbbda4",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
     spots: { // bedroom
-    bed_main:         { position: [0,    0, -1],   rotation: 0,        size: 2.5 },
-    nightstand_left:  { position: [-2.2, 0, -1.5], rotation: 0,        size: 0.7 },
-    nightstand_right: { position: [2.2,  0, -1.5], rotation: 0,        size: 0.7 },
-    bedside_lamp:     { position: [2.2,  0.55, -1.5], rotation: 0,     size: 0.5 },
-    wardrobe:         { position: [-3.5, 0,  2],   rotation: Math.PI/2, size: 2.4 },
-    chair_accent:     { position: [2.5,  0,  2.5], rotation: -0.9,     size: 1.0 },
+    bed_main:         { position: [-1,    0, -4.6],   rotation: 0,        size: 2.5 },
+    nightstand_left:  { position: [-3.2, 0, -5.5], rotation: 0,        size: 0.7 },
+    nightstand_right: { position: [1.2,  0, -5.5], rotation: 0,        size: 0.7 },
+    bedside_lamp:     { position: [1.2,  0.7, -5.5], rotation: 0,     size: 0.5 },
+    wardrobe:         { position: [-5.3, 0,  -4.6],   rotation: Math.PI/2, size: 2.4 },
+    chair_accent:     { position: [2.5,  0,  0], rotation: Math.PI*1.25,     size: 1.5 },
+    carpet: { position: [-1.2, 0, -2.7], rotation: Math.PI*0.5, size: 9},
   },
   },
   kitchen: {
@@ -56,11 +58,8 @@ const ROOMS = {
     accentColor: "#dad6cc",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
     spots: { // kitchen
-      dining_table:   { position: [0,    0,  0],    rotation: 0,         size: 1.8 },
-      dining_chair_1: { position: [-1.6, 0,  0],    rotation: Math.PI/2, size: 1.0 },
-      dining_chair_2: { position: [1.6,  0,  0],    rotation: -Math.PI/2, size: 1.0 },
-      bar_stool:      { position: [-3,   0,  2.5],  rotation: 0,         size: 1.0 },
-      cabinet:        { position: [0,    0, -3],    rotation: 0,         size: 2.0 },
+      dining_table:   { position: [0,    0,  0],    rotation: 0,         size: 4 },
+      cabinet:        { position: [0,    0, -5.5],    rotation: Math.PI*1.5,         size: 4 },
       pendant_light:  { position: [0,    2.6, 0],   rotation: 0,         size: 2 },
     },
   },
@@ -72,11 +71,11 @@ const ROOMS = {
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
     spots: { // office
       desk_main:    { position: [0,    0, -1.5], rotation: 0,         size: 1.8 },
-      office_chair: { position: [0,    0,  0],   rotation: 0,         size: 1.2 },
-      desk_lamp:    { position: [-0.8, 0.75, -1.8], rotation: 0,      size: 1.0 },
-      bookshelf:    { position: [-3.5, 0,  0],   rotation: Math.PI/2, size: 2.2 },
-      monitor:      { position: [0,    0.75, -1.8], rotation: 0,      size: 1.0, decorative: true, model: "https://avmjxpqdjahnptedhuow.supabase.co/storage/v1/object/public/Products_Models/ultrawide_monitor.glb" },
+      office_chair: { position: [0,    0,  -0.8],   rotation: Math.PI,         size: 1.1 },
+      desk_lamp:    { position: [-0.6, 0.9, -1.7], rotation: Math.PI*-0.25,      size: 1.0 },
+      bookshelf:    { position: [-3.5, 0.01,  0],   rotation: Math.PI/2, size: 2.2 },
       floor_plant:  { position: [3,    0,  2.5], rotation: 0,         size: 1.5 },
+      carpet: { position: [0, 0, -0.5], rotation: 0, size: 8 },
     },
   },
 };
@@ -392,48 +391,68 @@ function CameraRig({ targetView, controlsRef, transitionKey }) {
 }
 
 // =============================================================
-// CEILING LAMP — simple light source to make things pop a bit more
+// CEILING LAMPS 
 // =============================================================
 function CeilingLamp() {
+  const lampPosition = [0, 7.2, 0];
+
   return (
     <group>
       {/* lamp visual */}
-      <group position={[0, 7.2, 0]}>
+      <group position={lampPosition}>
         {/* cord */}
         <mesh position={[0, 0.4, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 0.8, 8]} />
           <meshStandardMaterial color="#1a1a1a" />
         </mesh>
+
         {/* shade */}
         <mesh position={[0, -0.05, 0]}>
-          <coneGeometry args={[0.4, 0.35, 24, 1, true]} />
-          <meshStandardMaterial color="#2a2a2a" side={THREE.DoubleSide} roughness={0.6} />
+          <coneGeometry args={[0.45, 0.4, 24, 1, true]} />
+          <meshStandardMaterial
+            color="#2a2a2a"
+            side={THREE.DoubleSide}
+            roughness={0.6}
+          />
         </mesh>
+
         {/* glowing bulb */}
         <mesh position={[0, -0.22, 0]}>
-          <sphereGeometry args={[0.12, 16, 16]} />
+          <sphereGeometry args={[0.14, 16, 16]} />
           <meshStandardMaterial
             emissive="#ffe2b3"
-            emissiveIntensity={2.2}
+            emissiveIntensity={2.5}
             color="#fff5dc"
           />
         </mesh>
       </group>
 
-      {/* light source — always there, pointing down */}
+      {/* main room spotlight */}
       <spotLight
-        position={[0, 7, 0]}
-        angle={0.85}
-        penumbra={0.45}
-        intensity={45}
-        distance={18}
+        position={lampPosition}
+        angle={1.05} // wide enough for whole room
+        penumbra={0.65}
+        intensity={160}
+        distance={30}
         decay={1.8}
         castShadow
         color="#fff1d6"
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.0001}
       />
-      {/* low fill so dark corners aren't black */}
-      <pointLight position={[3, 3, 3]} intensity={4} distance={10} decay={2} color="#ffe7c0" />
+
+      {/* soft fill so corners don't die */}
+      <ambientLight intensity={0.12} />
+
+      {/* subtle warm bounce */}
+      <pointLight
+        position={[0, 3, 0]}
+        intensity={3}
+        distance={20}
+        decay={2}
+        color="#ffe7c0"
+      />
     </group>
   );
 }
@@ -472,7 +491,11 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack, calctotald
 
   return (
     <div className={styles.canvasShell}>
-      <Canvas shadows camera={{ position: config.camera.position, fov: 45 }}>
+      <Canvas
+        shadows
+        camera={{ position: config.camera.position, fov: 45 }}
+        gl={{ shadowMapType: THREE.PCFSoftShadowMap }}
+      >
         <color attach="background" args={["#0a0807"]} />
 
         <ambientLight intensity={0.15} />

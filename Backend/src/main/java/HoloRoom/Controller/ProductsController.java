@@ -96,6 +96,22 @@ public class ProductsController {
         }
     }
 
+    @PostMapping("/update-size/{id}")
+    public ResponseEntity<?> updateSize(
+            @PathVariable Long id,
+            @RequestParam("width") float width,
+            @RequestParam("height") float height) {
+
+        try {
+            Products p = productsService.updateSize(id, width, height);
+            return ResponseEntity.ok(p);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/upload-image/{id}")
     public ResponseEntity<?> uploadImage(
             @PathVariable Long id,
@@ -200,6 +216,9 @@ public class ProductsController {
         p.setProductPrice(body.getProductPrice());
         p.setProductBrand(body.getProductBrand());
         p.setProductDescription(body.getProductDescription());
+        p.setProductPlacement(body.getProductPlacement());
+        p.setPWidth(body.getPWidth());
+        p.setPHeight(body.getPHeight());
 
         // =========================
         // CATEGORIES

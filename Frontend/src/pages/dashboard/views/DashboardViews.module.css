@@ -1206,3 +1206,14 @@ td, th {
   text-align: center;
   border: 1px solid rgba(255,255,255,0.1);
 }
+
+.sizeRow {
+  margin-top: 5px;
+  display: grid;
+  grid-template-columns: 10% 40% 10%;
+  text-align: left;
+}
+
+.sizeRow span {
+  margin-top: 25%;
+}
