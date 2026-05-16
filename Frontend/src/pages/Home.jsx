@@ -11,7 +11,7 @@ import {
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, View, ShoppingBag, Sparkles, Users } from "lucide-react";
 import styles from "./Home.module.css";
-import { API } from "../api";
+import { API, myFetch } from "../api";
 
 // =============================================================
 // ROOM CONFIG
@@ -23,15 +23,15 @@ const ROOMS = {
     wallColor: "#efe6d4",
     accentColor: "#d8c8aa",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
-    spots: {
-      sofa_main:    { position: [0,    0, -1.5], rotation: 0 },
-      coffee_table: { position: [0,    0,  0.6], rotation: 0 },
-      floor_lamp:   { position: [-3,   0, -1.2], rotation: 0 },
-      accent_chair: { position: [2.6,  0,  0.6], rotation: -0.6 },
-      tv_stand:     { position: [0,    0,  3],   rotation: Math.PI },
-      side_table:   { position: [2,    0, -1.5], rotation: 0 },
-      plant_decor:  { position: [-3,   0,  2.6], rotation: 0 },
-    },
+    spots: { // living_room
+    sofa_main:    { position: [0,    0, -1.5], rotation: 0,         size: 2.8 },
+    coffee_table: { position: [0,    0,  0.6], rotation: 0,         size: 1.2 },
+    floor_lamp:   { position: [-3,   0, -1.2], rotation: 0,         size: 1.8 },
+    accent_chair: { position: [2.6,  0,  0.6], rotation: -0.6,      size: 1.2 },
+    tv_stand:     { position: [0,    0,  3],   rotation: Math.PI,   size: 1.6 },
+    side_table:   { position: [2,    0, -1.5], rotation: 0,         size: 0.7 },
+    plant_decor:  { position: [-3,   0,  2.6], rotation: 0,         size: 1.5 },
+  },
   },
   bedroom: {
     label: "Bedroom",
@@ -39,14 +39,14 @@ const ROOMS = {
     wallColor: "#e6dccb",
     accentColor: "#cbbda4",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
-    spots: {
-      bed_main:         { position: [0,    0, -1],   rotation: 0 },
-      nightstand_left:  { position: [-2.2, 0, -1.5], rotation: 0 },
-      nightstand_right: { position: [2.2,  0, -1.5], rotation: 0 },
-      bedside_lamp:     { position: [2.2,  0.55, -1.5], rotation: 0 },
-      wardrobe:         { position: [-3.5, 0,  2],   rotation: Math.PI / 2 },
-      chair_accent:     { position: [2.5,  0,  2.5], rotation: -0.9 },
-    },
+    spots: { // bedroom
+    bed_main:         { position: [0,    0, -1],   rotation: 0,        size: 2.5 },
+    nightstand_left:  { position: [-2.2, 0, -1.5], rotation: 0,        size: 0.7 },
+    nightstand_right: { position: [2.2,  0, -1.5], rotation: 0,        size: 0.7 },
+    bedside_lamp:     { position: [2.2,  0.55, -1.5], rotation: 0,     size: 0.5 },
+    wardrobe:         { position: [-3.5, 0,  2],   rotation: Math.PI/2, size: 2.4 },
+    chair_accent:     { position: [2.5,  0,  2.5], rotation: -0.9,     size: 1.0 },
+  },
   },
   kitchen: {
     label: "Kitchen",
@@ -54,13 +54,13 @@ const ROOMS = {
     wallColor: "#f6f3ec",
     accentColor: "#dad6cc",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
-    spots: {
-      dining_table:   { position: [0,    0,  0],    rotation: 0 },
-      dining_chair_1: { position: [-1.6, 0,  0],    rotation: Math.PI / 2 },
-      dining_chair_2: { position: [1.6,  0,  0],    rotation: -Math.PI / 2 },
-      bar_stool:      { position: [-3,   0,  2.5],  rotation: 0 },
-      cabinet:        { position: [0,    0, -3],    rotation: 0 },
-      pendant_light:  { position: [0,    2.6, 0],   rotation: 0 },
+    spots: { // kitchen
+      dining_table:   { position: [0,    0,  0],    rotation: 0,         size: 1.8 },
+      dining_chair_1: { position: [-1.6, 0,  0],    rotation: Math.PI/2, size: 1.0 },
+      dining_chair_2: { position: [1.6,  0,  0],    rotation: -Math.PI/2, size: 1.0 },
+      bar_stool:      { position: [-3,   0,  2.5],  rotation: 0,         size: 1.0 },
+      cabinet:        { position: [0,    0, -3],    rotation: 0,         size: 2.0 },
+      pendant_light:  { position: [0,    2.6, 0],   rotation: 0,         size: 0.6 },
     },
   },
   office: {
@@ -69,13 +69,13 @@ const ROOMS = {
     wallColor: "#e8dfcc",
     accentColor: "#bfa988",
     camera: { position: [6, 4, 6], target: [0, 1, 0] },
-    spots: {
-      desk_main:    { position: [0,    0, -1.5], rotation: 0 },
-      office_chair: { position: [0,    0,  0],   rotation: 0 },
-      desk_lamp:    { position: [-0.8, 0.75, -1.8], rotation: 0 },
-      bookshelf:    { position: [-3.5, 0,  0],   rotation: Math.PI / 2 },
-      monitor:      { position: [0,    0.75, -1.8], rotation: 0, decorative: true },
-      floor_plant:  { position: [3,    0,  2.5], rotation: 0 },
+    spots: { // office
+      desk_main:    { position: [0,    0, -1.5], rotation: 0,         size: 1.8 },
+      office_chair: { position: [0,    0,  0],   rotation: 0,         size: 1.2 },
+      desk_lamp:    { position: [-0.8, 0.75, -1.8], rotation: 0,      size: 1.0 },
+      bookshelf:    { position: [-3.5, 0,  0],   rotation: Math.PI/2, size: 2.2 },
+      monitor:      { position: [0,    0.75, -1.8], rotation: 0,      size: 0.6, decorative: true },
+      floor_plant:  { position: [3,    0,  2.5], rotation: 0,         size: 1.5 },
     },
   },
 };
@@ -87,8 +87,37 @@ const ROOM_HALF = 6;
 const WALL_H = 8;
 
 // =============================================================
-// PROCEDURAL FLOOR TEXTURES (per room)
+// PROCEDURAL FLOOR/WALL TEXTURES (per room)
 // =============================================================
+function makeWallTexture(baseColor) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, 0, 512, 512);
+
+  // subtle vertical paint streaks
+  for (let i = 0; i < 200; i++) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.04})`;
+    const x = Math.random() * 512;
+    ctx.fillRect(x, 0, 1, 512);
+  }
+  // micro-grain
+  for (let i = 0; i < 6000; i++) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(2, 2);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function useWallTexture(color) {
+  return useMemo(() => makeWallTexture(color), [color]);
+}
 function makeFloorTexture(type) {
   const c = document.createElement("canvas");
   c.width = c.height = 1024;
@@ -159,29 +188,27 @@ function useFloorTexture(type) {
 // =============================================================
 function RoomEnvironment({ config }) {
   const floorTex = useFloorTexture(config.floor);
+  const wallTex = useWallTexture(config.wallColor);
+  const accentTex = useWallTexture(config.accentColor);
   const floorRoughness = config.floor === "tile" ? 0.35 : 0.85;
 
   return (
     <group>
-      {/* floor as a thin box (matches wall footprint) */}
       <mesh position={[0, -0.05, 0]} receiveShadow>
         <boxGeometry args={[ROOM_HALF * 2, 0.1, ROOM_HALF * 2]} />
         <meshStandardMaterial map={floorTex} roughness={floorRoughness} />
       </mesh>
 
-      {/* back wall (z = -ROOM_HALF) */}
       <mesh position={[0, WALL_H / 2, -ROOM_HALF]} receiveShadow>
         <planeGeometry args={[ROOM_HALF * 2, WALL_H]} />
-        <meshStandardMaterial color={config.wallColor} roughness={0.95} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={wallTex} roughness={0.95} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* left wall (x = -ROOM_HALF) */}
       <mesh rotation={[0, Math.PI / 2, 0]} position={[-ROOM_HALF, WALL_H / 2, 0]} receiveShadow>
         <planeGeometry args={[ROOM_HALF * 2, WALL_H]} />
-        <meshStandardMaterial color={config.accentColor} roughness={0.95} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={accentTex} roughness={0.95} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* baseboards */}
       <mesh position={[0, 0.05, -ROOM_HALF + 0.01]}>
         <boxGeometry args={[ROOM_HALF * 2, 0.12, 0.02]} />
         <meshStandardMaterial color="#ffffff" />
@@ -193,14 +220,37 @@ function RoomEnvironment({ config }) {
     </group>
   );
 }
-
 // =============================================================
 // PRODUCTS
 // =============================================================
-function ProductModel({ url, position, rotation, interactive, onClick, hovered, onHover }) {
+function ProductModel({ url, position, rotation, targetSize, interactive, onClick, hovered, onHover }) {
   const safeUrl = url?.startsWith("http") ? url : `${API}/${url}`;
   const { scene } = useGLTF(safeUrl);
-  const cloned = useMemo(() => scene.clone(true), [scene]);
+
+  const cloned = useMemo(() => {
+    const c = scene.clone(true);
+
+    if (targetSize) {
+      // measure raw size
+      const box = new THREE.Box3().setFromObject(c);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      if (maxDim > 0) {
+        c.scale.setScalar(targetSize / maxDim);
+
+        // re-measure after scale, then sit bottom at y=0 and center on x/z
+        const newBox = new THREE.Box3().setFromObject(c);
+        c.position.set(
+          -(newBox.max.x + newBox.min.x) / 2,
+          -newBox.min.y,
+          -(newBox.max.z + newBox.min.z) / 2
+        );
+      }
+    }
+    return c;
+  }, [scene, targetSize]);
 
   const handlers = interactive
     ? {
@@ -272,6 +322,7 @@ function SpotProduct({ spotKey, spotConfig, item, onClick }) {
         url={product.p3DModel}
         position={spotConfig.position}
         rotation={spotConfig.rotation}
+        targetSize={spotConfig.size}
         interactive={interactive}
         hovered={hovered}
         onHover={setHovered}
@@ -323,9 +374,56 @@ function CameraRig({ targetView, controlsRef, transitionKey }) {
 }
 
 // =============================================================
+// CEILING LAMP — simple light source to make things pop a bit more
+// =============================================================
+function CeilingLamp() {
+  return (
+    <group>
+      {/* lamp visual */}
+      <group position={[0, 7.2, 0]}>
+        {/* cord */}
+        <mesh position={[0, 0.4, 0]}>
+          <cylinderGeometry args={[0.015, 0.015, 0.8, 8]} />
+          <meshStandardMaterial color="#1a1a1a" />
+        </mesh>
+        {/* shade */}
+        <mesh position={[0, -0.05, 0]}>
+          <coneGeometry args={[0.4, 0.35, 24, 1, true]} />
+          <meshStandardMaterial color="#2a2a2a" side={THREE.DoubleSide} roughness={0.6} />
+        </mesh>
+        {/* glowing bulb */}
+        <mesh position={[0, -0.22, 0]}>
+          <sphereGeometry args={[0.12, 16, 16]} />
+          <meshStandardMaterial
+            emissive="#ffe2b3"
+            emissiveIntensity={2.2}
+            color="#fff5dc"
+          />
+        </mesh>
+      </group>
+
+      {/* light source — always there, pointing down */}
+      <spotLight
+        position={[0, 7, 0]}
+        angle={0.85}
+        penumbra={0.45}
+        intensity={45}
+        distance={18}
+        decay={1.8}
+        castShadow
+        color="#fff1d6"
+        shadow-mapSize={[1024, 1024]}
+      />
+      {/* low fill so dark corners aren't black */}
+      <pointLight position={[3, 3, 3]} intensity={4} distance={10} decay={2} color="#ffe7c0" />
+    </group>
+  );
+}
+
+// =============================================================
 // ROOM SCENE
 // =============================================================
-function RoomScene({ roomKey, items, focused, onProductClick, onBack }) {
+function RoomScene({ roomKey, items, focused, onProductClick, onBack, calctotaldis }) {
   const config = ROOMS[roomKey];
   const controlsRef = useRef();
 
@@ -357,23 +455,13 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack }) {
   return (
     <div className={styles.canvasShell}>
       <Canvas shadows camera={{ position: config.camera.position, fov: 45 }}>
-        <color attach="background" args={["#f4ede0"]} />
+        <color attach="background" args={["#0a0807"]} />
 
-        <ambientLight intensity={0.55} />
-        <directionalLight
-          position={[6, 9, 4]}
-          intensity={1.1}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-        />
-        <directionalLight position={[-4, 5, -3]} intensity={0.25} />
-
-        <Suspense fallback={null}>
-          <Environment preset="apartment" />
-        </Suspense>
+        <ambientLight intensity={0.15} />
+        <CeilingLamp />
 
         <RoomEnvironment config={config} />
-        <ContactShadows position={[0, 0.02, 0]} opacity={0.45} scale={14} blur={2.5} far={4} />
+        <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={14} blur={2.5} far={4} />
 
         {Object.entries(config.spots).map(([spotKey, spotConfig]) => (
           <SpotProduct
@@ -392,7 +480,6 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack }) {
           maxPolarAngle={Math.PI / 2 - 0.05}
           minDistance={focused ? 1.5 : 4}
           maxDistance={focused ? 6 : 11}
-          target={config.camera.target}
         />
         <CameraRig
           targetView={targetView}
@@ -414,7 +501,23 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack }) {
             <div className={styles.focusedProductBrand}>{focused.item.product.pBrand}</div>
           )}
           <div className={styles.focusedProductPrice}>
-            {focused.item.product.pFinalPrice} DZD
+            {calctotaldis(focused.item.product.pDiscount) > 0 ? (
+              <>
+                <span className={styles.priceMain}>
+                  {focused.item.product.pPrice*calctotaldis(focused.item.product.pDiscount)} DZD
+                </span>
+                <span className={styles.priceOld}>
+                  {focused.item.product.pPrice} DZD
+                </span>
+                <span className={styles.priceBadge}>
+                  -{calctotaldis(focused.item.product.pDiscount)}%
+                </span>
+              </>
+            ) : (
+              <span className={styles.priceMain}>
+                {focused.item.product.pPrice} DZD
+              </span>
+            )}
           </div>
           <Link
             to={`/product/${encodeURIComponent(focused.item.product.pName)}`}
@@ -467,12 +570,37 @@ const Home = () => {
   const [activeRoomIdx, setActiveRoomIdx] = useState(0);
   const [focused, setFocused] = useState(null);
 
+  const [globalDiscount, setGlobalDiscount] = useState(0);
+
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      try {
+        const res = await myFetch(`${API}/api/discounts/active`);
+        const data = await res.json();
+        const total = Math.min(
+          (data || [])
+            .filter(d => d.active && d.productId == null)
+            .reduce((sum, d) => sum + (d.percentage || 0), 0),
+          80
+        );
+        setGlobalDiscount(total);
+      } catch (e) {
+        console.error("Discounts fetch failed:", e);
+        setGlobalDiscount(0);
+      }
+    };
+    fetchDiscounts();
+  }, []);
+
+  const calctotaldis = (productDiscount) =>
+    Math.min((productDiscount || 0) + globalDiscount, 80);
+
   const activeRoomKey = ROOM_ORDER[activeRoomIdx];
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API}/api/featured/lists`);
+        const res = await myFetch(`${API}/api/featured/lists`);
         const lists = await res.json();
         const byName = {};
         lists.forEach((l) => (byName[l.name] = l.items || []));
@@ -520,6 +648,7 @@ const Home = () => {
           focused={focused}
           onProductClick={setFocused}
           onBack={() => setFocused(null)}
+          calctotaldis={calctotaldis}
         />
       </section>
 
@@ -557,13 +686,22 @@ const Home = () => {
           <Reveal delay={120}>
             <div className={styles.teamCard}>
               <div className={styles.teamAvatar}>A</div>
-              <h3>Ayoub</h3>
-              <p>Founder · Engineering</p>
+              <h3>Ayoub Germaiche</h3>
+              <p>Goat · Emotional support</p>
             </div>
+          </Reveal>
+          <Reveal delay={240}>
             <div className={styles.teamCard}>
               <div className={styles.teamAvatar}>A</div>
-              <h3>Ayoub</h3>
-              <p>Founder · Engineering</p>
+              <h3>Abderrahim Ferdi</h3>
+              <p>Developer · Backend</p>
+            </div>
+          </Reveal>
+          <Reveal delay={240}>
+            <div className={styles.teamCard}>
+              <div className={styles.teamAvatar}>B</div>
+              <h3>Anis Ben Abderrahmane</h3>
+              <p>Developer · Frontend</p>
             </div>
           </Reveal>
         </div>

@@ -201,8 +201,7 @@
   text-align: center;
 }
 .teamGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
   justify-content: center;
   gap: 2rem;
 }
@@ -222,3 +221,25 @@
 }
 .teamCard h3 { margin: 0; }
 .teamCard p { color: #6f6f6f; margin: 0.25rem 0 0; }
+
+.priceMain {
+  font-weight: 700;
+  color: #b48a3c;
+  font-size: 1.1rem;
+}
+.priceOld {
+  text-decoration: line-through;
+  color: #999;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+}
+.priceBadge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #b48a3c;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
