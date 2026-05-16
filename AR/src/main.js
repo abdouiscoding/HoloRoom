@@ -322,6 +322,52 @@ const arBtn = ARButton.createButton(renderer, {
 });
 document.body.appendChild(arBtn);
 
+// dark themed body so the page isn't blank
+document.body.style.cssText = `
+  margin: 0;
+  background: radial-gradient(circle at 50% 40%, #1a1a22 0%, #050505 70%);
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+`;
+
+// intro panel behind the button
+const intro = document.createElement("div");
+intro.id = "arIntro";
+intro.setAttribute("data-ui", "true");
+intro.style.cssText = `
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+  color: white; text-align: center;
+`;
+intro.innerHTML = `
+  <h1 style="font-size:40px;margin:0 0 8px;background:linear-gradient(135deg,#00ffff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">HoloRoom AR</h1>
+  <p style="opacity:.6;margin:0 0 32px;">Tap below to place this product in your room.</p>
+`;
+document.body.appendChild(intro);
+
+// restyle the three.js AR button — override its defaults
+arBtn.style.cssText = `
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, 10px) !important;
+  padding: 18px 44px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%) !important;
+  color: #001218 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: .5px !important;
+  cursor: pointer !important;
+  box-shadow: 0 12px 40px rgba(0,200,255,.5), 0 0 0 10px rgba(0,255,255,.06) !important;
+  z-index: 10 !important;
+  opacity: 1 !important;
+`;
+
 /* =========================
    RETICLE (GROUND SNAP)
 ========================= */
@@ -737,11 +783,13 @@ function startRecording() {
 
   recordRecognition.onresult = (event) => {
     lastSpeechTime = Date.now();
-    for (let i = event.resultIndex; i < event.results.length; i++) {
+    let finalText = "";
+    for (let i = 0; i < event.results.length; i++) {
       if (event.results[i].isFinal) {
-        accumulatedText += event.results[i][0].transcript + " ";
+        finalText += event.results[i][0].transcript + " ";
       }
     }
+    accumulatedText = finalText.trim();
   };
 
   recordRecognition.onerror = (e) => {
@@ -1803,19 +1851,8 @@ async function loadProduct(id = currentProductId) {
           });
         }
 
-        requiredPlacement = "FLOOR";
-      placementStatus = "SEARCHING";
-      showPlacementToast("Detecting floor...");
-
-      if (
-        productData.pPlacement &&
-        productData.pPlacement.toUpperCase() !== "FLOOR"
-      ) {
-        showPopup({
-          title: "Placement Notice",
-          text: "HoloRoom AR only supports placing products on the floor. This product will still be placed on the floor."
-        });
-      }
+        requiredPlacement = (productData.pPlacement || "FLOOR").toUpperCase();
+        placementStatus = "SEARCHING";
 
       }, 400);
     },
@@ -1986,12 +2023,6 @@ function addObject() {
   const model = productModelTemplate.clone(true);
 
   normalizeProductModel(model, 1.1);
-
-  // center model
-  const box = new THREE.Box3().setFromObject(model);
-  const center = box.getCenter(new THREE.Vector3());
-
-  model.position.sub(center);
 
   holder.add(model);
 
@@ -2278,16 +2309,18 @@ window.addEventListener("pointercancel", () => {
 ========================= */
 renderer.xr.addEventListener("sessionstart", () => {
   ui.style.display = "block";
-
   interactionEnabled = true;
-  
   arBtn.style.display = "none";
+  document.getElementById("arIntro")?.style.setProperty("display", "none");
+  const label = SURFACE_LABEL[requiredPlacement] || "surface";
+  showPlacementToast(`Detecting ${label}...`);
 });
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.style.display = "none";
-
   arBtn.style.display = "block";
+  document.getElementById("arIntro")?.style.setProperty("display", "flex");
+  if (placementToast) { placementToast.remove(); placementToast = null; }
 });
 
 /* =========================
@@ -2322,9 +2355,6 @@ renderer.setAnimationLoop(async (_, frame) => {
     renderer.render(scene, camera);
     return;
   }
-
-  reticle.visible = true;
-  snapped = false;
 
   if (manualReticleHit) {
     reticle.position.copy(manualReticleHit);
@@ -2390,7 +2420,7 @@ renderer.setAnimationLoop(async (_, frame) => {
   /* =====================================
      MENU PRIORITY
   ===================================== */
-  if (menu.visible) {
+  if (!snapped && menu.visible) {
     const menuHits =
       raycaster.intersectObject(menu);
 
@@ -2463,55 +2493,38 @@ renderer.setAnimationLoop(async (_, frame) => {
     }
   }
 
-  /* =====================================
-     GROUND HIT TEST
-  ===================================== */
+  /* GROUND HIT TEST */
   if (!snapped) {
-    const hits =
-      frame.getHitTestResults(
-        hitTestSource
-      );
-
+    const hits = frame.getHitTestResults(hitTestSource);
     if (hits.length) {
-      const pose =
-        hits[0].getPose(
-          referenceSpace
+      // find the closest hit matching the required surface
+      let matched = null;
+      let matchedNormal = null;
+      for (const h of hits) {
+        const pose = h.getPose(referenceSpace);
+        const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
+        const n = new THREE.Vector3(0, 1, 0).applyMatrix4(m).sub(
+          new THREE.Vector3().setFromMatrixPosition(m)
+        ).normalize();
+        const surface = classifySurface(n);
+        if (surface === requiredPlacement) {
+          matched = { pose, matrix: m };
+          matchedNormal = n;
+          break;
+        }
+      }
+      if (matched) {
+        reticle.position.setFromMatrixPosition(matched.matrix);
+        reticle.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 0, 1),
+          matchedNormal
         );
-
-      const matrix =
-        new THREE.Matrix4().fromArray(
-          pose.transform.matrix
-        );
-
-      reticle.position.setFromMatrixPosition(
-        matrix
-      );
-
-      reticle.rotation.set(
-        -Math.PI / 2,
-        0,
-        0
-      );
-
-      detectedPlacement = "FLOOR";
-      placementStatus = "READY";
-
-      applyDynamicScale(
-        reticle.position,
-        0.032
-      );
-
-      snapped = true;
+        detectedPlacement = requiredPlacement;
+        placementStatus = "READY";
+        applyDynamicScale(reticle.position, 0.032);
+        snapped = true;
+      }
     }
-  }
-
-  if (placementStatus === "READY" && placementToast) {
-    placementToast.remove();
-    placementToast = null;
-  }
-
-  if (placementStatus !== "READY" && !placementToast) {
-    showPlacementToast("Detecting floor...");
   }
 
   /* =====================================
@@ -2549,6 +2562,17 @@ renderer.setAnimationLoop(async (_, frame) => {
   selectedObject.position.z =
     reticle.position.z + dragOffset.z;
 }
+
+  const SURFACE_LABEL = { FLOOR: "floor", WALL: "wall", CEILING: "ceiling" };
+
+  if (placementStatus === "READY" && placementToast) {
+    placementToast.remove();
+    placementToast = null;
+  }
+
+  if (placementStatus !== "READY" && !placementToast && interactionEnabled) {
+    showPlacementToast(`Detecting ${SURFACE_LABEL[requiredPlacement] || "surface"}...`);
+  }
 
   updateSelectorDot(selectedObject, camera);
   renderer.render(scene, camera);
