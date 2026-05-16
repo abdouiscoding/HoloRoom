@@ -60,7 +60,7 @@ const ROOMS = {
       dining_chair_2: { position: [1.6,  0,  0],    rotation: -Math.PI/2, size: 1.0 },
       bar_stool:      { position: [-3,   0,  2.5],  rotation: 0,         size: 1.0 },
       cabinet:        { position: [0,    0, -3],    rotation: 0,         size: 2.0 },
-      pendant_light:  { position: [0,    2.6, 0],   rotation: 0,         size: 0.6 },
+      pendant_light:  { position: [0,    2.6, 0],   rotation: 0,         size: 2 },
     },
   },
   office: {
@@ -703,7 +703,7 @@ const Home = () => {
           <Reveal delay={120}>
             <div className={styles.teamCard}>
               <div className={styles.teamAvatar}>A</div>
-              <h3>Ayoub Germaiche</h3>
+              <h3>Ayoub guermache</h3>
               <p>Goat · Emotional support</p>
             </div>
           </Reveal>

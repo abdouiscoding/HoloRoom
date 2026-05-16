@@ -389,31 +389,35 @@ function makeBtn(txt) {
 
 // chatbotbtn
 const chatbotBtn = document.createElement("button");
-
-chatbotBtn.innerHTML = "★";
-
-chatbotBtn.style.cssText = `
-position:absolute;
-top:80px;
-right:18px;
-width:48px;
-height:40px;
-border:none;
-border-radius:50%;
-background:#ffd400;
-color:white;
-font-size:30px;
-font-weight:bold;
-cursor:pointer;
-pointer-events:auto;
-display:flex;
-justify-content:center;
-text-align:center;
-align-items:center;
-box-shadow:0 10px 30px rgba(0,0,0,.35);
-z-index:9999;
+chatbotBtn.innerHTML = `
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    <circle cx="9" cy="10" r="1" fill="currentColor"/>
+    <circle cx="12" cy="10" r="1" fill="currentColor"/>
+    <circle cx="15" cy="10" r="1" fill="currentColor"/>
+  </svg>
 `;
-
+chatbotBtn.style.cssText = `
+  position:absolute;
+  top:80px;
+  right:18px;
+  width:54px;
+  height:54px;
+  border:none;
+  border-radius:50%;
+  background:linear-gradient(135deg,#00ffff 0%,#0088ff 100%);
+  color:#001218;
+  cursor:pointer;
+  pointer-events:auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 8px 24px rgba(0,200,255,.4), 0 2px 6px rgba(0,0,0,.4);
+  z-index:9999;
+  transition:transform .15s;
+`;
+chatbotBtn.onpointerdown = () => (chatbotBtn.style.transform = "scale(.92)");
+chatbotBtn.onpointerup = () => (chatbotBtn.style.transform = "scale(1)");
 ui.appendChild(chatbotBtn);
 
 /* =========================
@@ -436,6 +440,115 @@ function speak(text) {
   window.speechSynthesis.speak(u);
 }
 
+/* =========================
+   WAKE-WORD VOICE LISTENER
+========================= */
+let wakeListening = true; // default on
+let recognition = null;
+let isReplyingViaVoice = false;
+
+const WAKE_WORDS = [
+  "hey assistant", "hey ar assistant", "hey holoroom assistant",
+  "hey chatbot", "hey ar chatbot", "hey holoroom chatbot",
+  "hey holoroom", "hey ar", "ok assistant", "okay assistant"
+];
+
+function startWakeListener() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    console.warn("SpeechRecognition not supported");
+    return;
+  }
+
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  recognition.onresult = async (event) => {
+    if (isReplyingViaVoice) return; // don't trigger on TTS pickup
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (!event.results[i].isFinal) continue;
+      const transcript = event.results[i][0].transcript.toLowerCase().trim();
+
+      for (const wake of WAKE_WORDS) {
+        const idx = transcript.indexOf(wake);
+        if (idx !== -1) {
+          const question = transcript.substring(idx + wake.length).trim();
+          if (question.length > 1) {
+            await handleVoiceQuestion(question);
+          } else {
+            isReplyingViaVoice = true;
+            speak("Yes, how can I help?");
+            setTimeout(() => (isReplyingViaVoice = false), 2500);
+          }
+          return;
+        }
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    console.log("SR error:", e.error);
+    if (e.error === "not-allowed") {
+      popup("Microphone access denied");
+      wakeListening = false;
+    }
+  };
+
+  recognition.onend = () => {
+    if (wakeListening) {
+      setTimeout(() => {
+        try { recognition.start(); } catch (e) {}
+      }, 300);
+    }
+  };
+
+  try { recognition.start(); } catch (e) {}
+}
+
+function stopWakeListener() {
+  wakeListening = false;
+  if (recognition) {
+    try { recognition.stop(); } catch (e) {}
+    recognition = null;
+  }
+}
+
+async function handleVoiceQuestion(question) {
+  popup("🎤 " + question);
+  isReplyingViaVoice = true;
+  try {
+    const res = await myFetch(`${API}/api/chat/ar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: question,
+        history: chatHistory.slice(-10),
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "Sorry, I didn't get that.";
+    chatHistory.push({ role: "user", text: question });
+    chatHistory.push({ role: "assistant", text: reply });
+    speak(reply);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    // re-enable wake listening after the bot finishes speaking
+    setTimeout(() => (isReplyingViaVoice = false), 1500);
+  }
+}
+
+// auto-start on AR session
+renderer.xr.addEventListener("sessionstart", () => {
+  if (wakeListening) startWakeListener();
+});
+renderer.xr.addEventListener("sessionend", () => {
+  stopWakeListener();
+});
+
 function showChatPopup() {
   const existing = document.getElementById("arChatPopup");
   if (existing) { existing.remove(); return; }
@@ -450,16 +563,36 @@ function showChatPopup() {
     font-family:Arial,sans-serif;
   `;
 
+  function closePopup() {
+  window.speechSynthesis?.cancel();
+  window.visualViewport?.removeEventListener("resize", syncHeight);
+  window.visualViewport?.removeEventListener("scroll", syncHeight);
+  overlay.remove();
+  }
+  closeBtn.onclick = closePopup;
+
   const card = document.createElement("div");
   card.style.cssText = `
-    width:min(560px,96vw); height:75vh;
-    background:#111; border-radius:24px 24px 0 0;
+    width:min(560px,96vw);
+    height:85dvh;
+    max-height:85dvh;
+    background:#111;
+    border-radius:24px 24px 0 0;
     border:1px solid rgba(255,255,255,.08);
     display:flex; flex-direction:column;
     overflow:hidden;
   `;
-  overlay.onclick = () => overlay.remove();
+  overlay.onclick = () => closePopup();
   card.onclick = (e) => e.stopPropagation();
+
+  // keyboard-aware height
+  function syncHeight() {
+    if (!window.visualViewport) return;
+    card.style.height = (window.visualViewport.height - 20) + "px";
+  }
+  window.visualViewport?.addEventListener("resize", syncHeight);
+  window.visualViewport?.addEventListener("scroll", syncHeight);
+  syncHeight();
 
   /* HEADER */
   const header = document.createElement("div");
@@ -528,8 +661,11 @@ function showChatPopup() {
   /* INPUT */
   const inputBar = document.createElement("div");
   inputBar.style.cssText = `
-    padding:14px; border-top:1px solid rgba(255,255,255,.06);
+    padding:14px;
+    border-top:1px solid rgba(255,255,255,.06);
     display:flex; gap:10px;
+    flex-shrink:0;
+    background:#111;
   `;
   inputBar.innerHTML = `
     <input id="arChatInput" placeholder="Type your question..." style="
@@ -1334,7 +1470,7 @@ selectorDot.style.cssText = `
   width:14px; height:14px;
   border-radius:50%;
   background:#00ffff;
-  box-shadow:0 0 12px #00ffff, 0 0 4px #fff inset;
+  box-shadow:0 0 14px #00ffff, 0 0 6px rgba(255,255,255,.5) inset;
   transform:translate(-50%,-50%);
   pointer-events:none;
   z-index:999999999;
@@ -1351,13 +1487,20 @@ function updateSelectorDot(obj, camera) {
   const pos = new THREE.Vector3();
   obj.getWorldPosition(pos);
 
+  // anchor between the model top and the HUD card
+  const h = obj.userData.modelHeight || 1;
+  pos.y += h + 0.05;
+
   pos.project(camera);
 
-  const x = (pos.x * 0.5 + 0.5) * innerWidth;
-  const y = (-pos.y * 0.5 + 0.5) * innerHeight;
+  // hide if behind camera or outside view
+  if (pos.z > 1 || pos.z < -1 || Math.abs(pos.x) > 1.2 || Math.abs(pos.y) > 1.2) {
+    selectorDot.style.display = "none";
+    return;
+  }
 
-  selectorDot.style.left = x + "px";
-  selectorDot.style.top = y + "px";
+  selectorDot.style.left = ((pos.x * 0.5 + 0.5) * innerWidth) + "px";
+  selectorDot.style.top = ((-pos.y * 0.5 + 0.5) * innerHeight) + "px";
   selectorDot.style.display = "block";
 }
 
@@ -1787,6 +1930,11 @@ function addObject() {
 
   objects.push(holder);
 
+  const modelBox = new THREE.Box3().setFromObject(model);
+  const modelSize = new THREE.Vector3();
+  modelBox.getSize(modelSize);
+  holder.userData.modelHeight = modelSize.y;
+
   createHUD(holder);
 
   selectedObject = holder;
@@ -1947,214 +2095,69 @@ const raycaster = new THREE.Raycaster();
 window.addEventListener("click", async (event) => {
   if (!interactionEnabled) return;
   const isUI = event.target.closest("[data-ui]");
-
-  // allow HUD + menu raycast only if NOT UI blocking full scene interaction
   if (isUI) return;
 
-  const x = (event.clientX / innerWidth) * 2 - 1;
-  const y = -(event.clientY / innerHeight) * 2 + 1;
-  raycaster.setFromCamera({ x, y }, camera);
+  const cx = (event.clientX / innerWidth) * 2 - 1;
+  const cy = -(event.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera({ x: cx, y: cy }, camera);
 
-  /* =========================
-     MENU COLLISION
-  ========================= */
+  /* ===== MENU ===== */
   if (menu.visible) {
-
     const hit = raycaster.intersectObject(menu);
-
     if (hit.length) {
-
       const uv = hit[0].uv;
-
       const x = uv.x * 1024;
       const y = (1 - uv.y) * 768;
 
-      /* =========================
-         CLOSE BUTTON
-      ========================= */
-      if (x > 920 && y < 80) {
-
-        menu.visible = false;
-        menuVisible = false;
-
-        return;
+      if (x > 920 && y < 80) { menu.visible = false; menuVisible = false; return; }
+      if (x >= 930 && x <= 990 && y >= 150 && y <= 220) { menuScroll = Math.max(0, menuScroll - 1); drawMenu(); return; }
+      if (x >= 930 && x <= 990 && y >= 250 && y <= 320) {
+        if (menuScroll < allProducts.length - 6) menuScroll++;
+        drawMenu(); return;
       }
 
-      /* =========================
-         SCROLL UP
-      ========================= */
-      if (
-        x >= 930 &&
-        x <= 990 &&
-        y >= 150 &&
-        y <= 220
-      ) {
-
-        menuScroll = Math.max(
-          0,
-          menuScroll - 1
-        );
-
-        drawMenu();
-
-        return;
-      }
-
-      /* =========================
-         SCROLL DOWN
-      ========================= */
-      if (
-        x >= 930 &&
-        x <= 990 &&
-        y >= 250 &&
-        y <= 320
-      ) {
-
-        if (
-          menuScroll <
-          allProducts.length - 6
-        ) {
-          menuScroll++;
-        }
-
-        drawMenu();
-
-        return;
-      }
-
-      /* =========================
-         PRODUCT CARD COLLISION
-      ========================= */
-
-      const visible = allProducts.slice(
-        menuScroll,
-        menuScroll + 6
-      );
-
-      const cardW = 270;
-      const cardH = 250;
-
-      const spacingX = 295;
-      const spacingY = 300;
-
-      const startX = 35;
-      const startY = 120;
-
+      const visible = allProducts.slice(menuScroll, menuScroll + 6);
+      const cardW = 270, cardH = 250, spacingX = 295, spacingY = 300, startX = 35, startY = 120;
       let clickedProduct = null;
-
       for (let i = 0; i < visible.length; i++) {
-
-        const col = i % 3;
-
-        const row = Math.floor(i / 3);
-
-        const cardX =
-          startX + col * spacingX;
-
-        const cardY =
-          startY + row * spacingY;
-
-        const inside =
-          x >= cardX &&
-          x <= cardX + cardW &&
-          y >= cardY &&
-          y <= cardY + cardH;
-
-        if (inside) {
-
+        const col = i % 3, row = Math.floor(i / 3);
+        const cardX = startX + col * spacingX, cardY = startY + row * spacingY;
+        if (x >= cardX && x <= cardX + cardW && y >= cardY && y <= cardY + cardH) {
           clickedProduct = visible[i];
-
           break;
         }
       }
-
       if (clickedProduct) {
-
-        selectedProductId =
-          clickedProduct.pId;
-
+        selectedProductId = clickedProduct.pId;
         drawMenu();
-
-        await loadProduct(
-          clickedProduct.pId
-        );
-
-        popup(
-          "Selected " +
-          clickedProduct.pName
-        );
+        await loadProduct(clickedProduct.pId);
+        popup("Selected " + clickedProduct.pName);
       }
-
       return;
     }
   }
 
-  /* =========================
-     OBJECT / HUD COLLISION
-  ========================= */
-
-  const hits =
-    raycaster.intersectObjects(
-      objects,
-      true
-    );
-
+  /* ===== OBJECTS / HUD ===== */
+  const hits = raycaster.intersectObjects(objects, true);
   if (hits.length) {
-
     let root = hits[0].object;
-
-    while (
-      root.parent &&
-      !objects.includes(root)
-    ) {
-      root = root.parent;
-    }
-
+    while (root.parent && !objects.includes(root)) root = root.parent;
     selectedObject = root;
 
-      const hitObj = hits[0].object;
-
-    /* =========================
-       HUD BUTTONS
-    ========================= */
-
+    const hitObj = hits[0].object;
     if (hitObj.type === "Sprite") {
-
       const uv = hits[0].uv;
-
-      const x = uv.x * 512;
-      const y = (1 - uv.y) * 256;
-
-      const root = selectedObject;
+      const x = uv.x * 512, y = (1 - uv.y) * 256;
       const canWishlist = root?.userData && !root.userData.addedToWishlist;
       const canCart = root?.userData && !root.userData.addedToCart;
-
-      // wishlist
-      if (
-        x > 350 &&
-        x < 410 &&
-        y > 30 &&
-        y < 90 &&
-        canWishlist
-      ) {
-        await addWishlistForObject(root);
-      }
-
-      // cart
-      if (
-        x > 290 &&
-        x < 470 &&
-        y > 140 &&
-        y < 210 &&
-        canCart
-      ) {
-        await addCartForObject(root);
-      }
+      if (x > 350 && x < 410 && y > 30 && y < 90 && canWishlist) await addWishlistForObject(root);
+      if (x > 290 && x < 470 && y > 140 && y < 210 && canCart) await addCartForObject(root);
     }
-  } else {
-    selectedObject = null;
+    return; // <- key fix: don't fall through to floor projection
   }
-  // Tap-to-place fallback (no menu, no object hit)
+
+  /* ===== EMPTY TAP — pin reticle to floor where tapped ===== */
+  selectedObject = null;
   const planeY = reticle.position.y;
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
   const point = new THREE.Vector3();
@@ -2246,6 +2249,8 @@ renderer.setAnimationLoop(async (_, frame) => {
   });
 
   if (!session || !frame) {
+    updateSelectorDot(selectedObject, camera);
+    renderer.render(scene, camera);
     return;
   }
 
@@ -2476,6 +2481,7 @@ renderer.setAnimationLoop(async (_, frame) => {
     reticle.position.z + dragOffset.z;
 }
 
+  updateSelectorDot(selectedObject, camera);
   renderer.render(scene, camera);
 });
 
