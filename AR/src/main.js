@@ -13,7 +13,7 @@ const API = "https://control-parole-grandkid.ngrok-free.dev";
 ========================= */
 let searchStartedAt = null;
 let hintsSpoken = 0;
-const HINT_TIMES_MS = [15000, 35000, 60000]; // when to speak hints, in ms after search starts  
+const HINT_TIMES_MS = [15000, 35000]; // when to speak hints, in ms after search starts  
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 const userId = params.get("userId");
