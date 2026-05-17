@@ -69,9 +69,9 @@ function classifySurface(normal) {
 }
 
 function switchPlacementForObject(obj) {
-  if (!obj?.userData?.placement) return;
-  if (obj.userData.placement === requiredPlacement) return;
-  requiredPlacement = obj.userData.placement;
+  if (!obj?.userData?.pPlacement) return;
+  if (obj.userData.pPlacement === requiredPlacement) return;
+  requiredPlacement = obj.userData.pPlacement;
   placementStatus = "SEARCHING";
   snapped = false;
   detectedPlacement = null;
@@ -377,17 +377,19 @@ intro.appendChild(arBtn);
 arBtn.style.cssText = `
   position: static !important;
   margin: 0 !important;
-  padding: 8px 36px !important;
+  padding: 18px 64px !important;
   border: none !important;
   border-radius: 999px !important;
   background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%) !important;
   color: #001218 !important;
-  font-size: 17px !important;
-  font-weight: 700 !important;
-  letter-spacing: .3px !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: .4px !important;
   cursor: pointer !important;
+  min-width: 260px !important;
   box-shadow: 0 12px 36px rgba(0,200,255,.45) !important;
   pointer-events: auto !important;
+  white-space: nowrap !important;
 `;
 
 /* =========================
@@ -425,13 +427,18 @@ const cursorCtx = cursorCanvas.getContext("2d");
 drawCursorShape(cursorCtx, cursorMode, cursorColor);
 const cursorTex = new THREE.CanvasTexture(cursorCanvas);
 
-const reticle = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: cursorTex,
-  transparent: true,
-  depthTest: false,
-  depthWrite: false,
-}));
-reticle.scale.set(0.05, 0.05, 1);
+// PlaneGeometry — faces +Z by default, can be rotated to any surface
+const reticle = new THREE.Mesh(
+  new THREE.PlaneGeometry(1, 1),
+  new THREE.MeshBasicMaterial({
+    map: cursorTex,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  })
+);
+reticle.scale.set(0.1, 0.1, 0.1);
 reticle.renderOrder = 10000;
 reticle.matrixAutoUpdate = false;
 reticle.visible = false;
@@ -2489,7 +2496,7 @@ renderer.setAnimationLoop(async (_, frame) => {
 
   function applyDynamicScale(targetPos) {
     const dist = camPos.distanceTo(targetPos);
-    const s = Math.max(dist, 0.5) * 0.04; 
+    const s = Math.max(dist, 0.5) * 0.08; 
     reticle.scale.set(s, s, s);
   }
 
@@ -2651,7 +2658,7 @@ if (menuScrollDragging && menu.visible) {
      DRAG
   ===================================== */
  if (dragging && selectedObject && placementStatus === "READY") {
-    const placement = selectedObject.userData.placement || "FLOOR";
+    const placement = selectedObject.userData.pPlacement || "FLOOR";
     if (placement === "FLOOR" || placement === "CEILING") {
       selectedObject.position.x = reticle.position.x + dragOffset.x;
       selectedObject.position.z = reticle.position.z + dragOffset.z;
