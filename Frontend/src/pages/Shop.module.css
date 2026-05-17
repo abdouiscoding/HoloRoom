@@ -496,3 +496,53 @@
 
   box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
 }
+
+@media (max-width: 991px) {
+  .sidebar { display: none; }
+  .sidebarMobileOpen {
+    display: flex !important;
+    margin-bottom: 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+  }
+  .sidebarMobileOpen .filterBlock { padding: 0.5rem; }
+}
+
+@media (max-width: 768px) {
+  .shopHeader { padding: 5rem 0 1.25rem; }
+  .shopHeader h1 { font-size: 1.8rem; }
+  .shopHeader p { font-size: 0.9rem; padding: 0 1rem; }
+
+  .controlsBar {
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+  .searchInput { max-width: 100%; }
+  .sortDropdown { margin-left: 0; justify-content: space-between; }
+  .mobileFilterBtn { justify-content: center; width: 100%; }
+
+  /* 2 cards per row */
+  .productGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+  .productCard { padding: 0.4rem; }
+  .productInfo { padding: 0.5rem 0.25rem; }
+  .productInfo h3 { font-size: 0.9rem; line-height: 1.25; }
+  .category { font-size: 0.65rem; letter-spacing: 0.5px; }
+  .finalPrice { font-size: 0.9rem; }
+  .oldPrice { font-size: 0.7rem; }
+  .discountBadge { font-size: 10px; padding: 3px 7px; bottom: 6px; right: 6px; }
+  .arBadge { font-size: 0.65rem; padding: 2px 7px; top: 6px; left: 6px; }
+
+  /* card actions visible by default since hover doesn't exist on mobile */
+  .cardActions {
+    position: static;
+    opacity: 1;
+    transform: none;
+    margin-top: 0.4rem;
+  }
+  .quickViewBtn { padding: 6px; font-size: 0.8rem; }
+}

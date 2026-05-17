@@ -911,7 +911,9 @@
   background: rgba(255, 255, 255, 0.05);
   padding: 12px;
   border-radius: 8px;
-  width: 165%;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 0.75rem;
 }
 .actionGroup {
   display: flex;
@@ -924,7 +926,6 @@
 }
 
 .changebtn {
-  margin-left: 100%;
 }
 
 .grid {
@@ -1139,4 +1140,73 @@
   flex: 1;
   overflow-y: auto;   /* this is what scrolls */
   padding-right: 0.5rem; /* optional, keeps the scrollbar from hugging text */
+}
+
+@media (max-width: 768px) {
+  /* container & header */
+  .profileContainer { padding: 5rem 0.75rem 1.5rem; }
+  .headerGlass { padding: 1.25rem 1rem; }
+  .profileHeader { gap: 0.75rem; }
+  .userName { font-size: 1.4rem; }
+  .userEmail { font-size: 0.9rem; word-break: break-all; }
+  .avatar { width: 90px; height: 90px; }
+
+  /* settings form */
+  .formGroup { max-width: 100%; }
+  .infoRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 10px;
+  }
+  .infoRow p {
+    flex: 1 1 100%;
+    min-width: 0;
+    word-break: break-word;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+  .infoRow button { flex-shrink: 0; align-self: flex-end; }
+  .grid { grid-template-columns: 85% 15%; }
+  .mainContent { padding: 1rem; }
+
+  /* orders top bar */
+  .ordersTopBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .filtersGroup { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .filtersGroup .filterSelect { flex: 1; min-width: 0; font-size: 0.85rem; }
+  .totalSpending {
+    align-items: flex-start;
+    padding: 0.6rem 0.8rem;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+  .totalSpending strong { font-size: 1.05rem; }
+
+  /* order cards */
+  .orderCard {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.85rem;
+    gap: 0.5rem;
+  }
+  .orderRight {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .orderPrice { font-size: 0.95rem; }
+  .orderStatus { font-size: 0.7rem; padding: 0.15rem 0.5rem; }
+  .cancelOrderBtn { font-size: 0.8rem; }
+
+  /* wishlist — 2 columns instead of 1 */
+  .wishlistGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+  .wishlistCard { padding: 0.5rem; }
+  .wishlistCard img { height: 110px; }
+  .wishlistCard h4 { font-size: 0.85rem; }
 }

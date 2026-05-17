@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Box } from 'lucide-react';
+import { ShoppingBag, User, Box, Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { useCart } from '../../context/CartContext';
 
@@ -149,10 +149,16 @@ const Navbar = ({ onMenuToggle }) => {
             <button className={styles.iconBtn} onClick={handleProfile}>
               <User size={20} />
             </button>
-
             <button className={styles.iconBtn} onClick={handleCart}>
               <ShoppingBag size={20} />
               {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
+            </button>
+            <button
+              className={`${styles.iconBtn} ${styles.hamburgerBtn}`}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -163,7 +169,7 @@ const Navbar = ({ onMenuToggle }) => {
             <nav className={styles.mobileNav}>
               <Link to="/" className={styles.mobileNavLink}>Home</Link>
               <Link to="/shop" className={styles.mobileNavLink}>Shop</Link>
-              <Link to="/support" className={`${styles.navLink} ${location.pathname === '/support' ? styles.active : ''}`}>Support</Link>
+              <Link to="/support" className={styles.mobileNavLink}>Support</Link>
             </nav>
           </div>
         )}

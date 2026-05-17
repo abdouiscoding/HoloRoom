@@ -311,3 +311,35 @@
   border: none;
   cursor: pointer;
 }
+
+@media (max-width: 600px) {
+  .chatbotContainer {
+    bottom: 1rem;
+    right: 1rem;
+    left: auto;
+  }
+  .floatingBtn {
+    width: 52px;
+    height: 52px;
+  }
+  .chatWindow {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100vw;
+    height: 75vh;
+    max-height: 75vh;
+    border-radius: 18px 18px 0 0;
+  }
+  .chatHeader { padding: 0.85rem 1rem; }
+  .botInfo h4 { font-size: 0.95rem; }
+  .messagesContainer { padding: 0.85rem; }
+  .message { font-size: 0.9rem; padding: 8px 12px; }
+  .inputArea { padding: 0.7rem 0.85rem; }
+  .input { font-size: 0.9rem; }
+  .loginBox {
+    width: 90vw;
+    max-width: 320px;
+  }
+}

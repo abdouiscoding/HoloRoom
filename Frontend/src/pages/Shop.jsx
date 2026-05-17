@@ -12,6 +12,8 @@ import styles from './Shop.module.css';
 import { API, address, myFetch } from "../api";
 
 const Shop = () => {
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
@@ -349,7 +351,7 @@ useEffect(() => {
         className={`container ${styles.shopLayout}`}
       >
         {/* SIDEBAR */}
-        <aside className={styles.sidebar}>
+        <aside className={`${styles.sidebar} ${mobileFiltersOpen ? styles.sidebarMobileOpen : ''}`}>
           <div
             className={`${styles.filterBlock} glass-panel`}
           >
@@ -436,14 +438,11 @@ useEffect(() => {
           {/* CONTROLS */}
           <div className={styles.controlsBar}>
             <button
-              className={
-                styles.mobileFilterBtn
-              }
+              className={styles.mobileFilterBtn}
+              onClick={() => setMobileFiltersOpen(o => !o)}
             >
-              <SlidersHorizontal
-                size={18}
-              />
-              Filters
+              <SlidersHorizontal size={18} />
+              Filters {mobileFiltersOpen ? '▲' : '▼'}
             </button>
 
             <input
