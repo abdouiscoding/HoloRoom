@@ -13,7 +13,6 @@ const ARManagerView = () => {
   const [modelWidth, setModelWidth] = useState("");
   const [modelHeight, setModelHeight] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
-  let hasSizeUpdate = false;
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
@@ -44,98 +43,60 @@ const uploadModelFile = async () => {
     setProgress(10);
 
     const id = editingModel.pId;
+    let didSomething = false;
 
-    let hasUpload = false;
-    let hasPlacementUpdate = false;
-
-    // =========================
-    // 1. UPLOAD MODEL (ONLY IF FILE SELECTED)
-    // =========================
+    // 1. UPLOAD MODEL FILE
     if (modelFile) {
-      hasUpload = true;
-
+      didSomething = true;
       const fd = new FormData();
       fd.append("file", modelFile);
-
-      const uploadRes = await myFetch(
-        `${API}/api/products/upload-model/${id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          body: fd
-        }
-      );
-
-      if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
-        throw new Error(`Upload failed: ${errorText}`);
-      }
-
-      await uploadRes.json();
-      setProgress(60);
+      const res = await myFetch(`${API}/api/products/upload-model/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error(`Upload failed: ${await res.text()}`);
+      setProgress(50);
     }
 
-    // =========================
-    // 2. UPDATE PLACEMENT (ONLY IF CHANGED)
-    // =========================
+    // 2. PLACEMENT
     if (placement && placement !== editingModel.pPlacement) {
-      hasPlacementUpdate = true;
-
-      const placementRes = await myFetch(
-        `${API}/api/products/update-placement/${id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${token}`
-          },
-          body: new URLSearchParams({
-            placement
-          })
-        }
-      );
-
-      if (!placementRes.ok) {
-        const errorText = await placementRes.text();
-        throw new Error(`Placement update failed: ${errorText}`);
-      }
-
-      if (
-        modelWidth !== (editingModel.pWidth || 0) ||
-        modelHeight !== (editingModel.pHeight || 0)
-      ) {
-        hasSizeUpdate = true;
-
-        const sizeRes = await myFetch(
-          `${API}/api/products/update-size/${id}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: `Bearer ${token}`
-            },
-            body: new URLSearchParams({
-              pWidth: modelWidth,
-              pHeight: modelHeight
-            })
-          }
-        );
-
-        if (!sizeRes.ok) {
-          const errorText = await sizeRes.text();
-          throw new Error(`Size update failed: ${errorText}`);
-        }
-      }
-
-      setProgress(hasUpload ? 80 : 60);
+      didSomething = true;
+      const res = await myFetch(`${API}/api/products/update-placement/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${token}`,
+        },
+        body: new URLSearchParams({ placement }),
+      });
+      if (!res.ok) throw new Error(`Placement update failed: ${await res.text()}`);
+      setProgress(70);
     }
 
-    // =========================
-    // NOTHING CHANGED
-    // =========================
-    if (!hasUpload && !hasPlacementUpdate && !hasSizeUpdate) {
+    // 3. SIZE — independent of placement
+    const newW = parseFloat(modelWidth) || 0;
+    const newH = parseFloat(modelHeight) || 0;
+    const oldW = (editingModel.pWidth || 0);
+    const oldH = (editingModel.pHeight || 0);
+    if (newW !== oldW || newH !== oldH) {
+      didSomething = true;
+      const res = await myFetch(`${API}/api/products/update-size/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${token}`,
+        },
+        body: new URLSearchParams({
+          width: (newW).toString(),   // cm → m
+          height: (newH).toString(),
+        }),
+      });
+      if (!res.ok) throw new Error(`Size update failed: ${await res.text()}`);
+      setProgress(90);
+    }
+
+    if (!didSomething) {
       setUploading(false);
       setProgress(0);
       setEditingModel(null);
@@ -144,18 +105,17 @@ const uploadModelFile = async () => {
     }
 
     setProgress(100);
-
     setTimeout(() => {
       setUploading(false);
       setProgress(0);
       setEditingModel(null);
       setModelFile(null);
+      setPreviewUrl(null);
       fetchProducts();
     }, 300);
-
   } catch (err) {
     console.error(err);
-    alert(err.message || "Failed to save model");
+    alert(err.message || "Failed to save");
     setUploading(false);
     setProgress(0);
   }
@@ -224,7 +184,7 @@ const uploadModelFile = async () => {
               onChange={(e) => setModelWidth(e.target.value)}
               className={styles.input}
             />
-            <span>Cm</span>
+            <span>m</span>
           </div>
 
           <div className={styles.sizeRow}>
@@ -235,7 +195,7 @@ const uploadModelFile = async () => {
               onChange={(e) => setModelHeight(e.target.value)}
               className={styles.input}
             />
-            <span>Cm</span>
+            <span>m</span>
           </div>
 
           {/* MODEL INFO */}
@@ -390,8 +350,8 @@ const uploadModelFile = async () => {
               onClick={() => {
                 setEditingModel(p);
                 setPlacement(p.pPlacement || "FLOOR");
-                setModelWidth(p.pWidth || 0);
-                setModelHeight(p.pHeight || 0);
+                setModelWidth(((p.pWidth || 0)).toString());
+                setModelHeight(((p.pHeight || 0)).toString());
               }}
             >
               Edit Model

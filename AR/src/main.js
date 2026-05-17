@@ -318,7 +318,7 @@ scene.add(dir);
 ========================= */
 const arBtn = ARButton.createButton(renderer, {
   requiredFeatures: ["hit-test"],
-  optionalFeatures: ["dom-overlay"],
+  optionalFeatures: ["dom-overlay", "plane-detection"],
   domOverlay: { root: document.body }
 });
 document.body.appendChild(arBtn);
@@ -1718,6 +1718,9 @@ function drawMenu() {
     roundRect(ctx, trackX + 3, thumbY, trackW - 6, thumbH, 11);
     ctx.fill();
   }
+  const visible = allProducts.slice(menuScroll, menuScroll + 6);
+  const cardW = 270;
+  const cardH = 250;
 
   visible.forEach((p, i) => {
     const col = i % 3;
@@ -2530,7 +2533,7 @@ renderer.setAnimationLoop(async (_, frame) => {
   if (!snapped) {
     reticle.position.copy(camPos).add(
       forward.clone().multiplyScalar(
-        1.5
+        0.5
       )
     );
 

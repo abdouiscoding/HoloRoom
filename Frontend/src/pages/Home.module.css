@@ -243,3 +243,40 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+.modelsLoader {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 18, 14, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 999px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+  pointer-events: none;
+  animation: loaderFade .25s ease;
+}
+.modelsLoaderTrack {
+  width: 140px; height: 4px;
+  background: rgba(255,255,255,.12);
+  border-radius: 999px; overflow: hidden;
+}
+.modelsLoaderBar {
+  height: 100%;
+  background: linear-gradient(90deg, #b48a3c, #d4a85e);
+  transition: width 0.2s;
+}
+.modelsLoaderText {
+  color: #f0e6d4;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+@keyframes loaderFade {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}

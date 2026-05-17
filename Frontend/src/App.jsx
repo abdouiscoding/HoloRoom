@@ -5,7 +5,6 @@ import Footer from './components/layout/Footer';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
-import ARViewer from './pages/ARViewer';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
 import { LoginPage } from './pages/LoginPage';
 import Cart from './pages/Cart';
@@ -13,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import DashboardLayout from './pages/dashboard/DashboardLayout';
 import Changeemail from './pages/changedata/Changeemail';
 import Changepassword from './pages/changedata/Changepassword';
+import Support from './pages/Support';
 import './App.css';
 
 function App() {
@@ -32,8 +32,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/support" element={<Support />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/ar/:id" element={<ARViewer />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/changeemail" element={<Changeemail />} />

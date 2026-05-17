@@ -1,9 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Box, Globe, Mail, MessageCircle, Share2 } from 'lucide-react';
+import { Box, Globe, MessageCircle, Share2, Mail, MapPin } from 'lucide-react';
 import styles from './Footer.module.css';
 
 const Footer = () => {
+  const toprofile = () => {
+    if (!localStorage.getItem('loggedin')) {
+      window.location.href = '/login';
+    } else {
+      window.location.href = '/profile';
+    }
+  };
   return (
     <footer className={styles.footer}>
       <div className={`container ${styles.footerGrid}`}>
@@ -13,49 +20,49 @@ const Footer = () => {
             <span className="text-gradient">HoloRoom</span>
           </Link>
           <p className={styles.brandDesc}>
-            Experience the future of retail. Try before you buy with our immersive Augmented Reality platform.
+            Furniture, tried before bought. Preview products in your real room with AR
+            before you commit.
           </p>
           <div className={styles.socials}>
-            <a href="#" className={styles.socialLink}><Globe size={20} /></a>
-            <a href="#" className={styles.socialLink}><Mail size={20} /></a>
-            <a href="#" className={styles.socialLink}><MessageCircle size={20} /></a>
-            <a href="#" className={styles.socialLink}><Share2 size={20} /></a>
+            <a href="#" aria-label="Share" className={styles.socialLink}><Share2 size={18} /></a>
+            <a href="#" aria-label="Message" className={styles.socialLink}><MessageCircle size={18} /></a>
           </div>
         </div>
-        
+
         <div className={styles.linkCol}>
-          <h3>Shop</h3>
+          <h3>Explore</h3>
           <ul>
-            <li><Link to="/shop">New Arrivals</Link></li>
-            <li><Link to="/shop">Furniture</Link></li>
-            <li><Link to="/shop">Decor</Link></li>
-            <li><Link to="/shop">Accessories</Link></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/shop">Shop</Link></li>
+            <li><Link to="/profile" onClick={toprofile}>
+              My Account
+            </Link></li>
+            <li><Link to="/cart">Cart</Link></li>
           </ul>
         </div>
 
         <div className={styles.linkCol}>
-          <h3>Support</h3>
+          <h3>Help</h3>
           <ul>
-            <li><Link to="/faq">FAQ</Link></li>
-            <li><Link to="/shipping">Shipping & Returns</Link></li>
-            <li><Link to="/contact">Contact Us</Link></li>
-            <li><Link to="/ar-help">AR Guide</Link></li>
+            <li><Link to="/support">Contact Support</Link></li>
+            <li><Link to="/support">Report a Bug</Link></li>
+            <li><Link to="/support">Order Issues</Link></li>
           </ul>
         </div>
-        
+
         <div className={styles.linkCol}>
-          <h3>Legal</h3>
-          <ul>
-            <li><Link to="/privacy">Privacy Policy</Link></li>
-            <li><Link to="/terms">Terms of Service</Link></li>
-            <li><Link to="/cookies">Cookie Policy</Link></li>
+          <h3>Get in touch</h3>
+          <ul className={styles.contactList}>
+            <li><Mail size={14} /> support@holoroom.app</li>
+            <li><MapPin size={14} /> Algeria</li>
           </ul>
         </div>
       </div>
-      
+
       <div className={styles.footerBottom}>
         <div className="container">
           <p>&copy; {new Date().getFullYear()} HoloRoom. All rights reserved.</p>
+          <p className={styles.footerBy}>Built by Ayoub Guermache, Abderrahim Ferdi, and Anis Ben Abderrahmane.</p>
         </div>
       </div>
     </footer>

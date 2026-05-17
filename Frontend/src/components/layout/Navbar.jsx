@@ -141,7 +141,7 @@ const Navbar = ({ onMenuToggle }) => {
           <nav className={styles.desktopNav}>
             <Link to="/" className={`${styles.navLink} ${location.pathname === '/' ? styles.active : ''}`}>Home</Link>
             <Link to="/shop" className={`${styles.navLink} ${location.pathname.startsWith('/shop') ? styles.active : ''}`}>Shop</Link>
-            <Link to="/about" className={styles.navLink}>About</Link>
+            <Link to="/support" className={`${styles.navLink} ${location.pathname === '/support' ? styles.active : ''}`}>Support</Link>
           </nav>
 
           {/* Icons */}
@@ -163,7 +163,7 @@ const Navbar = ({ onMenuToggle }) => {
             <nav className={styles.mobileNav}>
               <Link to="/" className={styles.mobileNavLink}>Home</Link>
               <Link to="/shop" className={styles.mobileNavLink}>Shop</Link>
-              <Link to="/about" className={styles.mobileNavLink}>About</Link>
+              <Link to="/support" className={`${styles.navLink} ${location.pathname === '/support' ? styles.active : ''}`}>Support</Link>
             </nav>
           </div>
         )}

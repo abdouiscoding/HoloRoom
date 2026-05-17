@@ -7,11 +7,28 @@ import {
   ContactShadows,
   useGLTF,
   Html,
+  useProgress
 } from "@react-three/drei";
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, View, ShoppingBag, Sparkles, Users } from "lucide-react";
 import styles from "./Home.module.css";
 import { API, myFetch } from "../api";
+
+// loader
+function ModelsLoader() {
+  const { progress, active } = useProgress();
+  if (!active && progress >= 100) return null;
+  return (
+    <div className={styles.modelsLoader}>
+      <div className={styles.modelsLoaderTrack}>
+        <div className={styles.modelsLoaderBar} style={{ width: `${progress}%` }} />
+      </div>
+      <span className={styles.modelsLoaderText}>
+        Loading room... {Math.round(progress)}%
+      </span>
+    </div>
+  );
+}
 
 // =============================================================
 // ROOM CONFIG
@@ -528,6 +545,7 @@ function RoomScene({ roomKey, items, focused, onProductClick, onBack, calctotald
           transitionKey={transitionKey}
         />
       </Canvas>
+      <ModelsLoader />
 
       {focused && (
         <button className={styles.backToRoomBtn} onClick={onBack}>
