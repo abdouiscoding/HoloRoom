@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
@@ -8,8 +9,9 @@ const Header = ({ role, changeRole }) => {
 
   return (
     <header className={styles.headerContainer}>
-      <div>
-      </div>
+      <button className={styles.menuBtn} onClick={onMenuClick}>
+        <Menu size={22} />
+      </button>
 
       <div className={styles.headerRight}>
         {/* Role Switcher */}

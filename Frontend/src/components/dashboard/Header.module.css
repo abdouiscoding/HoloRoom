@@ -114,3 +114,24 @@
   color: var(--text-muted);
   text-transform: capitalize;
 }
+.menuBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+@media (max-width: 992px) {
+  .headerContainer {
+    padding: var(--spacing-md) var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  .menuBtn { display: flex; }
+  .roleSwitcher { display: none; }
+  .headerRight { gap: var(--spacing-md); }
+  .profileInfo { display: none; }
+  .avatar { width: 36px; height: 36px; }
+}

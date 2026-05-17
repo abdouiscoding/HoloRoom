@@ -67,7 +67,7 @@ const ReviewModal = ({ isOpen, onClose, product }) => {
                   </span>
 
                   <span className={styles.date}>
-                    {formatDate(review.date)}
+                    {formatDate(review.Date)}
                   </span>
                 </div>
 

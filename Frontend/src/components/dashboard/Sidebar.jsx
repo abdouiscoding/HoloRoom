@@ -25,7 +25,7 @@ const allMenuItems = [
 
 const Sidebar = ({ role, permissions = [] }) => {
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
 
   const currentMenu = allMenuItems.filter(item =>
     permissions.includes(item.id)

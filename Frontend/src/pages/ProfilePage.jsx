@@ -356,7 +356,7 @@ const ProfilePage = () => {
               ) : (
                 <div className={styles.wishlistGrid}>
                   {wishlistItems.map((item) => (
-                    <div key={item.id} className={styles.wishlistCard} onClick={() => navigate(`/product/${item.name}`)}>
+                    <div key={item.id} className={styles.wishlistCard} onClick={() => navigate(`/product/${encodeURIComponent(item.name)}`)}>
                       <img src={item.image} alt={item.name} />
                       <div>
                         <h4>{item.name}</h4>

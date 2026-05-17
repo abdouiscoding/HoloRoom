@@ -159,7 +159,7 @@ const DashboardLayout = () => {
         />
 
         <div className={styles.mainContent}>
-          <Header role={role} changeRole={changeRole} />
+          <Header role={role} changeRole={changeRole} onMenuClick={() => setCollapsed(c => !c)} />
 
           <div className={styles.pageContent}>
             <Routes>

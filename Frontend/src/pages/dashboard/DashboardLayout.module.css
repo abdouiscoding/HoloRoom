@@ -24,6 +24,13 @@
 
 @media (max-width: 992px) {
   .dashboardContainer {
-    flex-direction: column;
+    flex-direction: row; 
+  }
+  .mainContent {
+    width: 100%;
+    height: 100vh;
+  }
+  .pageContent {
+    padding: var(--spacing-md);
   }
 }

@@ -1,5 +1,8 @@
 package HoloRoom.Model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
@@ -8,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -28,6 +32,9 @@ public class PReviews {
     @JsonProperty("userName")
     private String userName;
 
+    @JsonProperty("Date")
+    private LocalDateTime Date;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Products product;
@@ -38,6 +45,11 @@ public class PReviews {
         this.userName = userName;
         this.pRating = pRating;
         this.pComment = pComment;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.Date = LocalDateTime.now();
     }
 
     @JsonProperty("userName")
@@ -64,5 +76,8 @@ public class PReviews {
     public Long getProductId() {
         return product != null ? product.getProductId() : null;
     }
+
+    @JsonProperty("Date")
+    public LocalDateTime getDate() { return Date; }
 
 }

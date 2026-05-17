@@ -27,6 +27,9 @@ let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
 let dragOffset = new THREE.Vector3();
 let dragPlaneY = 0;
+let menuScrollDragging = false;
+let micEnabled = true;
+let hintsEnabled = true;
 
 let interactionEnabled = false;
 
@@ -63,6 +66,17 @@ function classifySurface(normal) {
   if (dot > 0.7) return "FLOOR";
   if (dot < -0.7) return "CEILING";
   return "WALL";
+}
+
+function switchPlacementForObject(obj) {
+  if (!obj?.userData?.placement) return;
+  if (obj.userData.placement === requiredPlacement) return;
+  requiredPlacement = obj.userData.placement;
+  placementStatus = "SEARCHING";
+  snapped = false;
+  detectedPlacement = null;
+  searchStartedAt = null;
+  hintsSpoken = 0;
 }
 
   /* =====================================================
@@ -377,24 +391,56 @@ arBtn.style.cssText = `
 `;
 
 /* =========================
-   RETICLE (GROUND SNAP)
+   RETICLE (sprite-based, switchable shape)
 ========================= */
-const reticle = new THREE.Mesh(
-  new THREE.RingGeometry(0.014, 0.022, 32), // much smaller
-  new THREE.MeshBasicMaterial({
-    color: cursorColor,
-    transparent: true,
-    opacity: 1,
-    side: THREE.DoubleSide,
-    depthTest: false
-  })
-);
+function drawCursorShape(ctx, mode, color) {
+  ctx.clearRect(0, 0, 128, 128);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 12;
+  ctx.lineCap = "round";
 
-reticle.rotation.x = -Math.PI / 2;
-reticle.renderOrder = 9999;
+  if (mode === "dot") {
+    ctx.beginPath();
+    ctx.arc(64, 64, 22, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (mode === "circle") {
+    ctx.beginPath();
+    ctx.arc(64, 64, 42, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (mode === "plus") {
+    ctx.beginPath();
+    ctx.moveTo(64, 16); ctx.lineTo(64, 112);
+    ctx.moveTo(16, 64); ctx.lineTo(112, 64);
+    ctx.stroke();
+  } else if (mode === "square") {
+    ctx.strokeRect(22, 22, 84, 84);
+  }
+}
+
+const cursorCanvas = document.createElement("canvas");
+cursorCanvas.width = 128;
+cursorCanvas.height = 128;
+const cursorCtx = cursorCanvas.getContext("2d");
+drawCursorShape(cursorCtx, cursorMode, cursorColor);
+const cursorTex = new THREE.CanvasTexture(cursorCanvas);
+
+const reticle = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: cursorTex,
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+}));
+reticle.scale.set(0.05, 0.05, 1);
+reticle.renderOrder = 10000;
 reticle.matrixAutoUpdate = false;
 reticle.visible = false;
 scene.add(reticle);
+
+function refreshCursor() {
+  drawCursorShape(cursorCtx, cursorMode, cursorColor);
+  cursorTex.needsUpdate = true;
+}
 
 /* =========================
    DOM UI
@@ -794,6 +840,7 @@ function setMicState(recording) {
 }
 
 function startRecording() {
+  if (!micEnabled) { popup("Microphone disabled in settings"); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     popup("Voice not supported on this device");
@@ -984,20 +1031,9 @@ setupHoldRotation(rotateLeftBtn, "left");
 setupHoldRotation(rotateRightBtn, "right");
 
 dragBtn.addEventListener("pointerdown", (event) => {
-
   event.stopPropagation();
-
-  if (!selectedObject) {
-    popup("Select an object first");
-    return;
-  }
-
-  dragOffset.set(
-    selectedObject.position.x - reticle.position.x,
-    0,
-    selectedObject.position.z - reticle.position.z
-  );
-
+  if (!selectedObject) { popup("Select an object first"); return; }
+  dragOffset.copy(selectedObject.position).sub(reticle.position);
   dragging = true;
 });
 
@@ -1397,124 +1433,127 @@ function showSettingsPopup() {
   `;
 
   function renderCursorSettings() {
+    content.innerHTML = `<h2 style="margin-top:0;">Cursor Settings</h2>`;
 
-    content.innerHTML = `
-      <h2 style="margin-top:0;">Cursor Settings</h2>
-    `;
-
-    /* CURSOR TYPE */
     const modeTitle = document.createElement("div");
-
-    modeTitle.innerText = "Cursor";
-
-    modeTitle.style.cssText = `
-      margin-top:20px;
-      margin-bottom:12px;
-      font-weight:bold;
-      opacity:.9;
-    `;
-
+    modeTitle.innerText = "Shape";
+    modeTitle.style.cssText = `margin-top:16px;margin-bottom:12px;font-weight:bold;opacity:.9;`;
     content.appendChild(modeTitle);
 
     const modes = document.createElement("div");
+    modes.style.cssText = `display:grid;grid-template-columns:repeat(4,1fr);gap:10px;`;
 
-    modes.style.cssText = `
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    `;
-
-    function modeBtn(label, mode) {
-
+    function shapeBtn(mode, svg) {
       const b = document.createElement("button");
-
-      b.innerText = label;
-
+      const active = cursorMode === mode;
       b.style.cssText = `
-        padding:12px 18px;
-        border:none;
-        border-radius:14px;
-        background:#1f1f1f;
-        color:white;
-        cursor:pointer;
-        font-weight:700;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:8px;padding:14px 8px;border:none;border-radius:14px;
+        background:${active ? "#00ffff" : "#1f1f1f"};
+        color:${active ? "#000" : "#fff"};
+        cursor:pointer;font-weight:700;font-size:12px;
+        text-transform:capitalize;
       `;
-
+      b.innerHTML = svg + `<span>${mode}</span>`;
       b.onclick = () => {
-
         cursorMode = mode;
-
-        reticle.geometry.dispose();
-
-        if (mode === "dot") {
-
-          reticle.geometry =
-            new THREE.SphereGeometry(0.01, 32, 32);
-
-        } else {
-
-          reticle.geometry =
-            new THREE.RingGeometry(0.014, 0.022, 32);
-
-          reticle.rotation.x = -Math.PI / 2;
-        }
+        refreshCursor();
+        renderCursorSettings();
       };
-
       return b;
     }
 
-    modes.appendChild(modeBtn("Dot", "dot"));
-    modes.appendChild(modeBtn("Circle", "circle"));
+    modes.appendChild(shapeBtn("dot",
+      `<svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="6" fill="currentColor"/></svg>`));
+    modes.appendChild(shapeBtn("circle",
+      `<svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>`));
+    modes.appendChild(shapeBtn("plus",
+      `<svg width="28" height="28" viewBox="0 0 28 28"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>`));
+    modes.appendChild(shapeBtn("square",
+      `<svg width="28" height="28" viewBox="0 0 28 28"><rect x="6" y="6" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>`));
 
     content.appendChild(modes);
 
-    /* COLOR */
     const colorTitle = document.createElement("div");
-
     colorTitle.innerText = "Color";
-
-    colorTitle.style.cssText = `
-      margin-top:24px;
-      margin-bottom:12px;
-      font-weight:bold;
-      opacity:.9;
-    `;
-
+    colorTitle.style.cssText = `margin-top:24px;margin-bottom:12px;font-weight:bold;opacity:.9;`;
     content.appendChild(colorTitle);
 
     const colorInput = document.createElement("input");
-
     colorInput.type = "color";
-
     colorInput.value = cursorColor;
-
-    colorInput.style.cssText = `
-      width:80px;
-      height:50px;
-      border:none;
-      background:none;
-      cursor:pointer;
-    `;
-
-    colorInput.oninput = (e) => {
-
-      cursorColor = e.target.value;
-
-      reticle.material.color.set(cursorColor);
-    };
-
+    colorInput.style.cssText = `width:80px;height:50px;border:none;background:none;cursor:pointer;`;
+    colorInput.oninput = (e) => { cursorColor = e.target.value; refreshCursor(); };
     content.appendChild(colorInput);
   }
 
   function renderChatbotSettings() {
+    content.innerHTML = `<h2 style="margin-top:0;">Chatbot Settings</h2>`;
 
-    content.innerHTML = `
-      <h2 style="margin-top:0;">Chatbot Settings</h2>
+    function toggleRow(title, subtitle, isOn, onToggle) {
+      const row = document.createElement("div");
+      row.style.cssText = `
+        display:flex;justify-content:space-between;align-items:center;
+        padding:14px 18px;background:#1f1f1f;border-radius:14px;
+        margin-bottom:10px;gap:14px;
+      `;
+      row.innerHTML = `
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:15px;">${title}</div>
+          <div style="opacity:.6;font-size:13px;margin-top:2px;">${subtitle}</div>
+        </div>
+        <button style="
+          padding:8px 18px;border:none;border-radius:10px;
+          background:${isOn ? "#00ffff" : "#3a3a3a"};
+          color:${isOn ? "#000" : "#fff"};
+          font-weight:700;cursor:pointer;min-width:70px;
+        ">${isOn ? "ON" : "OFF"}</button>
+      `;
+      row.querySelector("button").onclick = async () => {
+        await onToggle();
+        renderChatbotSettings();
+      };
+      content.appendChild(row);
+    }
 
-      <p style="opacity:.7;">
-        Coming soon...
-      </p>
-    `;
+    toggleRow(
+      "Text-to-Speech",
+      "Read assistant replies aloud",
+      ttsEnabled,
+      () => {
+        ttsEnabled = !ttsEnabled;
+        if (!ttsEnabled) window.speechSynthesis?.cancel();
+      }
+    );
+
+    toggleRow(
+      "Microphone",
+      "Hold mic button to speak",
+      micEnabled,
+      async () => {
+        if (!micEnabled) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop()); // release immediately
+            micEnabled = true;
+          } catch (e) {
+            popup("Microphone permission denied");
+            return;
+          }
+        } else {
+          micEnabled = false;
+          if (isRecording) stopRecording();
+        }
+        micBtn.style.display = micEnabled ? "flex" : "none";
+      }
+    );
+
+    toggleRow(
+      "Detection Hints",
+      "Spoken tips when surface detection takes too long",
+      hintsEnabled,
+      () => { hintsEnabled = !hintsEnabled; }
+    );
   }
 
   cursorTab.onclick = renderCursorSettings;
@@ -2058,6 +2097,7 @@ function addObject() {
   };
   holder.userData.addedToCart = false;
   holder.userData.addedToWishlist = false;
+  holder.userData.pPlacement = requiredPlacement;
 
   // clone model
   const model = productModelTemplate.clone(true);
@@ -2289,6 +2329,7 @@ window.addEventListener("click", async (event) => {
     let root = hits[0].object;
     while (root.parent && !objects.includes(root)) root = root.parent;
     selectedObject = root;
+    switchPlacementForObject(root);
 
     const hitObj = hits[0].object;
     if (hitObj.type === "Sprite") {
@@ -2310,34 +2351,43 @@ window.addEventListener("click", async (event) => {
 window.addEventListener("pointerdown", (event) => {
   if (!interactionEnabled) return;
   const isUI = event.target.closest("[data-ui]");
-
-  // allow HUD + menu raycast only if NOT UI blocking full scene interaction
   if (isUI) return;
-  
-  // Use the cursor (center screen) — not the tap location
+
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-  const hits = raycaster.intersectObjects(objects, true);
 
-  if (hits.length) {
-    let root = hits[0].object;
-
-    while (root.parent && !objects.includes(root)) {
-      root = root.parent;
+  // scrollbar drag start
+  if (menu.visible) {
+    const mh = raycaster.intersectObject(menu);
+    if (mh.length) {
+      const uv = mh[0].uv;
+      const x = uv.x * 1024;
+      const y = (1 - uv.y) * 768;
+      if (x >= 935 && x <= 963 && y >= 100 && y <= 700) {
+        menuScrollDragging = true;
+        return;
+      }
     }
-
-    selectedObject = root;
-    return;
   }
 
+  // existing object hit logic
+  const hits = raycaster.intersectObjects(objects, true);
+  if (hits.length) {
+    let root = hits[0].object;
+    while (root.parent && !objects.includes(root)) root = root.parent;
+    selectedObject = root;
+    switchPlacementForObject(root);
+    return;
+  }
   selectedObject = null;
 });
 
 window.addEventListener("pointerup", () => {
   dragging = false;
+  menuScrollDragging = false;
 });
-
 window.addEventListener("pointercancel", () => {
   dragging = false;
+  menuScrollDragging = false;
 });
 
 /* =========================
@@ -2399,6 +2449,11 @@ renderer.setAnimationLoop(async (_, frame) => {
 
   if (!session || !frame) {
     updateSelectorDot(selectedObject, camera);
+    if (interactionEnabled && !reticle.visible) {
+      reticle.visible = true;
+      reticle.position.copy(camPos).add(forward.clone().multiplyScalar(0.9));
+      applyDynamicScale(reticle.position);
+    }
     renderer.render(scene, camera);
     return;
   }
@@ -2434,7 +2489,7 @@ renderer.setAnimationLoop(async (_, frame) => {
 
   function applyDynamicScale(targetPos) {
     const dist = camPos.distanceTo(targetPos);
-    const s = Math.max(dist, 0.5) * 1.2;
+    const s = Math.max(dist, 0.5) * 0.04; 
     reticle.scale.set(s, s, s);
   }
 
@@ -2549,6 +2604,25 @@ renderer.setAnimationLoop(async (_, frame) => {
   }
 }
 
+// hold-to-scroll
+if (menuScrollDragging && menu.visible) {
+  const hit = raycaster.intersectObject(menu);
+  if (hit.length) {
+    const uv = hit[0].uv;
+    const y = (1 - uv.y) * 768;
+    const clampedY = Math.max(100, Math.min(700, y));
+    const totalItems = allProducts.length;
+    const maxScroll = Math.max(0, totalItems - 6);
+    if (maxScroll > 0) {
+      const trackH = 600;
+      const thumbH = Math.max(70, (6 / totalItems) * trackH);
+      const ratio = (clampedY - 100 - thumbH / 2) / (trackH - thumbH);
+      menuScroll = Math.max(0, Math.min(maxScroll, Math.round(ratio * maxScroll)));
+      drawMenu();
+    }
+  }
+}
+
   /* =====================================
      SKY / NO SURFACE FALLBACK
      always visible in front of camera
@@ -2576,16 +2650,18 @@ renderer.setAnimationLoop(async (_, frame) => {
   /* =====================================
      DRAG
   ===================================== */
-  if (dragging && selectedObject && detectedPlacement === "FLOOR") {
+ if (dragging && selectedObject && placementStatus === "READY") {
+    const placement = selectedObject.userData.placement || "FLOOR";
+    if (placement === "FLOOR" || placement === "CEILING") {
+      selectedObject.position.x = reticle.position.x + dragOffset.x;
+      selectedObject.position.z = reticle.position.z + dragOffset.z;
+    } else {
+      selectedObject.position.copy(reticle.position).add(dragOffset);
+    }
+  }
 
-  selectedObject.position.x =
-    reticle.position.x + dragOffset.x;
-
-  selectedObject.position.z =
-    reticle.position.z + dragOffset.z;
-} 
   // Auto-spoken hints when detection takes too long
-  if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement) {
+  if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement && hintsEnabled) {
     if (!searchStartedAt) searchStartedAt = Date.now();
     const elapsed = Date.now() - searchStartedAt;
     if (hintsSpoken < HINT_TIMES_MS.length && elapsed > HINT_TIMES_MS[hintsSpoken]) {
