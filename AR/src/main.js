@@ -11,6 +11,9 @@ const API = "https://control-parole-grandkid.ngrok-free.dev";
 /* =========================
    AUTH / URL PARAMS / OTHER VARS
 ========================= */
+let searchStartedAt = null;
+let hintsSpoken = 0;
+const HINT_TIMES_MS = [15000, 35000, 60000]; // when to speak hints, in ms after search starts  
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 const userId = params.get("userId");
@@ -489,6 +492,25 @@ function speak(text) {
   const en = voices.find(v => v.lang?.startsWith("en"));
   if (en) u.voice = en;
   window.speechSynthesis.speak(u);
+}
+
+function generateSearchHint(placement, level) {
+  if (placement === "FLOOR") {
+    return level === 1
+      ? "I'm still looking for the floor. Try moving your phone slowly while pointing at the ground."
+      : "Still no floor. Try taking a step, or aim at a different patch with more texture, or try aiming at a different area of the floor.";
+  }
+  if (placement === "WALL") {
+    return level === 1
+      ? "I'm still looking for a wall. Pan your phone slowly sideways across it, don't just rotate."
+      : "Walls are tricky. Step back a bit, aim at a wall with some texture, and pan sideways slowly, or try a different wall.";
+  }
+  if (placement === "CEILING") {
+    return level === 1
+      ? "I'm still looking for the ceiling. Look up and pan your phone slowly across it."
+      : "Try aiming at a fixture or detail on the ceiling — plain ceilings are hard to detect, or try aiming at a different area of the ceiling with more texture.";
+  }
+  return "I'm still looking for a surface. Move your phone slowly and try again.";
 }
 
 async function handleVoiceQuestion(question) {
@@ -2344,6 +2366,8 @@ renderer.xr.addEventListener("sessionend", () => {
   arBtn.style.display = "block";
   document.getElementById("arIntro")?.style.setProperty("display", "flex");
   if (placementToast) { placementToast.remove(); placementToast = null; }
+  searchStartedAt = null;
+  hintsSpoken = 0;
 });
 
 /* =========================
@@ -2410,8 +2434,7 @@ renderer.setAnimationLoop(async (_, frame) => {
 
   function applyDynamicScale(targetPos) {
     const dist = camPos.distanceTo(targetPos);
-    // keep apparent size roughly constant — bigger at distance
-    const s = Math.max(dist, 0.5) * 1.8;
+    const s = Math.max(dist, 0.5) * 1.2;
     reticle.scale.set(s, s, s);
   }
 
@@ -2495,36 +2518,36 @@ renderer.setAnimationLoop(async (_, frame) => {
   }
 
   /* GROUND HIT TEST */
-  if (!snapped) {
-    const hits = frame.getHitTestResults(hitTestSource);
-    if (hits.length) {
-      // find the closest hit matching the required surface
-      let matched = null;
-      let matchedNormal = null;
-      for (const h of hits) {
-        const pose = h.getPose(referenceSpace);
-        const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
-        const n = new THREE.Vector3().setFromMatrixColumn(m, 1).normalize();
-        const surface = classifySurface(n);
-        if (surface === requiredPlacement) {
-          matched = { pose, matrix: m };
-          matchedNormal = n;
-          break;
-        }
-      }
-      if (matched) {
-        reticle.position.setFromMatrixPosition(matched.matrix);
-        reticle.quaternion.setFromUnitVectors(
-          new THREE.Vector3(0, 0, 1),
-          matchedNormal
-        );
-        detectedPlacement = requiredPlacement;
-        placementStatus = "READY";
-        applyDynamicScale(reticle.position);
-        snapped = true;
+ if (!snapped) {
+  const hits = frame.getHitTestResults(hitTestSource);
+  if (hits.length) {
+    let matched = null;
+    let matchedNormal = null;
+    let matchedY = Infinity;
+    for (const h of hits) {
+      const pose = h.getPose(referenceSpace);
+      const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
+      const n = new THREE.Vector3().setFromMatrixColumn(m, 1).normalize();
+      const surface = classifySurface(n);
+      if (surface !== requiredPlacement) continue;
+
+      const y = m.elements[13]; // translation Y
+      if (requiredPlacement === "FLOOR") {
+        if (y < matchedY) { matched = { pose, matrix: m }; matchedNormal = n; matchedY = y; }
+      } else if (!matched) {
+        matched = { pose, matrix: m }; matchedNormal = n;
       }
     }
+    if (matched) {
+      reticle.position.setFromMatrixPosition(matched.matrix);
+      reticle.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), matchedNormal);
+      detectedPlacement = requiredPlacement;
+      placementStatus = "READY";
+      applyDynamicScale(reticle.position);
+      snapped = true;
+    }
   }
+}
 
   /* =====================================
      SKY / NO SURFACE FALLBACK
@@ -2533,7 +2556,7 @@ renderer.setAnimationLoop(async (_, frame) => {
   if (!snapped) {
     reticle.position.copy(camPos).add(
       forward.clone().multiplyScalar(
-        0.5
+        0.9
       )
     );
 
@@ -2560,7 +2583,24 @@ renderer.setAnimationLoop(async (_, frame) => {
 
   selectedObject.position.z =
     reticle.position.z + dragOffset.z;
-}
+} 
+  // Auto-spoken hints when detection takes too long
+  if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement) {
+    if (!searchStartedAt) searchStartedAt = Date.now();
+    const elapsed = Date.now() - searchStartedAt;
+    if (hintsSpoken < HINT_TIMES_MS.length && elapsed > HINT_TIMES_MS[hintsSpoken]) {
+      const hint = generateSearchHint(requiredPlacement, hintsSpoken + 1);
+      hintsSpoken++;
+      speak(hint);
+      chatHistory.push({ role: "assistant", text: hint });
+      rerenderChatIfOpen();
+    }
+  }
+
+  if (placementStatus === "READY") {
+    searchStartedAt = null;
+    hintsSpoken = 0;
+  }
 
   if (placementStatus === "READY" && placementToast) {
     placementToast.remove();

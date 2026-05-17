@@ -8,6 +8,7 @@ import MarketingView from './views/MarketingView';
 import UsersManagerView from './views/UsersManagerView';
 import FeaturedManagerView from './views/FeaturedManagerView';
 import ARManagerView from './views/ARManagerView';
+import SupportManagerView from './views/SupportManagerView';
 import styles from './DashboardLayout.module.css';
 
 // ===============================
@@ -33,9 +34,10 @@ const checkTokenExpiration = (onExpire) => {
 // ROLE PERMISSIONS
 // ===============================
 const rolePermissions = {
-  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured"],
+  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support"],
   PRODUCT_MANAGER: ["products", "ar"],
   MARKETING_MANAGER: ["marketing", "featured"],
+  SUPPORT_MANAGER: ["support"],
   USER: []
 };
 
@@ -56,6 +58,8 @@ const DashboardLayout = () => {
     if (newRole === "ADMIN") navigate("/dashboard/overview", { replace: true });
     else if (newRole === "PRODUCT_MANAGER") navigate("/dashboard/products", { replace: true });
     else if (newRole === "MARKETING_MANAGER") navigate("/dashboard/marketing", { replace: true });
+    else if (newRole === "SUPPORT_MANAGER") navigate("/dashboard/support", { replace: true });
+    else navigate("/login", { replace: true });
   };
 
   // ===============================
@@ -181,6 +185,10 @@ const DashboardLayout = () => {
 
               {permissions.includes("featured") && (
                 <Route path="featured" element={<FeaturedManagerView />} />
+              )}
+
+              {permissions.includes("support") && (
+                <Route path="support" element={<SupportManagerView />} />
               )}
             </Routes>
           </div>

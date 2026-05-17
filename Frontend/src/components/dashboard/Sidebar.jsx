@@ -8,7 +8,8 @@ import {
   Box,
   Ticket,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessagesSquare
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -19,6 +20,7 @@ const allMenuItems = [
   { id: 'ar', name: 'AR Support', path: 'ar', icon: Box },
   { id: 'marketing', name: 'Discounts', path: 'marketing', icon: Ticket },
   { id: 'featured', name: 'Featured', path: 'featured', icon: Star },
+  { id: 'support', name: 'Support', path: 'support', icon: MessagesSquare },
 ];
 
 const Sidebar = ({ role, permissions = [] }) => {

@@ -1217,3 +1217,92 @@ td, th {
 .sizeRow span {
   margin-top: 25%;
 }
+
+.supportList { display: grid; gap: 0.75rem; margin-top: 1rem; }
+.supportCard {
+  background: #fff; border: 1px solid #e5e5e5; border-radius: 12px;
+  padding: 1rem 1.25rem; cursor: pointer; transition: 0.15s;
+}
+.supportCard:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.supportCardTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.supportTopic { background: #eef2ff; color: #3730a3; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+.statusOpen { background: #fef3c7; color: #92400e; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+.statusResponded { background: #d1fae5; color: #065f46; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+.supportTitle { margin: 0 0 0.4rem; font-size: 1rem; }
+.supportPreview { margin: 0; color: #666; font-size: 0.9rem; line-height: 1.4; }
+.supportMeta { margin-top: 0.5rem; font-size: 0.78rem; color: #999; }
+.supportOriginal { background: #f9fafb; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; }
+.supportOriginal strong { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; opacity: 0.7; }
+.supportOriginal pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: 0.92rem; }
+/* Override the global table rule's leak into pre */
+.supportOriginal pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: visible !important;
+  max-width: none !important;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #222;
+  background: transparent;
+  border: none;
+  display: block;
+  line-height: 1.5;
+}
+.supportOriginal {
+  background: #f9fafb;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  margin: 0.5rem 0 1.5rem;
+}
+.supportOriginal strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+}
+
+.responseField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+.responseField label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2a2a2a;
+}
+.responseField label em {
+  font-weight: 400;
+  font-style: normal;
+  color: #999;
+  font-size: 0.85rem;
+}
+.responseField textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 160px;
+  outline: none;
+  background: #fff;
+  color: #1a1a1a;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+.responseField textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(248, 157, 0, 0.1);
+}
+.responseField textarea::placeholder { color: #aaa; }

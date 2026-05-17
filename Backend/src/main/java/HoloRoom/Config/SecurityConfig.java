@@ -81,8 +81,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/update/name/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/users/update/shipping/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/users/update/image/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
-
-                //change when done with app
+                
                 .requestMatchers("/api/cart/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/cartitem/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/orders/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
@@ -108,6 +107,14 @@ public class SecurityConfig {
                     .hasAnyRole("MARKETING_MANAGER", "ADMIN")
                 .requestMatchers("/api/featured/**")
                     .hasAnyRole("MARKETING_MANAGER", "ADMIN")
+
+
+                // =====================================
+                // Customer SUPPORT
+                // =====================================
+                .requestMatchers("/api/support/messages/**")
+                    .hasAnyRole("USER", "SUPPORT_MANAGER", "ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
+
 
 
                 // =====================================

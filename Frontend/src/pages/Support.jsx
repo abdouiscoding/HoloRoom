@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
 import { LifeBuoy, Send, MessageSquare, CheckCircle } from 'lucide-react';
 import styles from './Support.module.css';
 import { API, myFetch } from '../api';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 const TOPICS = [
   { value: '', label: 'Select a topic' },
@@ -27,6 +29,15 @@ function getExtraField(topic) {
 }
 
 const Support = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    if (!token || !userId) {
+      navigate('/login', { state: { from: '/support' } });
+    }
+  }, [navigate]);
   const [topic, setTopic] = useState('');
   const [extra, setExtra] = useState('');
   const [title, setTitle] = useState('');
@@ -63,19 +74,21 @@ const Support = () => {
     try {
       const res = await myFetch(`${API}/api/support/messages/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic,
-          title: title.trim(),
+          Title: title.trim(),
           message: fullMessage,
-          userId: userId ? parseInt(userId) : null,
+          userId: parseInt(localStorage.getItem('userId')),
         }),
       });
       if (!res.ok) throw new Error('Failed');
       setSent(true);
       setTopic(''); setExtra(''); setTitle(''); setMessage('');
     } catch (e) {
-      alert('Could not send your ticket. Please try again.');
+      alert(e.message || 'An error occurred while sending your ticket. Please try again later.');
     } finally {
       setSending(false);
     }
@@ -94,7 +107,7 @@ const Support = () => {
       {sent && (
         <div className={styles.successBanner}>
           <CheckCircle size={18} />
-          <span>Your ticket has been sent. We'll get back to you soon.</span>
+          <span>Your ticket has been sent. We'll receive an email once one of our staff members responds.</span>
         </div>
       )}
 

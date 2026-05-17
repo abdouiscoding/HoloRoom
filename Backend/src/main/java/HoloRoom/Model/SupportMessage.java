@@ -1,9 +1,12 @@
 package HoloRoom.Model;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -21,6 +24,8 @@ public class SupportMessage {
 
     private Long userId;
 
+    private LocalDateTime Date;
+
     private String Status = "Open";
 
     // Constructors, getters, and setters
@@ -32,6 +37,15 @@ public class SupportMessage {
         this.Title = Title;
         this.message = message;
         this.userId = userId;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.Date = LocalDateTime.now();
+    }
+
+    public LocalDateTime getDate() {
+        return Date;
     }
 
     public Long getId() {
