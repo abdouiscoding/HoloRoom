@@ -1,10 +1,9 @@
 import React from 'react';
-import { Search } from 'lucide-react';
 import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
-const Header = ({ role, changeRole }) => {
+const Header = ({ role, changeRole, onMenuClick }) => {
   const navigate = useNavigate();
 
   return (
@@ -14,7 +13,6 @@ const Header = ({ role, changeRole }) => {
       </button>
 
       <div className={styles.headerRight}>
-        {/* Role Switcher */}
         <div className={styles.roleSwitcher}>
           <label>Role:</label>
           <label>{localStorage.getItem("role")}</label>
@@ -22,7 +20,7 @@ const Header = ({ role, changeRole }) => {
 
         <div className={styles.profileSection} onClick={() => navigate('/profile')}>
           <div className={styles.avatar}>
-            <img className={styles.avatar} src={localStorage.getItem("userImage")}/>
+            <img className={styles.avatar} src={localStorage.getItem("userImage")} />
           </div>
           <div className={styles.profileInfo}>
             <span className={styles.profileName}>{localStorage.getItem("userName")}</span>

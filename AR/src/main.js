@@ -377,7 +377,7 @@ intro.appendChild(arBtn);
 arBtn.style.cssText = `
   position: static !important;
   margin: 0 !important;
-  padding: 16px 36px !important;
+  padding: 8px 36px !important;
   border: none !important;
   border-radius: 999px !important;
   background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%) !important;

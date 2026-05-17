@@ -43,7 +43,7 @@ const rolePermissions = {
 
 const DashboardLayout = () => {
   const [showSessionPopup, setShowSessionPopup] = useState(false);
-  const [collapsed, setCollapsed] = useState(false); // ✅ NEW
+  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,7 +159,11 @@ const DashboardLayout = () => {
         />
 
         <div className={styles.mainContent}>
-          <Header role={role} changeRole={changeRole} onMenuClick={() => setCollapsed(c => !c)} />
+          <Header
+            role={role}
+            changeRole={changeRole}
+            onMenuClick={() => setCollapsed(c => !c)}
+          />
 
           <div className={styles.pageContent}>
             <Routes>

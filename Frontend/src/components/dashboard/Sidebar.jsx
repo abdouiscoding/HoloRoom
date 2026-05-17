@@ -23,9 +23,8 @@ const allMenuItems = [
   { id: 'support', name: 'Support', path: 'support', icon: MessagesSquare },
 ];
 
-const Sidebar = ({ role, permissions = [] }) => {
+const Sidebar = ({ role, permissions = [], collapsed, setCollapsed }) => {
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
 
   const currentMenu = allMenuItems.filter(item =>
     permissions.includes(item.id)
@@ -37,27 +36,20 @@ const Sidebar = ({ role, permissions = [] }) => {
         collapsed ? styles.collapsed : ''
       }`}
     >
-      {/* HEADER */}
       <div className={styles.logoArea}>
-        <div
-          className={styles.logoLeft}
-          onClick={() => navigate('/')}
-        >
+        <div className={styles.logoLeft} onClick={() => navigate('/')}>
           <Box size={30} className={styles.logoIcon} />
           {!collapsed && <h3 className={styles.logoText}>HoloRoom</h3>}
         </div>
-
       </div>
 
-      {/* COLLAPSE BUTTON */}
-        <button
-          className={styles.navItem}
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+      <button
+        className={styles.navItem}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+      </button>
 
-      {/* NAV */}
       <nav className={styles.navMenu}>
         {currentMenu.map((item) => (
           <NavLink

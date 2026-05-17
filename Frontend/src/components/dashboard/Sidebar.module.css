@@ -1,5 +1,115 @@
 .sidebarContainer {
   width: 18%;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border-glass);
+  padding: var(--spacing-xl) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.collapsed {
+  width: 7%;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-2xl);
+  padding: 0 var(--spacing-sm);
+}
+
+.logoIcon {
+  color: var(--accent-primary);
+}
+
+.logoText {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+
+.collapsed .navItem {
+  justify-content: center;
+}
+
+.navIcon {
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.navItem:hover {
+  background: rgba(36, 69, 104, 0.04);
+  color: var(--text-primary);
+}
+
+.navItem:hover .navIcon {
+  color: var(--accent-primary);
+}
+
+.navItem.active {
+  background: white;
+  color: var(--text-primary);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.navItem.active .navIcon {
+  color: var(--accent-primary);
+}
+
+.logoLeft {
+  display: grid;
+  grid-template-columns: 20% 79% 1%;
+}
+
+.logoLeft:hover {
+  cursor: pointer;
+}
+
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 157, 0, 0.3);
+}
+
+.sidebarContainer {
+  width: 18%;
   min-width: 220px;
   background: var(--bg-glass);
   backdrop-filter: blur(16px);

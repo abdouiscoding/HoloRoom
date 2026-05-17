@@ -25,8 +25,6 @@ const ROOM_SPOTS = {
   ],
   kitchen: [
     { key: "dining_table", label: "Dining table" },
-    { key: "dining_chair_1", label: "Dining chair" },
-    { key: "dining_chair_2", label: "Dining chair" },
     { key: "bar_stool", label: "Bar stool" },
     { key: "cabinet", label: "Kitchen cabinet / sideboard" },
     { key: "pendant_light", label: "Pendant ceiling light" },
@@ -36,7 +34,6 @@ const ROOM_SPOTS = {
     { key: "office_chair", label: "Office chair" },
     { key: "desk_lamp", label: "Small desk lamp (sits on the desk)" },
     { key: "bookshelf", label: "Tall bookshelf" },
-    { key: "monitor", label: "Monitor (sits on the desk)" },
     { key: "floor_plant", label: "Floor plant" },
     { key: "carpet", label: "clean carpet"}
   ],

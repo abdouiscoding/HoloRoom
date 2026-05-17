@@ -835,7 +835,7 @@ const Cart = () => {
                 </div>
 
                 <p className={styles.cardNote}>
-                  🔒 Demo form — for real payments integrate Stripe or a licensed local gateway.
+                  🔒 Demo form
                 </p>
               </div>
             )}

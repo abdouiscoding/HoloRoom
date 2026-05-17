@@ -53,7 +53,7 @@ const Footer = () => {
         <div className={styles.linkCol}>
           <h3>Get in touch</h3>
           <ul className={styles.contactList}>
-            <li><Mail size={14} /> support@holoroom.app</li>
+            <li><Mail size={14} /> holoroom.code@gmail.com</li>
             <li><MapPin size={14} /> Algeria</li>
           </ul>
         </div>
