@@ -41,6 +41,11 @@ public class OrdersService {
         return ordersRepository.findByUserId(userId);
     }
 
+    public boolean userHasOrders(Long userId) {
+        Orders order = ordersRepository.findByUserId(userId);
+        return order != null && order.getOrderItems() != null && !order.getOrderItems().isEmpty();
+    }
+
     public void addorderitemtolist(Long userId, OrdersItem item) {
         Orders orderlist = ordersRepository.findByUserId(userId);
 

@@ -88,6 +88,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/reviews/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
                 .requestMatchers("/api/wishlist/**").hasAnyRole("USER","ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
 
+                .requestMatchers("/api/logs/create").authenticated()
+                .requestMatchers("/api/logs/all", "/api/logs/user/**", "/api/logs/{id}", "/api/logs/delete/**")
+                    .hasRole("ADMIN")
+
                 // =====================================
                 // PRODUCT MANAGER
                 // =====================================

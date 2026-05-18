@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 // --- COMPONENTS ---
 
@@ -119,7 +119,8 @@ export const LoginPage = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ info, userPassword })
-            }); 
+            }
+        ); 
 
             const data = await response.json();
             if (!response.ok) {
@@ -145,8 +146,10 @@ export const LoginPage = () => {
                 localStorage.setItem("userImage", userData.userImage);
                 localStorage.setItem("role", userData.userRole);
                 localStorage.setItem("loggedin", "true");
+                localStorage.setItem("creationdate", userData.creationdate);
 
                 showToast("Login successful", "success");
+                logAction("LOGIN", `User ${userData.userName} logged in`)
                 navigate(-1);
                 setTimeout(() => window.location.reload(), 1000);
             } else {
@@ -191,7 +194,8 @@ export const LoginPage = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: userEmail, code: verificationCode })
-            });
+            }
+        );
 
             const data = await response.json();
             if (!response.ok) {
@@ -201,6 +205,7 @@ export const LoginPage = () => {
             }
 
             showToast("Account verified! You can now sign in.", "success");
+            logAction("ACCOUNT_CREATED", `A new account have been created with the email: ${userEmail}`);
             setShowVerifyModal(false);
             setVerificationCode("");
             setView("signin");
@@ -245,6 +250,7 @@ export const LoginPage = () => {
         if (!codeRes.ok) throw new Error();
 
         showToast("Password reset email sent, check your inbox!", "success");
+        logAction("PASSWORD_RESET_REQUEST", `User ${user.userName} requested a password reset`);
         setShowForgotModal(false);
         setForgotEmail("");
 

@@ -4,7 +4,8 @@ import styles from "./ProfilePage.module.css";
 import { useWishlist } from "../context/WishlistContext";
 import { useOrders } from "../context/OrdersContext";
 import { Trash2, Eye, EyeOff, X } from "lucide-react";
-import { API, myFetch } from "../api";
+import { API, myFetch, logAction } from "../api";
+import { log } from "three";
 
 const Logout = () => {
   localStorage.clear();
@@ -109,10 +110,12 @@ const ProfilePage = () => {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userName: newName }),
-      });
+      }
+    );
       if (!res.ok) throw new Error();
       const data = await res.json();
       localStorage.setItem("userName", data.userName);
+      logAction("UPDATE_USERNAME", `User ${localStorage.getItem("userName")} changed username to ${newName}`);
       setIsUsernameModalOpen(false);
     } catch {
       alert("Failed to update username");
@@ -125,11 +128,13 @@ const ProfilePage = () => {
       const codeRes = await myFetch(`${API}/api/users/emailcode/${userId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+    );
       if (!codeRes.ok) throw new Error();
     } catch {
       alert("Failed to send code");
     }
+    logAction("EMAIL_CHANGE_REQUEST", `User ${localStorage.getItem("userEmail")} requested email change`);
   };
 
   const updatepassword = async () => {
@@ -138,11 +143,13 @@ const ProfilePage = () => {
       const codeRes = await myFetch(`${API}/api/users/passwordcode/${userId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+    );
       if (!codeRes.ok) throw new Error();
     } catch {
       alert("Failed to send code");
     }
+    logAction("PASSWORD_RESET_REQUEST", `User ${localStorage.getItem("userName")} requested password reset`);
   };
 
   const updateshipping = async () => {
@@ -151,7 +158,9 @@ const ProfilePage = () => {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ shipping: `${newaddress} ${newplace}` }),
-      });
+      },
+      logAction("UPDATE_SHIPPING", `User ${localStorage.getItem("userName")} updated shipping address`)
+    );
       if (!res.ok) throw new Error();
       const data = await res.json();
       localStorage.setItem("shipping", data.shipping);
@@ -169,7 +178,9 @@ const ProfilePage = () => {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
-      });
+      },
+      logAction("UPDATE_PROFILE_IMAGE", `User ${localStorage.getItem("userName")} updated profile image`)
+    );
       if (!res.ok) throw new Error("Failed to update image");
       const data = await res.json();
       setProfileImage(data.userImage);

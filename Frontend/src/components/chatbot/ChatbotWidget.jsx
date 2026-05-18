@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react';
 import styles from './ChatbotWidget.module.css';
-import { API, address, myFetch } from "../../api";
+import { API, address, myFetch, logAction } from "../../api";
 
 const token = localStorage.getItem("token");
 
@@ -68,7 +68,8 @@ const ChatbotWidget = () => {
           message: text,
           history
         })
-      });
+      } 
+       );
 
       const raw = await res.text();
 
@@ -79,6 +80,7 @@ const ChatbotWidget = () => {
       });
 
       try {
+        logAction("CHAT_WITH_AI", `User ${localStorage.getItem("userName")} sent a message to AI: ${text.slice(0, 80)}`);
         return raw;
       } catch {
         return JSON.stringify({
@@ -240,7 +242,7 @@ const ChatbotWidget = () => {
                   <Sparkles size={16} />
                 </div>
                 <div>
-                  <h4>AI Assistant</h4>
+                  <h4>HoloRoom Assistant</h4>
                   <span className={styles.status}>Online</span>
                 </div>
               </div>

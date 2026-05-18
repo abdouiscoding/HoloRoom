@@ -83,7 +83,9 @@ const Support = () => {
           message: fullMessage,
           userId: parseInt(localStorage.getItem('userId')),
         }),
-      });
+      },
+      logAction("CREATE_TICKET", `User ${localStorage.getItem("userName")} created a support ticket: ${topic} — ${title.trim()}`)
+    );
       if (!res.ok) throw new Error('Failed');
       setSent(true);
       setTopic(''); setExtra(''); setTitle(''); setMessage('');

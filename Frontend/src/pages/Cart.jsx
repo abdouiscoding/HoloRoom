@@ -12,7 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import styles from "./Cart.module.css";
 import { useCart } from "../context/CartContext";
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 const UPLOADS_BASE = `${API}/api/uploads/images/`;
 
@@ -135,6 +135,29 @@ const Cart = () => {
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;
 
+    const log = async () => {
+        if (userId && token) {
+          try {
+            await myFetch(`${API}/api/logs/create`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+                "ngrok-skip-browser-warning": "true",
+              },
+              body: JSON.stringify({
+                action: "AR_PREVIEW",
+                details: "Clicked AR preview for product " + product.pName ,
+                userId: parseInt(userId),
+              }),
+            });
+          } catch (e) {
+            console.warn("log failed:", e);
+          }
+        }
+    };
+    log();
+
   window.location.href = arUrl;
   };
 
@@ -205,8 +228,9 @@ const Cart = () => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    });
-
+    }
+  );
+    logAction("CLEAR_CART", `User ${localStorage.getItem("userName")} cleared their cart`);
     fetchCart();
   };
 

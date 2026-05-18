@@ -12,7 +12,7 @@ import {
 import styles from './ProductDetail.module.css';
 import { useReviews } from '../context/ReviewsContext';
 import ReviewModal from '../components/product/ReviewModal';
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 
 const ProductDetail = () => {
@@ -206,6 +206,7 @@ const ProductDetail = () => {
           'Item added to wishlist successfully.',
           'ok'
         );
+        logAction("ADD_TO_WISHLIST", `User ${localStorage.getItem("userName")} added ${product.name} to wishlist`);
       } else if (
         response.status === 409 ||
         text.toLowerCase().includes('exists')
@@ -302,6 +303,7 @@ const ProductDetail = () => {
           'Item removed from wishlist.',
           'ok'
         );
+        logAction("REMOVE_FROM_WISHLIST", `User ${localStorage.getItem("userName")} removed ${product.name} from wishlist`);
       } else {
         const txt = await removeRes.text();
 
@@ -455,6 +457,7 @@ const ProductDetail = () => {
           'Item added to cart successfully.',
           'ok'
         );
+        logAction("ADD_TO_CART", `Added product #${product.pName} (variant ${selectedVariant.pscsId}) to cart`);
       }
       else {
         openPopup(
@@ -504,6 +507,29 @@ const openAR = () => {
     `?token=${encodeURIComponent(token)}` +
     `&userId=${encodeURIComponent(userId)}` +
     `&productId=${encodeURIComponent(productId)}`;
+
+    const log = async () => {
+    if (userId && token) {
+      try {
+        await myFetch(`${API}/api/logs/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({
+            action: "AR_PREVIEW",
+            details: "Clicked AR preview for product " + product.pName ,
+            userId: parseInt(userId),
+          }),
+        });
+      } catch (e) {
+        console.warn("log failed:", e);
+      }
+    }
+  };
+  log();
 
   window.location.href = arUrl;
 };

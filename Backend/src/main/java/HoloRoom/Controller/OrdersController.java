@@ -57,6 +57,12 @@ public class OrdersController {
         return new ResponseEntity<>(orderItems, HttpStatus.OK);
     }
 
+    @GetMapping("/userhas/{userId}")
+    public ResponseEntity<Boolean> userHasOrders(@PathVariable Long userId) {
+        boolean hasOrders = ordersService.userHasOrders(userId);
+        return new ResponseEntity<>(hasOrders, HttpStatus.OK);
+    }
+
     // POST create order item /add it to user list
     @PostMapping("/create/{userId}")
     public ResponseEntity<OrdersItem> createOrderItem(@PathVariable Long userId, @RequestBody OrdersItem orderItem) {

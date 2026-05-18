@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 const CartContext = createContext();
 
@@ -55,9 +55,11 @@ export const CartProvider = ({ children }) => {
             Authorization: `Bearer ${token}`
           }
         }
+        
       );
 
       if (!res.ok) return;
+      logAction("REMOVE_FROM_CART", `User ${localStorage.getItem("userName")} removed cart item #${cartItemId}`);
 
       // update UI instantly (no refetch spam)
       setCart(prev => {
@@ -71,7 +73,7 @@ export const CartProvider = ({ children }) => {
           ...prev,
           items: newItems,
           total: newItems.reduce(
-            (sum, i) => sum + i.price * i.quantity,
+            (sum, i) => sum + i.subtotal * i.quantity,
             0
           )
         };

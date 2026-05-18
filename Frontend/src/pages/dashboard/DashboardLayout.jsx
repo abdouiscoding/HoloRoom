@@ -33,8 +33,10 @@ const checkTokenExpiration = (onExpire) => {
 // ===============================
 // ROLE PERMISSIONS
 // ===============================
+import LogsView from './views/LogsView';
+
 const rolePermissions = {
-  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support"],
+  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support", "logs"],
   PRODUCT_MANAGER: ["products", "ar"],
   MARKETING_MANAGER: ["marketing", "featured"],
   SUPPORT_MANAGER: ["support"],
@@ -177,6 +179,10 @@ const DashboardLayout = () => {
 
               {permissions.includes("users") && (
                 <Route path="users" element={<UsersManagerView />} />
+              )}
+
+              {permissions.includes("logs") && (
+                <Route path="logs" element={<LogsView />} />
               )}
 
               {permissions.includes("ar") && (

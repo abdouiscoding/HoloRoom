@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { API, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 const OrdersContext = createContext();
 
@@ -40,9 +40,11 @@ export const OrdersProvider = ({ children }) => {
       const res = await myFetch(`${API}/api/orders/cancel/${orderItemId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+      );
       if (!res.ok) throw new Error("Failed to cancel order");
       await fetchOrders();
+      logAction("CANCEL_ORDER", `User ${localStorage.getItem("userName")} canceled order item #${orderItemId}`);
       return true;
     } catch (err) {
       console.error("Cancel order error:", err);

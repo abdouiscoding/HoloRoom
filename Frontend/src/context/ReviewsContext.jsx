@@ -6,7 +6,7 @@ import React, {
   useCallback
 } from 'react';
 import { Navigate } from 'react-router-dom';
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 const ReviewsContext = createContext();
 
@@ -83,7 +83,7 @@ export const ReviewsProvider = ({ children }) => {
               : ''
           },
           body: JSON.stringify({
-            userName: localStorage.userName,
+            userName: localStorage.getItem("userName"),
             pRating: parseInt(rating),
             pComment: reviewText
           })
@@ -92,6 +92,7 @@ export const ReviewsProvider = ({ children }) => {
 
       if (response.ok) {
         await fetchAllReviews();
+        logAction("ADD_REVIEW", `User ${localStorage.getItem("userName")} reviewed product #${productId}: ${rating}/5 — ${reviewText.slice(0, 80)}`);
 
         return { success: true };
       }

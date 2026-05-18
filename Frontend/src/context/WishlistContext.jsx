@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { API, address, myFetch } from "../api";
+import { API, address, myFetch, logAction } from "../api";
 
 const WishlistContext = createContext();
 
@@ -85,6 +85,7 @@ export const WishlistProvider = ({ children }) => {
       setWishlistItems(prev =>
         prev.filter(i => i.id !== productId)
       );
+      logAction("REMOVE_FROM_WISHLIST", `User ${localStorage.getItem("userName")} removed ${item.name} from wishlist`);
     } catch (err) {
       console.error(err);
     }
