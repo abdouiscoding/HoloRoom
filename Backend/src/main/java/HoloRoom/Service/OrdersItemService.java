@@ -116,11 +116,16 @@ public class OrdersItemService {
         }
 
         List<Item> orderItems = new ArrayList<>();
+        int discount = (coupondiscount == null) ? 0 : coupondiscount;
+
         for (PCartItem ci : cart.getItems()) {
+            int discountedPrice = (int) Math.round(
+                ci.getPrice() * (100 - discount) / 100.0
+            );
             Item item = new Item(
                 ci.getProduct().getProductId(),
                 ci.getName(),
-                ci.getPrice()*(100 - coupondiscount/100),
+                discountedPrice,
                 ci.getQuantity(),
                 ci.getPscs().getPscsId()
             );
