@@ -125,7 +125,11 @@ public class OrdersController {
             @PathVariable Long userId,
             @RequestBody CheckoutRequest request) {
         try {
-            OrdersItem saved = ordersItemService.checkoutFromCart(userId, request.getCartId());
+            OrdersItem saved = ordersItemService.checkoutFromCart(
+                userId,
+                request.getCartId(),
+                request.getCouponDiscount() == null ? 0 : request.getCouponDiscount()
+            );
             return saved != null
                     ? new ResponseEntity<>(saved, HttpStatus.CREATED)
                     : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -139,11 +143,14 @@ public class OrdersController {
     public static class CheckoutRequest {
         private Long cartId;
         private String paymentMethod;
+        private Integer couponDiscount; // 0–35
 
         public Long getCartId() { return cartId; }
         public void setCartId(Long cartId) { this.cartId = cartId; }
         public String getPaymentMethod() { return paymentMethod; }
         public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+        public Integer getCouponDiscount() { return couponDiscount; }
+        public void setCouponDiscount(Integer couponDiscount) { this.couponDiscount = couponDiscount; }
     }
 
     // Request DTO

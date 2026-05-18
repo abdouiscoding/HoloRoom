@@ -119,7 +119,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/support/messages/**")
                     .hasAnyRole("USER", "SUPPORT_MANAGER", "ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
 
-
+                // =====================================
+                // chargily
+                // =====================================
+                .requestMatchers("/api/payment/chargily/webhook").permitAll()
+                .requestMatchers("/api/payment/chargily/create")
+                    .hasAnyRole("USER", "ADMIN", "SUPPORT_MANAGER", "MARKETING_MANAGER", "PRODUCT_MANAGER") 
 
                 // =====================================
                 // FALLBACK

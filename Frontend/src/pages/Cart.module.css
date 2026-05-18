@@ -1085,3 +1085,41 @@
 }
 .payBtn:hover { background: #000; }
 .secureNote { text-align: center; font-size: 0.8rem; color: #888; margin: 0.5rem 0 0; }
+
+.couponCard {
+  max-width: 460px;
+  text-align: center;
+  background: linear-gradient(135deg, #fff 0%, #fffbe6 100%);
+  border: 1px solid #fde68a;
+}
+
+.couponHeader {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.4rem; margin-bottom: 1rem; color: #b48a3c;
+}
+.couponHeader h2 { margin: 0; font-size: 1.4rem; color: #222; }
+
+.couponList { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.couponRow {
+  display: grid; grid-template-columns: 40px 1fr auto;
+  align-items: center; gap: 0.75rem;
+  padding: 0.75rem; background: white;
+  border: 1px solid #f1e4b8; border-radius: 12px;
+  text-align: left;
+}
+.couponIcon { font-size: 1.5rem; }
+.couponRow p { margin: 2px 0 0; font-size: 0.85rem; color: #666; }
+.couponPct {
+  background: #fef3c7; color: #92400e;
+  padding: 0.3rem 0.65rem; border-radius: 999px;
+  font-weight: 700; font-size: 0.85rem;
+}
+
+.couponSummary {
+  display: flex; justify-content: space-around;
+  padding: 0.85rem; background: #f9fafb;
+  border-radius: 10px; margin-bottom: 1rem;
+}
+.couponSummary div { display: flex; flex-direction: column; gap: 4px; }
+.couponSummary span { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.couponSummary strong { font-size: 1.15rem; }

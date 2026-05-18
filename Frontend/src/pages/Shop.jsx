@@ -100,8 +100,6 @@ const Shop = () => {
               cat?.pCategory === activeCategory
           )
         );
-
-  // sortbyrooms
 // ---------------- SORT FUNCTIONS ----------------
 const sortProducts = (type, list) => {
   let sorted = [...list];
@@ -110,26 +108,26 @@ const sortProducts = (type, list) => {
     case 'Reviews':
       sorted.sort((a, b) => (b.pRating || 0) - (a.pRating || 0));
       break;
-
     case 'Most wished for':
       sorted.sort((a, b) => (b.pWishes || 0) - (a.pWishes || 0));
       break;
-
     case 'Top selling':
       sorted.sort((a, b) => (b.pSold || 0) - (a.pSold || 0));
       break;
-
+    case 'Price low':
+      sorted.sort((a, b) => (Number(a.pFinalPrice) || 0) - (Number(b.pFinalPrice) || 0));
+      break;
+    case 'Price high':
+      sorted.sort((a, b) => (Number(b.pFinalPrice) || 0) - (Number(a.pFinalPrice) || 0));
+      break;
     case 'Discounts':
-    return list
-      .filter(p => (calctotaldis(p.pDiscount) || 0) > 0)
-      .sort((a, b) => (calctotaldis(b.pDiscount) || 0) - (calctotaldis(a.pDiscount) || 0));
-
+      return list
+        .filter(p => (calctotaldis(p.pDiscount) || 0) > 0)
+        .sort((a, b) => (calctotaldis(b.pDiscount) || 0) - (calctotaldis(a.pDiscount) || 0));
     case 'Standard':
     default:
       return list;
-    
   }
-
   return sorted;
 };
 
@@ -285,6 +283,22 @@ const toproductpage = (name, id) => {
 
       if (action === "discounts") {
         setSelectedRoom("Discounts");
+      }
+
+      if (action === "price_low") {
+        setSelectedRoom("Price low");
+      }
+      if (action === "price_high") {
+        setSelectedRoom("Price high");
+      }
+
+      if (action === "price_low" || action === "price_high") {
+        setSelectedRoom(action === "price_low" ? "Price low" : "Price high");
+        if (type && type.toLowerCase() !== "none") {
+          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === type.toLowerCase());
+          if (matchedCat) setActiveCategory(matchedCat);
+          else setSearch(type);
+        }
       }
     };
 
@@ -494,13 +508,7 @@ useEffect(() => {
                     styles.sortMenu
                   }
                 >
-                  {[
-                    'Standard',
-                    'Discounts',
-                    'Reviews',
-                    'Most wished for',
-                    'Top selling'
-                  ].map((room) => (
+                  {['Standard', 'Discounts', 'Reviews', 'Most wished for', 'Top selling', 'Price low', 'Price high'].map((room) => (
                     <button
                       key={room}
                       className={`${styles.sortMenuItem} ${

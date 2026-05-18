@@ -13,6 +13,8 @@ import { Link } from "react-router-dom";
 import styles from "./Cart.module.css";
 import { useCart } from "../context/CartContext";
 import { API, address, myFetch, logAction } from "../api";
+import confetti from 'canvas-confetti';
+import { Gift, Sparkles as SparklesIcon } from 'lucide-react';
 
 const UPLOADS_BASE = `${API}/api/uploads/images/`;
 
@@ -55,9 +57,105 @@ const Cart = () => {
 
   const [colorsMap, setColorsMap] = useState({});
 
+  const [coupons, setCoupons] = useState([]);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [showCouponPopup, setShowCouponPopup] = useState(false);
+  const [couponsChecked, setCouponsChecked] = useState(false);
+
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
   const cartId = localStorage.getItem("cartId");
+
+  const fireConfetti = () => {
+  const duration = 2000;
+  const end = Date.now() + duration;
+  (function frame() {
+    confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.6 } });
+    confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.6 } });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+};
+
+const calculateCoupons = async () => {
+  if (couponsChecked) return; // only run once per checkout open
+  setCouponsChecked(true);
+  const earned = [];
+
+  // 1. First-time buyer
+  try {
+    const res = await myFetch(`${API}/api/orders/userhas/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const hasOrders = await res.json();
+    if (!hasOrders) {
+      earned.push({
+        code: 'FIRST_ORDER',
+        icon: '🎉',
+        label: 'First Order Welcome',
+        description: 'Welcome to HoloRoom! Your first purchase comes with a special discount.',
+        percentage: 15,
+      });
+    }
+  } catch (e) { console.error('coupon check failed', e); }
+
+  // 2. Account anniversary (birthday)
+  const creationdate = localStorage.getItem('creationdate');
+  if (creationdate) {
+    try {
+      const created = new Date(creationdate);
+      const today = new Date();
+      const ageDays = (today - created) / (1000 * 60 * 60 * 24);
+      if (ageDays >= 30) {
+        const thisYearAnniv = new Date(today.getFullYear(), created.getMonth(), created.getDate());
+        const diff = Math.abs((today - thisYearAnniv) / (1000 * 60 * 60 * 24));
+        if (diff <= 7) {
+          earned.push({
+            code: 'ANNIVERSARY',
+            icon: '🎂',
+            label: 'Account Anniversary',
+            description: 'Happy account birthday! Thanks for sticking with us.',
+            percentage: 10,
+          });
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Bulk order (5+ units)
+  const itemCount = items.reduce((s, i) => s + (i.quantity || 0), 0);
+  if (itemCount >= 5) {
+    earned.push({
+      code: 'BULK_BUY',
+      icon: '📦',
+      label: 'Bulk Order Bonus',
+      description: '5 or more items in one order — thanks for stocking up.',
+      percentage: 5,
+    });
+  }
+
+  // 4. Big spender (50,000+ DZD)
+  if (subtotal >= 50000) {
+      earned.push({
+        code: 'BIG_SPENDER',
+        icon: '💎',
+        label: 'VIP Order',
+        description: 'High-value order — enjoy an extra discount.',
+        percentage: 5,
+      });
+    }
+
+    // cap combined discount at 35%
+    const totalDisc = Math.min(earned.reduce((s, c) => s + c.percentage, 0), 35);
+
+    setCoupons(earned);
+    setCouponDiscount(totalDisc);
+
+    if (earned.length > 0) {
+      setShowCouponPopup(true);
+      setTimeout(fireConfetti, 200);
+      logAction("COUPONS_APPLIED", `Earned coupons: ${earned.map(c => c.code).join(', ')} = ${totalDisc}% off`);
+    }
+  };
 
   const formatCardNumber = (v) =>
   v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
@@ -68,42 +166,64 @@ const Cart = () => {
   };
 
   const Order = async () => {
-  // basic client-side validation only — card data is NOT sent to backend
-  if (paymentMethod === "card") {
-    if (!cardNumber.trim() || !cardExpiry.trim() || !cardCvv.trim() || !cardName.trim()) {
-      alert("Please fill in all card details");
-      return;
+  // COD goes straight to your existing checkout flow
+  if (paymentMethod === "cod") {
+    try {
+      const res = await myFetch(`${API}/api/orders/checkout/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cartId: Number(cartId),
+          paymentMethod: "cod",
+          couponDiscount: couponDiscount,
+        }),
+      });
+      if (!res.ok) { alert("Transaction failed"); return; }
+      logAction("PLACE_ORDER", `COD order, ${items.length} items, ${discountedTotal} DZD`);
+      setOrderaddedPopup(true);
+      setCheckoutOpen(false);
+      fetchCart();
+    } catch (err) {
+      console.error(err);
+      alert("Transaction failed");
     }
+    return;
   }
 
+  // CARD → Chargily
   try {
-    const res = await myFetch(`${API}/api/orders/checkout/${userId}`, {
+    const res = await myFetch(`${API}/api/payment/chargily/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
+        userId: Number(userId),
         cartId: Number(cartId),
-        paymentMethod: paymentMethod,
+        amount: discountedTotal,
+        couponDiscount: couponDiscount,
+        paymentMethod: "edahabia",  // or "cib" — could be a UI choice
       }),
     });
-
     if (!res.ok) {
-      alert("Transaction failed");
+      const text = await res.text();
+      alert("Couldn't start payment: " + text);
       return;
     }
-
-    setOrderaddedPopup(true);
-    setCheckoutOpen(false);
-    setCardNumber("");
-    setCardExpiry("");
-    setCardCvv("");
-    setCardName("");
-    fetchCart(); // refresh (cart should be empty now)
+    const data = await res.json();
+    if (!data.checkout_url) {
+      alert("Payment provider didn't return a URL.");
+      return;
+    }
+    logAction("PAYMENT_INITIATED", `Chargily Edahabia, ${discountedTotal} DZD`);
+    window.location.href = data.checkout_url;
   } catch (err) {
     console.error(err);
-    alert("Transaction failed");
+    alert("Payment failed to start");
   }
 };
 
@@ -317,6 +437,8 @@ const Cart = () => {
   window.location.href = `/product/${safeName}`;
 };
 
+  const discountedTotal = total - Math.round(total * couponDiscount / 100);
+
   return (
     <div className={`container ${styles.cartContainer}`}>
       {/* HEADER */}
@@ -485,7 +607,10 @@ const Cart = () => {
 
             <button
               className={`btn-primary ${styles.checkoutBtn}`}
-              onClick={() => setCheckoutOpen(true)}
+              onClick={() => {
+                setCheckoutOpen(true);
+                calculateCoupons();
+              }}
             >
               Proceed to Checkout
             </button>
@@ -761,8 +886,26 @@ const Cart = () => {
             </div>
             <div className={styles.checkoutTotal}>
               <span>Total</span>
-              <span>{total} DZD</span>
+              <span>{discountedTotal} DZD</span>
             </div>
+
+            {couponDiscount > 0 && (
+              <div className={styles.checkoutSection} style={{ background: '#fff8e1', borderRadius: 10, padding: '0.75rem 1rem' }}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Gift size={16} /> Coupons applied
+                </strong>
+                {coupons.map(c => (
+                  <div key={c.code} className={styles.checkoutRow}>
+                    <span>{c.icon} {c.label}</span>
+                    <span style={{ color: '#b48a3c', fontWeight: 700 }}>-{c.percentage}%</span>
+                  </div>
+                ))}
+                <div className={styles.checkoutRow} style={{ marginTop: 4 }}>
+                  <span><strong>You saved</strong></span>
+                  <span style={{ color: '#22c55e', fontWeight: 700 }}>{total - discountedTotal} DZD</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* SHIPPING */}
@@ -809,57 +952,8 @@ const Cart = () => {
             {/* CARD FORM */}
             {paymentMethod === "card" && (
               <div className={styles.cardForm}>
-                <label className={styles.cardLabel}>
-                  Cardholder Name
-                  <input
-                    type="text"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
-                    placeholder="Name on card"
-                    className={styles.cardInput}
-                  />
-                </label>
-
-                <label className={styles.cardLabel}>
-                  Card Number
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    placeholder="1234 5678 9012 3456"
-                    className={styles.cardInput}
-                  />
-                </label>
-
-                <div className={styles.cardRow}>
-                  <label className={styles.cardLabel}>
-                    Expiry
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-                      placeholder="MM/YY"
-                      className={styles.cardInput}
-                    />
-                  </label>
-                  <label className={styles.cardLabel}>
-                    CVV
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={cardCvv}
-                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                      placeholder="•••"
-                      className={styles.cardInput}
-                    />
-                  </label>
-                </div>
-
                 <p className={styles.cardNote}>
-                  🔒 Demo form
+                  You'll be redirected to Chargily to pay securely with Edahabia or CIB.
                 </p>
               </div>
             )}
@@ -869,10 +963,48 @@ const Cart = () => {
         {/* STICKY FOOTER */}
         <div className={styles.checkoutFooter}>
           <button onClick={Order} className={styles.payBtn}>
-            Confirm Order · {total} DZD
+            Confirm Order · {discountedTotal} DZD
           </button>
           <p className={styles.secureNote}>🔒 Secure checkout protected</p>
         </div>
+      </div>
+    </div>
+  )}
+    {showCouponPopup && (
+    <div className={styles.popupOverlay}>
+      <div className={`${styles.popupCard} ${styles.couponCard}`}>
+        <div className={styles.couponHeader}>
+          <SparklesIcon size={28} />
+          <h2>You unlocked bonuses!</h2>
+        </div>
+
+        <div className={styles.couponList}>
+          {coupons.map(c => (
+            <div key={c.code} className={styles.couponRow}>
+              <span className={styles.couponIcon}>{c.icon}</span>
+              <div>
+                <strong>{c.label}</strong>
+                <p>{c.description}</p>
+              </div>
+              <span className={styles.couponPct}>-{c.percentage}%</span>
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.couponSummary}>
+          <div>
+            <span>Original</span>
+            <strong style={{ textDecoration: 'line-through', color: '#999' }}>{total} DZD</strong>
+          </div>
+          <div>
+            <span>New total</span>
+            <strong style={{ color: '#22c55e' }}>{discountedTotal} DZD</strong>
+          </div>
+        </div>
+
+        <button className={styles.okBtn} onClick={() => setShowCouponPopup(false)}>
+          Awesome — let's go
+        </button>
       </div>
     </div>
   )}

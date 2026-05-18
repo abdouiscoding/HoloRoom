@@ -109,7 +109,7 @@ public class OrdersItemService {
     }
 
     @Transactional
-    public OrdersItem checkoutFromCart(Long userId, Long cartId) {
+    public OrdersItem checkoutFromCart(Long userId, Long cartId, Integer coupondiscount) {
         PCart cart = cartRepository.findById(cartId).orElse(null);
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
             return null;
@@ -120,7 +120,7 @@ public class OrdersItemService {
             Item item = new Item(
                 ci.getProduct().getProductId(),
                 ci.getName(),
-                ci.getPrice(),
+                ci.getPrice()*(100 - coupondiscount/100),
                 ci.getQuantity(),
                 ci.getPscs().getPscsId()
             );
