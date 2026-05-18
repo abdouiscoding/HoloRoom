@@ -19,7 +19,7 @@ public class AIService {
     private static final String URL = "https://api.groq.com/openai/v1/chat/completions";
 
     public static class Message {
-        public String role; // "user" or "assistant"
+        public String role; 
         public String text;
     }
 
@@ -35,7 +35,7 @@ public class AIService {
 
             JSONObject requestBody = new JSONObject();
             requestBody.put("model", MODEL);
-            requestBody.put("temperature", 0.2); // makes output more stable
+            requestBody.put("temperature", 0.2); 
 
             JSONArray messages = new JSONArray();
 

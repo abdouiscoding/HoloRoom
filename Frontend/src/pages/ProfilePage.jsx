@@ -216,6 +216,13 @@ const ProfilePage = () => {
     return "";
   };
 
+  const toproductpage = (name, id) => {
+  const safeName = encodeURIComponent(name);
+
+  localStorage.setItem("selectedProductId", id);
+  window.location.href = `/product/${safeName}`;
+};
+
   return (
     <div className={styles.profileContainer}>
       {/* HEADER (unchanged) */}
@@ -356,7 +363,7 @@ const ProfilePage = () => {
               ) : (
                 <div className={styles.wishlistGrid}>
                   {wishlistItems.map((item) => (
-                    <div key={item.id} className={styles.wishlistCard} onClick={() => navigate(`/product/${encodeURIComponent(item.name)}`)}>
+                    <div key={item.id} className={styles.wishlistCard} onClick={() => toproductpage(item.name, item.id)}>
                       <img src={item.image} alt={item.name} />
                       <div>
                         <h4>{item.name}</h4>

@@ -280,3 +280,52 @@
   from { opacity: 0; transform: translate(-50%, 8px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
+
+@media (max-width: 768px) {
+  .roomsHero {
+    padding: 5rem 1rem 2rem; /* top padding clears the navbar */
+    min-height: auto;
+  }
+  .roomsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .roomsTitle { font-size: 2rem; }
+  .roomsSubtitle { font-size: 0.9rem; }
+  .roomsNav { align-self: center; }
+  .canvasShell {
+    height: 55vh;
+    min-height: 380px;
+    border-radius: 14px;
+  }
+  .focusedProductCard {
+    bottom: 0.6rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+  }
+  .backToRoomBtn { top: 0.5rem; left: 0.5rem; font-size: 0.85rem; }
+
+  .sectionH2 { font-size: 1.7rem; }
+  .aboutSection, .teamSection { padding: 2rem 1rem 3rem; }
+  .aboutLead { font-size: 1rem; padding: 0; }
+  .featureCard { padding: 1.5rem 1.25rem; }
+
+  /* TEAM — flex-wrap so cards drop to next row */
+  .teamGrid {
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+  .teamCard {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 0;
+    padding: 1.25rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .teamCard { flex: 1 1 100%; }
+}

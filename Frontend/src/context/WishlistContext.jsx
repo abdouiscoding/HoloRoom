@@ -75,7 +75,7 @@ export const WishlistProvider = ({ children }) => {
       if (!item) return;
 
       await myFetch(
-        `http://${address}:8080/api/wishlist/remove/${userId}/${item.wItemId}`,
+        `${API}/api/wishlist/remove/${userId}/${item.wItemId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
