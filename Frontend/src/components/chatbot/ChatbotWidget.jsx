@@ -14,7 +14,7 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const FILTER_ACTIONS = ['search', 'price', 'price_low', 'price_high', 'top_selling', 'most_wished', 'reviews', 'discounts', 'cancel'];
+const FILTER_ACTIONS = ['search', 'price', 'price_low', 'price_high', 'top_selling', 'most_wished', 'reviews', 'discounts', 'color', 'cancel'];
 const COOLDOWN_SECONDS = 10;
 const loggedin = localStorage.getItem("loggedin");
 
@@ -79,6 +79,164 @@ const ChatbotWidget = () => {
     }
   };
 
+  // ---- AI helper: fetch products, filter, sort, return best match ----
+  const findProduct = async (parsed) => {
+    try {
+      const res = await myFetch(`${API}/api/products/get`, {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
+      if (!res.ok) return null;
+      let list = (await res.json()).filter(p => p && p.pId && p.pName && p.pFinalPrice != null);
+
+      if (parsed.type && parsed.type !== 'none') {
+        const t = parsed.type.toLowerCase();
+        list = list.filter(p =>
+          (p.categories || []).some(c => c?.pCategory?.toLowerCase() === t) ||
+          p.pName?.toLowerCase().includes(t)
+        );
+      }
+      if (parsed.color) {
+        const c = parsed.color.toLowerCase();
+        list = list.filter(p =>
+          (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c)
+        );
+      }
+      if (parsed.min != null) list = list.filter(p => Number(p.pFinalPrice) >= parsed.min);
+      if (parsed.max != null) list = list.filter(p => Number(p.pFinalPrice) <= parsed.max);
+
+      if (!list.length) return null;
+
+      switch (parsed.criteria) {
+        case 'cheapest':     list.sort((a,b) => (+a.pFinalPrice||0) - (+b.pFinalPrice||0)); break;
+        case 'expensive':    list.sort((a,b) => (+b.pFinalPrice||0) - (+a.pFinalPrice||0)); break;
+        case 'best_rated':   list.sort((a,b) => (b.pRating||0) - (a.pRating||0)); break;
+        case 'most_wished':  list.sort((a,b) => (b.pWishes||0) - (a.pWishes||0)); break;
+        case 'best_selling': list.sort((a,b) => (b.pSold||0)   - (a.pSold||0));   break;
+      }
+      return list[0];
+    } catch { return null; }
+  };
+
+  // ---- pick current product if on /product/X ----
+  const fetchCurrentProduct = async () => {
+    if (!location.pathname.startsWith('/product/')) return null;
+    const id = localStorage.getItem('selectedProductId');
+    if (!id) return null;
+    try {
+      const res = await myFetch(`${API}/api/products/get/${id}`);
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
+  };
+
+  const botSay = (text) => setMessages(prev => [...prev, { id: Date.now() + Math.random(), sender: 'bot', text }]);
+
+  // ---- ADD TO CART ----
+  const handleAddCart = async (parsed) => {
+    const hasSpecifiers = parsed.type || parsed.color || parsed.criteria;
+    const product = hasSpecifiers ? await findProduct(parsed) : await fetchCurrentProduct();
+    if (!product) { botSay("I couldn't find a matching product."); return; }
+
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    if (!token || !userId) { botSay('Please log in first to add items to your cart.'); return; }
+
+    try {
+      const cartRes = await myFetch(`${API}/api/cart/getbyuser/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!cartRes.ok) { botSay('Could not access your cart.'); return; }
+      const cart = await cartRes.json();
+
+      const variant = (product.sizecolorstock || [])
+        .find(v => !parsed.color || v?.pColor?.toLowerCase() === parsed.color.toLowerCase())
+        || (product.sizecolorstock || [])[0];
+      if (!variant) { botSay(`"${product.pName}" has no variants available.`); return; }
+
+      const imageId = product.images?.[0]?.pImageId?.toString() || '0';
+      const res = await myFetch(`${API}/api/cart/additem/${cart.pCartId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          pId: product.pId.toString(),
+          pscsId: variant.pscsId.toString(),
+          pImageId: imageId,
+          quantity: '1'
+        })
+      });
+
+      if (res.ok) {
+        botSay(`Added "${product.pName}"${parsed.color ? ` (${parsed.color})` : ''} to your cart.`);
+        logAction('ADD_TO_CART', `Added ${product.pName} via chatbot`);
+      } else {
+        const t = await res.text();
+        botSay(`Couldn't add to cart: ${t || 'unknown error'}`);
+      }
+    } catch { botSay('Something went wrong adding to cart.'); }
+  };
+
+  // ---- ADD TO WISHLIST ----
+  const handleAddWishlist = async (parsed) => {
+    const hasSpecifiers = parsed.type || parsed.color || parsed.criteria;
+    const product = hasSpecifiers ? await findProduct(parsed) : await fetchCurrentProduct();
+    if (!product) { botSay("I couldn't find a matching product."); return; }
+
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    if (!token || !userId) { botSay('Please log in first to use the wishlist.'); return; }
+
+    try {
+      const res = await myFetch(`${API}/api/wishlist/add/${userId}/${product.pId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok || res.status === 201) {
+        botSay(`Added "${product.pName}" to your wishlist.`);
+        logAction('ADD_TO_WISHLIST', `Added ${product.pName} via chatbot`);
+      } else if (res.status === 409) {
+        botSay(`"${product.pName}" is already on your wishlist.`);
+      } else {
+        botSay(`Couldn't add to wishlist.`);
+      }
+    } catch { botSay('Something went wrong adding to wishlist.'); }
+  };
+
+  // ---- SHOW CART ----
+  const handleShowCart = async () => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    if (!token || !userId) { botSay('Log in to see your cart.'); return; }
+    try {
+      const res = await myFetch(`${API}/api/cart/getbyuser/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) { botSay('Could not load your cart.'); return; }
+      const cart = await res.json();
+      const items = cart.cartItems || [];
+      if (!items.length) { botSay('Your cart is empty.'); return; }
+      const lines = items.map(it => `• ${it.pName || 'Product'} × ${it.quantity || 1}`).join('\n');
+      const total = items.reduce((s, it) => s + (Number(it.price) || 0) * (it.quantity || 1), 0);
+      botSay(`You have ${items.length} item${items.length > 1 ? 's' : ''} in your cart:\n${lines}\nTotal: ${total.toLocaleString()} DZD`);
+    } catch { botSay('Something went wrong loading your cart.'); }
+  };
+
+  // ---- SHOW WISHLIST ----
+  const handleShowWishlist = async () => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    if (!token || !userId) { botSay('Log in to see your wishlist.'); return; }
+    try {
+      const res = await myFetch(`${API}/api/wishlist/get/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) { botSay('Could not load your wishlist.'); return; }
+      const data = await res.json();
+      const items = data.wishlistItems || [];
+      if (!items.length) { botSay('Your wishlist is empty.'); return; }
+      const lines = items.map(it => `• ${it.pName || 'Product'}`).join('\n');
+      botSay(`Your wishlist (${items.length} item${items.length > 1 ? 's' : ''}):\n${lines}`);
+    } catch { botSay('Something went wrong loading your wishlist.'); }
+  };
+
   const handleAIResponse = (reply) => {
     try {
       let outer = JSON.parse(reply);
@@ -101,10 +259,16 @@ const ChatbotWidget = () => {
         return;
       }
 
+      if (parsed.action === 'add_cart')      { handleAddCart(parsed);     return; }
+      if (parsed.action === 'add_wishlist')  { handleAddWishlist(parsed); return; }
+      if (parsed.action === 'show_cart')     { handleShowCart();          return; }
+      if (parsed.action === 'show_wishlist') { handleShowWishlist();      return; }
+
       if (FILTER_ACTIONS.includes(parsed.action)) {
         dispatchFilter({
           action: parsed.action,
           type: parsed.type,
+          color: parsed.color,
           query: parsed.type,
           min: parsed.min,
           max: parsed.max
@@ -140,7 +304,7 @@ const ChatbotWidget = () => {
               <div className={styles.botInfo}>
                 <div className={styles.avatar}><Sparkles size={16} /></div>
                 <div>
-                  <h4>AI Assistant</h4>
+                  <h4>HoloRoom Assistant</h4>
                   <span className={styles.status}>Online</span>
                 </div>
               </div>

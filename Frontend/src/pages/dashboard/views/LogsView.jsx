@@ -161,44 +161,10 @@ const LogsView = () => {
         </div>
       )}
 
-      {/* Single log details */}
-      {selectedLog && (
-        <div className={styles.overlay} onClick={() => setSelectedLog(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Log #{selectedLog.id}</h3>
-              <button className={styles.closeBtn} onClick={() => setSelectedLog(null)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.detailRow}>
-                <strong>Action</strong>
-                <span className={`${styles.actionBadge} ${actionColor(selectedLog.action)}`}>
-                  {selectedLog.action}
-                </span>
-              </div>
-              <div className={styles.detailRow}>
-                <strong>User</strong>
-                <span>{userMap[selectedLog.userId]?.userName || "—"} (#{selectedLog.userId})</span>
-              </div>
-              <div className={styles.detailRow}>
-                <strong>Time</strong>
-                <span>{formatDate(selectedLog.createdAt)}</span>
-              </div>
-              <div className={styles.detailRow}>
-                <strong>Details</strong>
-                <p className={styles.detailsBlock}>{selectedLog.details || "—"}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* User-logs popup */}
       {selectedUser && (
-        <div className={styles.overlay} onClick={() => setSelectedUser(null)}>
-          <div className={`${styles.modal} ${styles.modalLarge}`} onClick={e => e.stopPropagation()}>
+      <div className={styles.overlay} onClick={() => setSelectedUser(null)}>
+        <div className={`${styles.modal} ${styles.modalLarge}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3>{selectedUser.userName}'s Activity</h3>
               <button className={styles.closeBtn} onClick={() => setSelectedUser(null)}>
@@ -232,6 +198,39 @@ const LogsView = () => {
                   <p className={styles.logDetails}>{log.details}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Single log details */}
+      {selectedLog && (
+        <div className={styles.overlay} onClick={() => setSelectedLog(null)}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Log #{selectedLog.id}</h3>
+              <button className={styles.closeBtn} onClick={() => setSelectedLog(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.detailRow}>
+                <strong>Action</strong>
+                <span className={`${styles.actionBadge} ${actionColor(selectedLog.action)}`}>
+                  {selectedLog.action}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <strong>User</strong>
+                <span>{userMap[selectedLog.userId]?.userName || "—"} (#{selectedLog.userId})</span>
+              </div>
+              <div className={styles.detailRow}>
+                <strong>Time</strong>
+                <span>{formatDate(selectedLog.createdAt)}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <strong>Details</strong>
+                <p className={styles.detailsBlock}>{selectedLog.details || "—"}</p>
+              </div>
             </div>
           </div>
         </div>

@@ -746,7 +746,7 @@ const Home = () => {
             <div className={styles.teamCard}>
               <div className={styles.teamAvatar}>A</div>
               <h3>Ayoub Guermache</h3>
-              <p>Chamber · Emotional support</p>
+              <p>Tester and Memory writer</p>
             </div>
           </Reveal>
           <Reveal delay={240}>

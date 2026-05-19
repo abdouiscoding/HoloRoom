@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HoloRoom</string>
+    <string name="title_activity_main">HoloRoom</string>
+    <string name="package_name">com.AbdouIsCoding.app</string>
+    <string name="custom_url_scheme">com.AbdouIsCoding.app</string>
+</resources>

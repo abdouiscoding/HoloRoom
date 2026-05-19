@@ -93,6 +93,7 @@
   width: 100%; max-width: 500px;
   max-height: 85vh; display: flex; flex-direction: column;
   animation: modalUp 0.25s ease;
+  z-index: 20000;
 }
 .modalLarge { max-width: 720px; }
 @keyframes modalUp {

@@ -12,6 +12,8 @@ import styles from './Shop.module.css';
 import { API, address, myFetch } from "../api";
 
 const Shop = () => {
+  const [selectedColor, setSelectedColor] = useState('');
+
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [minPrice, setMinPrice] = useState('');
@@ -77,6 +79,12 @@ const Shop = () => {
     }
   };
 
+  const dbColors = [
+    ...new Set(
+      allProducts.flatMap(p => (p.sizecolorstock || []).map(v => v?.pColor))
+    )
+  ].filter(Boolean);
+
   // ---------------- CATEGORIES ----------------
   const dbCategories = [
     ...new Set(
@@ -131,6 +139,7 @@ const sortProducts = (type, list) => {
   return sorted;
 };
 
+// ---------------- MAIN FILTER PIPELINE ----------------
 useEffect(() => {
   let filtered = [...allProducts];
 
@@ -143,57 +152,38 @@ useEffect(() => {
     );
   }
 
-  // PRICE FILTER (final price)
+  // SEARCH
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(p => p.pName?.toLowerCase().includes(q));
+  }
+
+  // COLOR
+  if (selectedColor) {
+    const c = selectedColor.toLowerCase();
+    filtered = filtered.filter(p =>
+      (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c)
+    );
+  }
+
+  // PRICE
   const min = parseFloat(minPrice);
   const max = parseFloat(maxPrice);
-
-  if (!isNaN(min)) {
-    filtered = filtered.filter(
-      (p) => Number(p.pFinalPrice) >= min
-    );
-  }
-
-  if (!isNaN(max)) {
-    filtered = filtered.filter(
-      (p) => Number(p.pFinalPrice) <= max
-    );
-  }
+  if (!isNaN(min)) filtered = filtered.filter(p => Number(p.pFinalPrice) >= min);
+  if (!isNaN(max)) filtered = filtered.filter(p => Number(p.pFinalPrice) <= max);
 
   // SORT
   const sorted = sortProducts(selectedRoom, filtered);
-
   setProducts(sorted);
-}, [
-  allProducts,
-  activeCategory,
-  selectedRoom,
-  minPrice,
-  maxPrice
-]);
+}, [allProducts, activeCategory, selectedRoom, minPrice, maxPrice, search, selectedColor]);
 
 const resetPriceFilter = () => {
   setMinPrice('');
   setMaxPrice('');
 };
 
-  // ---------------- SEARCH ----------------
-  const Search = (value) => {
-    setSearch(value);
-
-    if (!value.trim()) {
-      setProducts(allProducts);
-      return;
-    }
-
-    const filtered = allProducts.filter(
-      (product) =>
-        product.pName
-          ?.toLowerCase()
-          .includes(value.toLowerCase())
-    );
-
-    setProducts(filtered);
-  };
+// ---------------- SEARCH ----------------
+const Search = (value) => setSearch(value);
 
 const toproductpage = (name, id) => {
   const safeName = encodeURIComponent(name);
@@ -213,7 +203,7 @@ const toproductpage = (name, id) => {
 
 useEffect(() => {
   const handleAISearch = (e) => {
-    const { action, type, min, max, query } = e.detail || {};
+    const { action, type, color, min, max, query } = e.detail || {};
     console.log("AI FILTER RECEIVED:", e.detail);
 
     // helper — type can refine ANY action; fall back to search if no category match
@@ -236,6 +226,7 @@ useEffect(() => {
       setActiveCategory('All');
       setSelectedRoom('Standard');
       setSearch('');
+      setSelectedColor('');
       return;
     }
 
@@ -262,6 +253,14 @@ useEffect(() => {
     };
     if (sortMap[action]) {
       setSelectedRoom(sortMap[action]);
+      applyType(type);
+    }
+
+    if (color !== undefined && color !== null && color !== '') {
+      setSelectedColor(color);
+    }
+
+    if (action === "color") {
       applyType(type);
     }
   };
@@ -364,47 +363,85 @@ useEffect(() => {
               ))}
             </ul>
             {/* PRICE FILTER */}
-<div className={styles.filterBlock}>
-  <div className={styles.filterHeader}>
-    <h3>Price</h3>
-  </div>
+            <div className={styles.filterBlock}>
+              <div className={styles.filterHeader}>
+                <h3>Price</h3>
+              </div>
 
-  <div className={styles.priceInputs}>
-    <input
-      type="number"
-      placeholder="Min"
-      value={minPrice}
-      onChange={(e) => setMinPrice(e.target.value)}
-      className={styles.input}
-    />
+              <div className={styles.priceInputs}>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className={styles.input}
+                />
 
-    <span style={{ color: 'var(--text-secondary)' }}>-</span>
+                <span style={{ color: 'var(--text-secondary)' }}>-</span>
 
-    <input
-      type="number"
-      placeholder="Max"
-      value={maxPrice}
-      onChange={(e) => setMaxPrice(e.target.value)}
-      className={styles.input}
-    />
-  </div>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
 
-  <button
-    onClick={resetPriceFilter}
-    style={{
-      marginTop: '10px',
-      width: '100%',
-      padding: '6px',
-      borderRadius: '8px',
-      border: '1px solid var(--border-glass)',
-      background: 'var(--bg-glass)',
-      color: 'var(--text-secondary)',
-      cursor: 'pointer'
-    }}
-  >
-    Reset Price
-  </button>
-</div>
+              <button
+                onClick={resetPriceFilter}
+                style={{
+                  marginTop: '10px',
+                  width: '100%',
+                  padding: '6px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-glass)',
+                  background: 'var(--bg-glass)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                Reset Price
+              </button>
+            </div>
+            <div className={styles.filterBlock}>
+              <div className={styles.filterHeader}>
+                <h3>Color</h3>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {dbColors.map(col => (
+                  <button
+                    key={col}
+                    title={col}
+                    onClick={() => setSelectedColor(selectedColor.toLowerCase() === col.toLowerCase() ? '' : col)}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      border: selectedColor.toLowerCase() === col.toLowerCase()
+                        ? '3px solid var(--accent-secondary)'
+                        : '1px solid #ccc',
+                      background: col.toLowerCase(),
+                      cursor: 'pointer'
+                    }}
+                  />
+                ))}
+                {selectedColor && (
+                  <button
+                    onClick={() => setSelectedColor('')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-glass)',
+                      background: 'transparent',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer'
+                    }}
+                  >Clear</button>
+                )}
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -526,19 +563,11 @@ useEffect(() => {
                 styles.productGrid
               }
             >
-              {filteredProducts.map(
-                (product) => {
-                  const firstImage =
-                    product.images
-                      ?.length > 0 &&
-                    product.images[0]
-                      ?.pImageUrl
-                      ? encodeURI(
-                          product
-                            .images[0]
-                            .pImageUrl
-                        )
-                      : '/no-image.png';
+              {products.map((product) => {
+                const firstImage =
+                  product.images?.length > 0 && product.images[0]?.pImageUrl
+                    ? encodeURI(product.images[0].pImageUrl)
+                    : '/no-image.png';
 
                   const firstCategory =
                     product

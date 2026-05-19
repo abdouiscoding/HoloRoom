@@ -14,8 +14,9 @@ const OverviewView = () => {
   const [activeUsers7Days, setActiveUsers7Days] = useState(0);
 
   const [totalOrders7d, setTotalOrders7d] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
   const [totalSales7d, setTotalSales7d] = useState(0);
-  const [totalSales, setTotalSales] = useState(0);
+  const [TotalSales, setTotalSales] = useState(0);
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
@@ -42,29 +43,32 @@ const OverviewView = () => {
       });
 
       const orders = await res.json();
+      const allItems = orders.flatMap(o => o.orderItems || []);
 
       // remove cancelled/canceled orders
-      const validOrders = orders.filter(order => {
-        const status = (order.status || order.Status || "").toLowerCase();
-        return status !== "canceled" && status !== "cancelled";
-      });
-
-      const allItems = validOrders.flatMap(o => o.orderItems || []);
+      const validOrders = allItems.filter((o) => {
+          const s = (o.status || o.Status || "").toLowerCase();
+          return s !== "canceled" && s !== "cancelled";
+        })
 
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      const recent = allItems.filter(
+      const recent = validOrders.filter(
         i => i.orderDate && new Date(i.orderDate) >= weekAgo
       );
 
       setTotalOrders7d(recent.length);
+      setTotalOrders(validOrders.length);
 
       setTotalSales7d(
         recent.reduce((s, i) => s + (i.price || 0), 0)
       );
 
-      // chart: daily totals for last 7 days
+      setTotalSales(
+        validOrders.reduce((s, i) => s + (i.price || 0), 0)
+      );
+
       const buckets = {};
 
       for (let i = 6; i >= 0; i--) {
@@ -114,8 +118,8 @@ const OverviewView = () => {
 
       <div className={styles.sectionHeader}><h3>Stats Cards</h3></div>
       <div className={styles.statsGrid}>
-        <StatCard title="Total Orders" value={totalOrders7d} icon={ShoppingCart} text="Last 7 days" value1={totalOrders7d} />
-        <StatCard title="Total Sales" value={`${totalSales7d.toLocaleString()} DZD`} icon={DollarSign} text="Last 7 days" value1={`${totalSales7d.toLocaleString()} DZD`} />
+        <StatCard title="Total Orders" value={totalOrders} icon={ShoppingCart} text="Last 7 days" value1={totalOrders7d} />
+        <StatCard title="Total Sales" value={`${TotalSales.toLocaleString()} DZD`} icon={DollarSign} text="Last 7 days" value1={`${totalSales7d.toLocaleString()} DZD`} />
         <StatCard title="Users" value={totalUsers} icon={Users} text="Active this week" value1={activeUsers7Days} />
       </div>
 
