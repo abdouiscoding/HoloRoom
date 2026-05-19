@@ -234,7 +234,7 @@ const ChatbotWidget = () => {
       if (!items.length) { botSay('Your wishlist is empty.'); return; }
       const lines = items.map(it => `• ${it.pName || 'Product'}`).join('\n');
       botSay(`Your wishlist (${items.length} item${items.length > 1 ? 's' : ''}):\n${lines}`);
-    } catch { botSay('Something went wrong loading your wishlist.'); }
+    } catch { botSay('Something went wrong loading your Wishlist.'); }
   };
 
   const handleAIResponse = (reply) => {

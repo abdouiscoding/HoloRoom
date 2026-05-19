@@ -16,8 +16,8 @@ const PaymentSuccess = () => {
     <div style={styles.wrap}>
       <CheckCircle size={72} color="#22c55e" />
       <h1 style={styles.h1}>Payment successful</h1>
-      <p style={styles.p}>Your order is being processed. Redirecting to your profile...</p>
-      <button style={styles.btn} onClick={() => navigate('/profile')}>Go now</button>
+      <p style={styles.p}>Order added. Press the button to go back to the website or just close the website and continue from the app</p>
+      <button style={styles.btn} onClick={() => navigate('/profile')}>Back to website</button>
     </div>
   );
 };

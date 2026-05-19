@@ -8,7 +8,7 @@ const PaymentFailure = () => {
     <div style={styles.wrap}>
       <XCircle size={72} color="#ef4444" />
       <h1 style={styles.h1}>Payment failed</h1>
-      <p style={styles.p}>Your payment didn't go through. Your cart is still saved — try again or pick cash on delivery.</p>
+      <p style={styles.p}>Your payment didn't go through. Press the button to go back to the website or just close the website and continue from the app</p>
       <div style={{ display: 'flex', gap: '0.75rem' }}>
         <button style={styles.btnPrimary} onClick={() => navigate('/cart')}>Back to cart</button>
         <button style={styles.btnSecondary} onClick={() => navigate('/shop')}>Keep shopping</button>

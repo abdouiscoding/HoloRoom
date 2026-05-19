@@ -34,7 +34,7 @@ const getImageUrl = (img) => {
 
 const Cart = () => {
   const { cart, fetchCart, removeItem, loading } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
