@@ -2743,13 +2743,6 @@ if (menuScrollDragging && menu.visible) {
 
   const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
 
-  if (placementStatus === "READY" && placementToast) {
-    placementToast.remove();
-    placementToast = null;
-  }
-
-  const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
-
   // Suppress toast when chat or the settings/exit menu (NOT the products menu) is open
   const chatOrMenuOpen = showingchat
     || !!document.getElementById("mainMenuPopup")
