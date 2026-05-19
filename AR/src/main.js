@@ -59,15 +59,6 @@ const authHeaders = token
   : {};
 
 // helper methods
-function classifySurface(normal) {
-  const up = new THREE.Vector3(0, 1, 0);
-
-  const dot = normal.dot(up);
-
-  if (dot > 0.7) return "FLOOR";
-  if (dot < -0.7) return "CEILING";
-  return "WALL";
-}
 
 function switchPlacementForObject(obj) {
   if (!obj?.userData?.pPlacement) return;
