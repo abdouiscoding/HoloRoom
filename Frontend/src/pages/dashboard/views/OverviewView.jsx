@@ -15,6 +15,7 @@ const OverviewView = () => {
 
   const [totalOrders7d, setTotalOrders7d] = useState(0);
   const [totalSales7d, setTotalSales7d] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
@@ -34,36 +35,68 @@ const OverviewView = () => {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await myFetch(`${API}/api/orders/getall`, { headers: { Authorization: `Bearer ${token}` }});
-        const orders = await res.json();
-        const allItems = (orders || []).flatMap(o => o.orderItems || []);
+  (async () => {
+    try {
+      const res = await myFetch(`${API}/api/orders/getall`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-        const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-        const recent = allItems.filter(i => i.orderDate && new Date(i.orderDate) >= weekAgo);
+      const orders = await res.json();
 
-        setTotalOrders7d(recent.length);
-        setTotalSales7d(recent.reduce((s, i) => s + (i.price || 0), 0));
+      // remove cancelled/canceled orders
+      const validOrders = orders.filter(order => {
+        const status = (order.status || order.Status || "").toLowerCase();
+        return status !== "canceled" && status !== "cancelled";
+      });
 
-        // chart: daily totals for last 7 days
-        const buckets = {};
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(); d.setDate(d.getDate() - i);
-          const key = d.toISOString().slice(0, 10);
-          buckets[key] = { day: key.slice(5), sales: 0, orders: 0 };
+      const allItems = validOrders.flatMap(o => o.orderItems || []);
+
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const recent = allItems.filter(
+        i => i.orderDate && new Date(i.orderDate) >= weekAgo
+      );
+
+      setTotalOrders7d(recent.length);
+
+      setTotalSales7d(
+        recent.reduce((s, i) => s + (i.price || 0), 0)
+      );
+
+      // chart: daily totals for last 7 days
+      const buckets = {};
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+
+        const key = d.toISOString().slice(0, 10);
+
+        buckets[key] = {
+          day: key.slice(5),
+          sales: 0,
+          orders: 0
+        };
+      }
+
+      recent.forEach(i => {
+        const key = new Date(i.orderDate)
+          .toISOString()
+          .slice(0, 10);
+
+        if (buckets[key]) {
+          buckets[key].sales += i.price || 0;
+          buckets[key].orders += 1;
         }
-        recent.forEach(i => {
-          const key = new Date(i.orderDate).toISOString().slice(0, 10);
-          if (buckets[key]) {
-            buckets[key].sales += i.price || 0;
-            buckets[key].orders += 1;
-          }
-        });
-        setChartData(Object.values(buckets));
-      } catch (e) { console.error("orders", e); }
-    })();
-  }, []);
+      });
+
+      setChartData(Object.values(buckets));
+    } catch (e) {
+      console.error("orders", e);
+    }
+  })();
+}, []);
 
   const recentUsersCols = [
     { header: 'User', accessor: 'userName' },

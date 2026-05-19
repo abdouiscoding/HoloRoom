@@ -1,0 +1,184 @@
+.container { padding: 1rem 0; }
+.loading { text-align: center; padding: 3rem; color: var(--text-muted); }
+
+.headerBar {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;
+}
+.title { margin: 0; font-size: 1.5rem; }
+.subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+.refreshBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0.5rem 0.9rem; border: 1px solid #ddd;
+  background: white; border-radius: 10px;
+  cursor: pointer; font-weight: 600; color: var(--text-secondary);
+}
+.refreshBtn:hover { background: #f9fafb; }
+
+.statsRow {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem; margin-bottom: 1.25rem;
+}
+.statCard {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 0.85rem 1rem; background: white; border-radius: 12px;
+  border: 1px solid #eee;
+}
+.statCard span { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.statCard strong { font-size: 1.5rem; }
+.statPending { border-left: 4px solid #f59e0b; }
+.statDelivered { border-left: 4px solid #22c55e; }
+.statCanceled { border-left: 4px solid #ef4444; }
+
+.filters { display: flex; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.searchInput {
+  flex: 1; min-width: 220px;
+  padding: 0.55rem 0.85rem; border-radius: 10px;
+  border: 1px solid #ddd; background: white; font-size: 0.9rem;
+}
+.filters select {
+  padding: 0.55rem 0.75rem; border-radius: 10px;
+  border: 1px solid #ddd; background: white; font-size: 0.9rem; cursor: pointer;
+}
+
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
+.row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.85rem 1rem; background: white; border: 1px solid #eee;
+  border-radius: 12px; cursor: pointer; gap: 1rem;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #ccc; }
+
+.rowLeft, .rowRight { display: flex; flex-direction: column; gap: 2px; }
+.rowRight { align-items: flex-end; }
+.orderId { font-weight: 700; font-size: 0.85rem; color: #888; }
+.userName { font-weight: 600; }
+.userEmail { font-size: 0.8rem; color: var(--text-muted); }
+.orderPrice { font-weight: 700; color: var(--text-primary); }
+.orderDate { font-size: 0.75rem; color: var(--text-muted); }
+
+.statusBadge {
+  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.badgePending { background: #fef3c7; color: #92400e; }
+.badgeDelivered { background: #d1fae5; color: #065f46; }
+.badgeCanceled { background: #fee2e2; color: #991b1b; }
+
+.empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+
+/* Modal */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; padding: 1rem;
+}
+.modal, .confirmModal {
+  background: white; border-radius: 16px; padding: 0;
+  width: 100%; max-width: 560px;
+  max-height: 88vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: modalUp 0.2s ease;
+}
+.confirmModal { max-width: 460px; padding: 1.75rem 1.5rem; text-align: center; }
+@keyframes modalUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modalHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 1.25rem; border-bottom: 1px solid #eee;
+}
+.modalHeader h3 { margin: 0; }
+.closeBtn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; }
+
+.modalBody { padding: 1.25rem; overflow-y: auto; }
+.detailRow {
+  display: grid; grid-template-columns: 110px 1fr;
+  gap: 0.75rem; margin-bottom: 1rem; align-items: flex-start;
+}
+.detailRow strong {
+  font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.itemList { display: flex; flex-direction: column; gap: 4px; }
+.itemRow {
+  display: flex; justify-content: space-between;
+  padding: 0.5rem 0.75rem; background: #f9fafb; border-radius: 8px;
+  font-size: 0.9rem;
+}
+.totalRow {
+  display: flex; justify-content: space-between;
+  padding: 0.85rem 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+  margin: 1rem 0; font-size: 1.05rem;
+}
+
+.statusSection { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.statusSection > strong {
+  font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.statusButtons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.statusBtn {
+  padding: 0.55rem 1rem; border: 1px solid #ddd; background: white;
+  border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.statusBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.07);
+}
+.statusBtnActive {
+  background: var(--text-primary) !important;
+  color: white;
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Confirmation */
+.confirmIcon {
+  display: flex; justify-content: center; color: #f59e0b;
+  margin-bottom: 0.85rem;
+}
+.confirmModal h3 { margin: 0 0 0.5rem; }
+.confirmText { margin: 0 0 1rem; color: var(--text-secondary); }
+
+.refundWarning {
+  text-align: left; background: #fff8e1; padding: 1rem;
+  border-radius: 10px; border: 1px solid #fde68a;
+  margin: 1rem 0;
+}
+.refundWarning strong { display: block; margin-bottom: 0.4rem; }
+.refundWarning ul { margin: 0 0 0.85rem 1.25rem; padding: 0; color: #666; font-size: 0.9rem; }
+.refundWarning ul li { margin: 2px 0; }
+.refundNote {
+  background: #fef3c7; padding: 0.75rem;
+  border-radius: 8px; font-size: 0.85rem;
+  margin: 0; color: #92400e;
+}
+
+.confirmActions {
+  display: flex; gap: 0.75rem; margin-top: 1rem;
+}
+.confirmActions button {
+  flex: 1; padding: 0.85rem;
+  border: none; border-radius: 10px;
+  font-weight: 700; cursor: pointer;
+}
+.cancelBtn { background: #f3f4f6; color: #444; }
+.cancelBtn:hover:not(:disabled) { background: #e5e7eb; }
+.confirmBtn { background: #ef4444; color: white; }
+.confirmBtn:hover:not(:disabled) { background: #dc2626; }
+.confirmBtn:disabled, .cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+  .statsRow { grid-template-columns: repeat(2, 1fr); }
+  .row { flex-direction: column; align-items: stretch; }
+  .rowRight { align-items: flex-start; }
+  .detailRow { grid-template-columns: 1fr; gap: 4px; }
+}

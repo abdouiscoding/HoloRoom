@@ -9,6 +9,7 @@ import UsersManagerView from './views/UsersManagerView';
 import FeaturedManagerView from './views/FeaturedManagerView';
 import ARManagerView from './views/ARManagerView';
 import SupportManagerView from './views/SupportManagerView';
+import OrdersManagerView from './views/OrdersManagerView';
 import styles from './DashboardLayout.module.css';
 
 // ===============================
@@ -36,10 +37,11 @@ const checkTokenExpiration = (onExpire) => {
 import LogsView from './views/LogsView';
 
 const rolePermissions = {
-  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support", "logs"],
+  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support", "logs", "orders"],
   PRODUCT_MANAGER: ["products", "ar"],
   MARKETING_MANAGER: ["marketing", "featured"],
   SUPPORT_MANAGER: ["support"],
+  ORDERS_MANAGER: ["orders"],
   USER: []
 };
 
@@ -61,6 +63,7 @@ const DashboardLayout = () => {
     else if (newRole === "PRODUCT_MANAGER") navigate("/dashboard/products", { replace: true });
     else if (newRole === "MARKETING_MANAGER") navigate("/dashboard/marketing", { replace: true });
     else if (newRole === "SUPPORT_MANAGER") navigate("/dashboard/support", { replace: true });
+    else if (newRole === "ORDERS_MANAGER") navigate("/dashboard/orders", { replace: true });
     else navigate("/login", { replace: true });
   };
 
@@ -200,6 +203,10 @@ const DashboardLayout = () => {
               {permissions.includes("support") && (
                 <Route path="support" element={<SupportManagerView />} />
               )}
+
+              {permissions.includes("orders") && (
+                <Route path="orders" element={<OrdersManagerView />} />
+              )}              
             </Routes>
           </div>
         </div>

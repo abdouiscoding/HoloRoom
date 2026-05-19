@@ -222,6 +222,8 @@ const UsersManagerView = () => {
             <option value="ADMIN">ADMIN</option>
             <option value="PRODUCT_MANAGER">PRODUCT MANAGER</option>
             <option value="MARKETING_MANAGER">MARKETING MANAGER</option>
+            <option value="ORDERS_MANAGER">ORDERS MANAGER</option>
+            <option value="SUPPORT_MANAGER">SUPPORT MANAGER</option>
           </select>
         </div>
 

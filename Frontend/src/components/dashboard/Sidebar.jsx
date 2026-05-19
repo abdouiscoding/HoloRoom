@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MessagesSquare,
-  ClipboardList
+  ClipboardList,
+  Package
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -18,6 +19,7 @@ const allMenuItems = [
   { id: 'overview', name: 'Overview', path: 'overview', icon: LayoutDashboard },
   { id: 'users', name: 'Users', path: 'users', icon: Users },
   { id: 'logs', name: 'Logs', path: 'logs', icon: ClipboardList },
+  { id: 'orders',    name: 'Orders',     path: 'orders',    icon: Package },
   { id: 'products', name: 'Products', path: 'products', icon: ShoppingBag },
   { id: 'ar', name: 'AR Support', path: 'ar', icon: Box },
   { id: 'marketing', name: 'Discounts', path: 'marketing', icon: Ticket },

@@ -211,103 +211,64 @@ const toproductpage = (name, id) => {
     return val.toFixed(1);
   };
 
- useEffect(() => {
-    const handleAISearch = (e) => {
-      const { action, type, min, max, query } = e.detail || {};
-      console.log("AI FILTER RECEIVED:", e.detail);
+useEffect(() => {
+  const handleAISearch = (e) => {
+    const { action, type, min, max, query } = e.detail || {};
+    console.log("AI FILTER RECEIVED:", e.detail);
 
-      // =========================
-      // CANCEL / RESET
-      // =========================
-      if (action === "cancel") {
-        setMinPrice('');
-        setMaxPrice('');
-        setActiveCategory('All');
-        setSelectedRoom('Standard');
+    // helper — type can refine ANY action; fall back to search if no category match
+    const applyType = (t) => {
+      if (!t || t.toLowerCase() === "none") return;
+      const matchedCat = CATEGORIES.find(c => c.toLowerCase() === t.toLowerCase());
+      if (matchedCat) {
+        setActiveCategory(matchedCat);
         setSearch('');
-        setProducts(allProducts); // Reset the visual grid
-        return;
-      }
-
-      // =========================
-      // PRICE FILTER
-      // =========================
-      if (action === "price") {
-        if (min != null) setMinPrice(min.toString());
-        if (max != null) setMaxPrice(max.toString());
-        
-        // If the AI passed a category with the price (e.g., "cheap sofas")
-        if (type && type.toLowerCase() !== "none") {
-          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === type.toLowerCase());
-          if (matchedCat) setActiveCategory(matchedCat);
-        }
-      }
-
-      // =========================
-      // CATEGORY / SEARCH
-      // =========================
-      if (action === "search" || action === "category") {
-        const searchTerm = type || query;
-        if (searchTerm && searchTerm.toLowerCase() !== "none") {
-          // Check if it matches an exact category first
-          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === searchTerm.toLowerCase());
-          
-          if (matchedCat) {
-            setActiveCategory(matchedCat);
-          } else {
-            // Fallback to text search input
-            setSearch(searchTerm);
-            // Trigger text search manually since it's separate from your main useEffect
-            const filteredSearch = allProducts.filter((product) =>
-              product.pName?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setProducts(filteredSearch);
-          }
-        }
-      }
-
-      // =========================
-      // SORTS
-      // =========================
-      if (action === "top_selling") {
-        setSelectedRoom("Top selling");
-      }
-
-      if (action === "most_wished") {
-        setSelectedRoom("Most wished for");
-      }
-
-      if (action === "reviews") {
-        setSelectedRoom("Reviews");
-      }
-
-      if (action === "discounts") {
-        setSelectedRoom("Discounts");
-      }
-
-      if (action === "price_low") {
-        setSelectedRoom("Price low");
-      }
-      if (action === "price_high") {
-        setSelectedRoom("Price high");
-      }
-
-      if (action === "price_low" || action === "price_high") {
-        setSelectedRoom(action === "price_low" ? "Price low" : "Price high");
-        if (type && type.toLowerCase() !== "none") {
-          const matchedCat = CATEGORIES.find(c => c.toLowerCase() === type.toLowerCase());
-          if (matchedCat) setActiveCategory(matchedCat);
-          else setSearch(type);
-        }
+      } else {
+        setActiveCategory('All');
+        setSearch(t);
       }
     };
 
-    window.addEventListener("ai-search", handleAISearch);
+    // CANCEL / RESET
+    if (action === "cancel") {
+      setMinPrice('');
+      setMaxPrice('');
+      setActiveCategory('All');
+      setSelectedRoom('Standard');
+      setSearch('');
+      return;
+    }
 
-    return () => {
-      window.removeEventListener("ai-search", handleAISearch);
+    // PRICE RANGE
+    if (action === "price") {
+      if (min != null) setMinPrice(min.toString());
+      if (max != null) setMaxPrice(max.toString());
+      applyType(type);
+    }
+
+    // SEARCH / CATEGORY
+    if (action === "search" || action === "category") {
+      applyType(type || query);
+    }
+
+    // SORTS — combinable with type
+    const sortMap = {
+      top_selling: "Top selling",
+      most_wished: "Most wished for",
+      reviews: "Reviews",
+      discounts: "Discounts",
+      price_low: "Price low",
+      price_high: "Price high",
     };
-  }, [allProducts, CATEGORIES]);
+    if (sortMap[action]) {
+      setSelectedRoom(sortMap[action]);
+      applyType(type);
+    }
+  };
+
+  window.addEventListener("ai-search", handleAISearch);
+  return () => window.removeEventListener("ai-search", handleAISearch);
+}, [allProducts, CATEGORIES]);
 
 const fetchDiscounts = async () => {
   try {

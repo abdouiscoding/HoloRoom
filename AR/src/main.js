@@ -30,6 +30,7 @@ let dragPlaneY = 0;
 let menuScrollDragging = false;
 let micEnabled = true;
 let hintsEnabled = true;
+let forceModeAnnounced = false;
 
 let interactionEnabled = false;
 
@@ -77,6 +78,19 @@ function switchPlacementForObject(obj) {
   detectedPlacement = null;
   searchStartedAt = null;
   hintsSpoken = 0;
+}
+
+function classifySurface(normal, elapsedMs = 0) {
+  const up = new THREE.Vector3(0, 1, 0);
+  const dot = normal.dot(up);
+
+  // 0.78 strict at start, easing to 0.5 by 25 seconds of searching
+  const elapsedSec = Math.min(25, elapsedMs / 1000);
+  const threshold = 0.78 - (elapsedSec / 16) * 0.28; // 0.78 → 0.50
+
+  if (dot > threshold) return "FLOOR";
+  if (dot < -threshold) return "CEILING";
+  return "WALL";
 }
 
   /* =====================================================
@@ -530,7 +544,7 @@ ui.appendChild(chatbotBtn);
 /* =========================
    AR CHATBOT + TTS
 ========================= */
-let chatHistory = []; // [{ role, text }, ...]
+let chatHistory = [];
 let ttsEnabled = true;
 
 function speak(text) {
@@ -540,7 +554,6 @@ function speak(text) {
   u.rate = 1.05;
   u.pitch = 1;
   u.volume = 1;
-  // try to pick an English voice
   const voices = window.speechSynthesis.getVoices();
   const en = voices.find(v => v.lang?.startsWith("en"));
   if (en) u.voice = en;
@@ -956,6 +969,22 @@ async function sendVoiceMessage(text) {
 }
 
 // buttons
+const forcePlaceBtn = makeBtn("Place Here");
+forcePlaceBtn.style.bottom = "30px";
+forcePlaceBtn.style.left = "50%";
+forcePlaceBtn.style.transform = "translateX(-50%)";
+forcePlaceBtn.style.display = "none"; // hidden by default
+forcePlaceBtn.style.background = "rgba(255, 165, 0, 0.85)";
+
+forcePlaceBtn.onclick = () => {
+  if (!productModelTemplate) return;
+  // force-mark as ready and place
+  placementStatus = "READY";
+  detectedPlacement = requiredPlacement;
+  addObject();
+  forcePlaceBtn.style.display = "none";
+};
+
 const addBtn = makeBtn("Add");
 addBtn.style.bottom = "30px";
 addBtn.style.left = "50%";
@@ -2425,6 +2454,8 @@ renderer.xr.addEventListener("sessionend", () => {
   if (placementToast) { placementToast.remove(); placementToast = null; }
   searchStartedAt = null;
   hintsSpoken = 0;
+  forceModeAnnounced = false;
+  forcePlaceBtn.style.display = "none"
 });
 
 /* =========================
@@ -2583,6 +2614,7 @@ renderer.setAnimationLoop(async (_, frame) => {
  if (!snapped) {
   const hits = frame.getHitTestResults(hitTestSource);
   if (hits.length) {
+    const elapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
     let matched = null;
     let matchedNormal = null;
     let matchedY = Infinity;
@@ -2590,7 +2622,7 @@ renderer.setAnimationLoop(async (_, frame) => {
       const pose = h.getPose(referenceSpace);
       const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
       const n = new THREE.Vector3().setFromMatrixColumn(m, 1).normalize();
-      const surface = classifySurface(n);
+      const surface = classifySurface(n, elapsed);
       if (surface !== requiredPlacement) continue;
 
       const y = m.elements[13]; // translation Y
@@ -2669,6 +2701,25 @@ if (menuScrollDragging && menu.visible) {
 
   // Auto-spoken hints when detection takes too long
   if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement && hintsEnabled) {
+    if (placementStatus === "SEARCHING" && searchStartedAt) {
+      const elapsed = Date.now() - searchStartedAt;
+      if (elapsed > 25000) {
+        if (!forceModeAnnounced) {
+          forceModeAnnounced = true;
+          speak(
+            "Surface detection is taking longer than usual. You can use the force Place button to drop items at the cursor for now, and I'll keep scanning for a real surface in the background."
+          );
+        }
+        forcePlaceBtn.style.display = "flex";
+        addBtn.style.display = "none";
+      } else {
+        forcePlaceBtn.style.display = "none";
+        addBtn.style.display = "flex";
+      }
+    } else {
+      forcePlaceBtn.style.display = "none";
+      addBtn.style.display = "flex";
+    }
     if (!searchStartedAt) searchStartedAt = Date.now();
     const elapsed = Date.now() - searchStartedAt;
     if (hintsSpoken < HINT_TIMES_MS.length && elapsed > HINT_TIMES_MS[hintsSpoken]) {
@@ -2683,7 +2734,10 @@ if (menuScrollDragging && menu.visible) {
   if (placementStatus === "READY") {
     searchStartedAt = null;
     hintsSpoken = 0;
-  }
+    forceModeAnnounced = false;
+    forcePlaceBtn.style.display = "none";
+    speak("I've finally detected a surface you can drop items on the cursor normally.");
+  } 
 
   if (placementStatus === "READY" && placementToast) {
     placementToast.remove();

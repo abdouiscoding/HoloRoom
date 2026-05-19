@@ -120,6 +120,14 @@ public class SecurityConfig {
                     .hasAnyRole("USER", "SUPPORT_MANAGER", "ADMIN", "MARKETING_MANAGER", "PRODUCT_MANAGER")
 
                 // =====================================
+                // Orders MANAGER
+                // ========================================
+                .requestMatchers("/api/orders/getall",
+                            "/api/orders/update/status/**",
+                            "/api/orders/cancel/**")
+                .hasAnyRole("ADMIN", "ORDERS_MANAGER")  
+
+                // =====================================
                 // chargily
                 // =====================================
                 .requestMatchers("/api/payment/chargily/webhook").permitAll()

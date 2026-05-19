@@ -5,7 +5,6 @@ import { useWishlist } from "../context/WishlistContext";
 import { useOrders } from "../context/OrdersContext";
 import { Trash2, Eye, EyeOff, X } from "lucide-react";
 import { API, myFetch, logAction } from "../api";
-import { log } from "three";
 
 const Logout = () => {
   localStorage.clear();
@@ -87,7 +86,13 @@ const ProfilePage = () => {
   // Derived: total spending across ALL orders (not filtered)
   // ===============================
   const totalSpending = useMemo(
-    () => orders.reduce((sum, o) => sum + (o.price || 0), 0),
+    () =>
+      orders
+        .filter((o) => {
+          const s = (o.status || o.Status || "").toLowerCase();
+          return s !== "canceled" && s !== "cancelled";
+        })
+        .reduce((sum, o) => sum + (o.price || 0), 0),
     [orders]
   );
 
@@ -153,22 +158,21 @@ const ProfilePage = () => {
   };
 
   const updateshipping = async () => {
-    try {
-      const res = await myFetch(`${API}/api/users/update/shipping/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ shipping: `${newaddress} ${newplace}` }),
-      },
-      logAction("UPDATE_SHIPPING", `User ${localStorage.getItem("userName")} updated shipping address`)
-    );
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      localStorage.setItem("shipping", data.shipping);
-      setIsAddressModalOpen(false);
-    } catch {
-      alert("Failed to update shipping");
-    }
-  };
+  try {
+    const res = await myFetch(`${API}/api/users/update/shipping/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ shipping: `${newaddress} ${newplace}` }),
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    localStorage.setItem("shipping", data.shipping);
+    logAction("UPDATE_SHIPPING", `User ${localStorage.getItem("userName")} updated shipping address`);
+    setIsAddressModalOpen(false);
+  } catch {
+    alert("Failed to update shipping");
+  }
+};
 
   const updateimage = async (file) => {
     try {
@@ -178,12 +182,12 @@ const ProfilePage = () => {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
-      },
-      logAction("UPDATE_PROFILE_IMAGE", `User ${localStorage.getItem("userName")} updated profile image`)
+      }
     );
       if (!res.ok) throw new Error("Failed to update image");
       const data = await res.json();
       setProfileImage(data.userImage);
+      logAction("UPDATE_PROFILE_IMAGE", `User ${localStorage.getItem("userName")} updated profile image`);
       localStorage.setItem("userImage", data.userImage);
     } catch (err) {
       alert(err.message || "Failed to update image");
@@ -192,7 +196,7 @@ const ProfilePage = () => {
 
   const role = localStorage.getItem("role");
   const dashboardbtn = () => {
-    if (role === "ADMIN" || role === "PRODUCT_MANAGER" || role === "MARKETING_MANAGER") {
+    if (role === "ADMIN" || role === "PRODUCT_MANAGER" || role === "MARKETING_MANAGER" || role == "SUPPORT_MANAGER" || role == "ORDERS_MANAGER") {
       navigate("/dashboard");
     }
   };
