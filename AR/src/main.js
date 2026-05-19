@@ -32,6 +32,8 @@ let micEnabled = true;
 let hintsEnabled = true;
 let forceModeAnnounced = false;
 
+let showingchat = false;
+
 let interactionEnabled = false;
 
 let detectedPlacement = null;
@@ -613,7 +615,9 @@ function rerenderChatIfOpen() {
 
 function showChatPopup() {
   const existing = document.getElementById("arChatPopup");
-  if (existing) { existing.remove(); return; }
+  if (existing) { existing.remove(); showingchat = false; return; }
+
+  showingchat = true;
 
   const overlay = document.createElement("div");
   overlay.id = "arChatPopup";
@@ -647,6 +651,7 @@ function showChatPopup() {
     window.visualViewport?.removeEventListener("resize", syncHeight);
     window.visualViewport?.removeEventListener("scroll", syncHeight);
     overlay.remove();
+    showingchat = false;
   }
   overlay.onclick = closePopup;
 
@@ -874,7 +879,7 @@ function startRecording() {
         finalText += event.results[i][0].transcript + " ";
       }
     }
-    accumulatedText = finalText.trim();
+    accumulatedText = finalText.trim().replace(/\b(\w+)(\s+\1\b)+/gi, '$1');
   };
 
   recordRecognition.onerror = (e) => {
@@ -924,7 +929,6 @@ micBtn.onclick = (e) => {
 };
 
 async function sendVoiceMessage(text) {
-  popup("🎤 " + text);
   chatHistory.push({ role: "user", text });
   rerenderChatIfOpen();
 
@@ -2730,12 +2734,39 @@ if (menuScrollDragging && menu.visible) {
     speak("I've finally detected a surface you can drop items on the cursor normally.");
   } 
 
+  const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
+
   if (placementStatus === "READY" && placementToast) {
     placementToast.remove();
     placementToast = null;
   }
 
-  if (placementStatus !== "READY" && !placementToast && interactionEnabled) {
+  const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
+
+  if (placementStatus === "READY" && placementToast) {
+    placementToast.remove();
+    placementToast = null;
+  }
+
+  const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
+
+  // Suppress toast when chat or the settings/exit menu (NOT the products menu) is open
+  const chatOrMenuOpen = showingchat
+    || !!document.getElementById("mainMenuPopup")
+    || !!document.getElementById("settingsPopup");
+
+  // Remove existing toast when surface is found OR a UI overlay covers it
+  if ((placementStatus === "READY" || chatOrMenuOpen) && placementToast) {
+    placementToast.remove();
+    placementToast = null;
+  }
+
+  // Only show toast after 20s of continuous searching and when nothing's covering it
+  if (placementStatus !== "READY"
+      && !placementToast
+      && interactionEnabled
+      && !chatOrMenuOpen
+      && searchElapsed > 20000) {
     const label = SURFACE_LABEL[requiredPlacement] || "surface";
     const hint = requiredPlacement === "WALL"
       ? "Pan the camera slowly across the wall"

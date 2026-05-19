@@ -49,79 +49,78 @@ public class AIService {
 
             YOU MUST ALWAYS RETURN ONLY VALID JSON. NO TEXT BEFORE OR AFTER.
 
+            TOP-LEVEL FORMAT (ALWAYS):
+            {
+            "actions": [ /* one or more action objects */ ],
+            "message": "short user-friendly reply"
+            }
+
+            Each action object:
+            {
+            "action": "...",
+            "type":   "string or null",       // product/category, e.g. "sofa", "rug"
+            "color":  "string or null",       // single color e.g. "red"
+            "size":   "string or null",       // e.g. "small", "M", "XL", "200x300"
+            "criteria": "string or null",     // cheapest|expensive|best_rated|most_wished|best_selling — only used by add_cart/add_wishlist
+            "min": number or null,
+            "max": number or null
+            }
+
             Allowed actions:
             - search
-            - price            (only when a SPECIFIC number is given)
-            - price_low        (cheapest first / sort low to high)
-            - price_high       (most expensive first / sort high to low)
+            - price            (only when SPECIFIC numbers are given)
+            - price_low        (cheapest first / low to high)
+            - price_high       (most expensive first / high to low)
             - top_selling
             - most_wished
             - reviews
             - discounts
-            - color            (filter products by a color)
-            - add_cart         (add a product to the cart)
-            - add_wishlist     (add a product to the wishlist)
-            - show_cart        (read out the user's cart contents)
-            - show_wishlist    (read out the user's wishlist contents)
+            - color            (filter by color)
+            - size             (filter by size)
+            - add_cart
+            - add_wishlist
+            - show_cart
+            - show_wishlist
             - navigate         (with type=support|cart|shop|home|profile)
             - cancel
             - help
             - none
 
-            JSON FORMAT:
-            {
-            "action": "...",
-            "type": "string or null",        // product / category, e.g. "sofa", "rug"
-            "color": "string or null",       // single color name e.g. "red", "black"
-            "criteria": "string or null",    // cheapest|expensive|best_rated|most_wished|best_selling — only for add_cart/add_wishlist
-            "min": number or null,
-            "max": number or null,
-            "message": "short user-friendly reply"
-            }
+            MULTI-ACTION RULES:
+            - Closely-related intents go in the SAME array:
+            "show cheapest red sofas and add the first one to my cart"
+                → actions: [
+                    {"action":"price_low","type":"sofa","color":"red"},
+                    {"action":"add_cart","type":"sofa","color":"red","criteria":"cheapest"}
+                ]
+            - If the user lists 3+ unrelated things ("show me my cart, take me to the shop, then my profile"),
+            include ONLY the first 2 in actions. Mention briefly in 'message' that you skipped the rest.
+            - Single intent → array with 1 object.
+            - 'message' summarizes everything in 1 sentence. NEVER leave 'message' empty.
 
-            RULES:
-            - Plurals → singular for search: rugs → rug, tables → table.
-            - "cheap", "budget", "cheapest", "lowest" with NO numbers → price_low. With type if mentioned.
-            - "expensive", "luxury", "premium" with NO numbers → price_high.
-            - "under 5000", "between 2000 and 8000" — with SPECIFIC numbers → price with min/max.
-            - "best selling" / "popular" → top_selling
-            - "best reviews" / "top rated" → reviews
-            - "most wished" / "favorites" → most_wished
-            - "biggest discounts" / "sale" → discounts
-
-            COLOR:
-            - "show me red sofas" → action=color, type=sofa, color=red
-            - "anything in blue" → action=color, color=blue, type=null
-            - Color also refines other actions: "cheapest red sofa" → price_low, type=sofa, color=red.
-
-            ADD TO CART / WISHLIST:
-            - "add this to my cart" / "add this to wishlist" with NO product specified
-            → action=add_cart/add_wishlist with type=null, color=null, criteria=null
-                (the app will use the product the user is currently viewing)
-            - "add the cheapest sofa to my cart" → add_cart, type=sofa, criteria=cheapest
-            - "add a red chair to my wishlist" → add_wishlist, type=chair, color=red
-            - "add the best-rated lamp to cart" → add_cart, type=lamp, criteria=best_rated
-            - "add the most popular table" → add_cart, type=table, criteria=best_selling
-
-            SHOW CONTENTS:
-            - "what's in my cart" / "what did I add" → show_cart
-            - "what's on my wishlist" / "what did I save" → show_wishlist
-
-            SUPPORT / NAVIGATION:
-            - "support", "I have an issue", "complaint", "report a bug", "need help with my order" → navigate, type=support
-            - "wishlist" / "orders" / "profile" / "account" → navigate, type=profile
-            - "cart" / "checkout" (just go there) → navigate, type=cart
-            - "shop" / "browse" → navigate, type=shop
-            - "home page" → navigate, type=home
-
-            OTHER:
-            - "where is the AR button" / "how do I view in AR" → action=none, message="To preview in AR, open any product's page and tap Preview in AR next to Add to Cart. From the cart, each AR-supported item has a Preview in AR button."
-            - "cancel" / "reset filters" / "show all" → cancel
-            - "what can you do" / "help me use this" → action=help
-            - Unclear / off-topic → action=none
-            - Keep 'message' short, friendly, in the user's language.
+            PER-ACTION RULES:
+            - Plurals → singular: "rugs" → "rug".
+            - "cheap"/"cheapest"/"low price" with NO numbers → price_low.
+            - "expensive"/"luxury"/"premium" with NO numbers → price_high.
+            - Specific numbers → price with min/max.
+            - Color/size refine other actions: "cheapest large red sofa" → price_low, type=sofa, color=red, size=large.
+            - COLOR: "red sofas" → action=color, type=sofa, color=red.
+            - SIZE: "large rugs" / "small chairs" / "XL bed" → action=size with size+type. Size also refines other actions.
+            - ADD_CART/ADD_WISHLIST with NO specifiers → uses the product currently being viewed.
+            - ADD with specifiers ("cheapest sofa", "red chair") → app will find the matching product.
+            - SHOW_CART/SHOW_WISHLIST → lists contents inline in chat.
+            - "best selling"/"popular" → top_selling. "best reviewed"/"top rated" → reviews. "most wished" → most_wished. "sale"/"deals" → discounts.
+            - Support: "issue"/"complaint"/"report bug"/"contact us"/"talk to someone" → navigate, type=support.
+            - "wishlist"/"orders"/"profile"/"settings" → navigate, type=profile.
+            - "cart"/"checkout" (just go there, no list) → navigate, type=cart.
+            - "shop"/"browse" → navigate, type=shop. "home" → navigate, type=home.
+            - "what can you do"/"how do I use this" → help.
+            - "where is the AR button"/"how do I view in AR" → action=none, message="To preview in AR, open any product's page and tap Preview in AR next to Add to Cart. From the cart, each AR-supported item has a Preview in AR button on its card."
+            - "cancel"/"reset"/"show all" → cancel.
+            - Unclear/off-topic/greeting → action=none with friendly 'message'.
             - NEVER include markdown. ONLY JSON.
-            """));
+            """)
+        );
 
             // =========================
             // HISTORY (LAST 6 MESSAGES ONLY)
@@ -237,6 +236,12 @@ public class AIService {
             - "Add to cart?" → "Tap the ADD CART button on the card floating above the item."
             - "Why won't it place?" → "Make sure the cursor is on the right surface for that product, and that the camera has scanned that area. Try moving the phone slowly across the floor, wall, or ceiling where you want to drop it."
             - "Where can I put this?" → if it's wall art, "On any wall — point the camera at the wall and scan around a bit." If a sofa/chair/etc, "On the floor — any open area works."
+            - "How do I turn off TTS / the voice reading replies?" → "Tap the menu top-right, open Settings, go to Chatbot, then turn Text-to-Speech off."
+            - "How do I change the cursor shape or color?" → "Open the top-right menu, tap Settings, then Cursor — pick a shape and a color there."
+            - "How do I disable the microphone?" → "Top-right menu, Settings, Chatbot, then turn Microphone off."
+            - "How do I stop the spoken detection hints?" → "Top-right menu, Settings, Chatbot, then turn Detection Hints off."
+            - "How do I exit AR?" → "Tap the menu top-right, then Exit."
+            - "How do I open settings?" → "Tap the three-line menu icon at the top-right of the screen."
 
             For product or design questions (colors, materials, scale, room layout, style fit), give friendly, concrete advice.
 

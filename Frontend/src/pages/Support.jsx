@@ -1,6 +1,6 @@
 import { LifeBuoy, Send, MessageSquare, CheckCircle } from 'lucide-react';
 import styles from './Support.module.css';
-import { API, myFetch } from '../api';
+import { API, myFetch, logAction } from '../api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 

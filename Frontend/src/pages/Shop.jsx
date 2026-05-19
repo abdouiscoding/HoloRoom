@@ -13,6 +13,7 @@ import { API, address, myFetch } from "../api";
 
 const Shop = () => {
   const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -37,6 +38,16 @@ const Shop = () => {
 
   const [discounts, setDiscounts] = useState([]); 
   const [globalDiscount, setglobalDiscount] = useState(0);
+
+  const resetAllFilters = () => {
+    setMinPrice('');
+    setMaxPrice('');
+    setActiveCategory('All');
+    setSelectedRoom('Standard');
+    setSearch('');
+    setSelectedColor('');
+    setSelectedSize('');
+  };
 
   // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = async () => {
@@ -82,6 +93,12 @@ const Shop = () => {
   const dbColors = [
     ...new Set(
       allProducts.flatMap(p => (p.sizecolorstock || []).map(v => v?.pColor))
+    )
+  ].filter(Boolean);
+
+  const dbSizes = [
+    ...new Set(
+      allProducts.flatMap(p => (p.sizecolorstock || []).map(v => v?.pSize))
     )
   ].filter(Boolean);
 
@@ -145,10 +162,12 @@ useEffect(() => {
 
   // CATEGORY
   if (activeCategory !== 'All') {
+    const ac = activeCategory.toLowerCase();
     filtered = filtered.filter((product) =>
-      (product.categories || []).some(
-        (cat) => cat?.pCategory === activeCategory
-      )
+      (product.categories || []).some(cat => {
+        const cLow = (cat?.pCategory || '').toLowerCase();
+        return cLow === ac || cLow.includes(ac) || ac.includes(cLow);
+      })
     );
   }
 
@@ -166,6 +185,13 @@ useEffect(() => {
     );
   }
 
+  if (selectedSize) {
+    const s = selectedSize.toLowerCase();
+    filtered = filtered.filter(p =>
+      (p.sizecolorstock || []).some(v => v?.pSize?.toLowerCase() === s)
+    );
+  } 
+
   // PRICE
   const min = parseFloat(minPrice);
   const max = parseFloat(maxPrice);
@@ -175,7 +201,7 @@ useEffect(() => {
   // SORT
   const sorted = sortProducts(selectedRoom, filtered);
   setProducts(sorted);
-}, [allProducts, activeCategory, selectedRoom, minPrice, maxPrice, search, selectedColor]);
+}, [allProducts, activeCategory, selectedRoom, minPrice, maxPrice, search, selectedColor, selectedSize]);
 
 const resetPriceFilter = () => {
   setMinPrice('');
@@ -203,13 +229,16 @@ const toproductpage = (name, id) => {
 
 useEffect(() => {
   const handleAISearch = (e) => {
-    const { action, type, color, min, max, query } = e.detail || {};
-    console.log("AI FILTER RECEIVED:", e.detail);
+    const { action, type, color, size, min, max, query } = e.detail || {};
 
     // helper — type can refine ANY action; fall back to search if no category match
     const applyType = (t) => {
       if (!t || t.toLowerCase() === "none") return;
-      const matchedCat = CATEGORIES.find(c => c.toLowerCase() === t.toLowerCase());
+      const tLow = t.toLowerCase();
+      const matchedCat = CATEGORIES.find(c => {
+        const cLow = c.toLowerCase();
+        return cLow === tLow || cLow.includes(tLow) || tLow.includes(cLow);
+      });
       if (matchedCat) {
         setActiveCategory(matchedCat);
         setSearch('');
@@ -221,12 +250,7 @@ useEffect(() => {
 
     // CANCEL / RESET
     if (action === "cancel") {
-      setMinPrice('');
-      setMaxPrice('');
-      setActiveCategory('All');
-      setSelectedRoom('Standard');
-      setSearch('');
-      setSelectedColor('');
+      resetAllFilters();
       return;
     }
 
@@ -261,6 +285,14 @@ useEffect(() => {
     }
 
     if (action === "color") {
+      applyType(type);
+    }
+
+    if (size !== undefined && size !== null && size !== '') {
+      setSelectedSize(size);
+    }
+
+    if (action === "size") {
       applyType(type);
     }
   };
@@ -326,6 +358,22 @@ useEffect(() => {
       >
         {/* SIDEBAR */}
         <aside className={`${styles.sidebar} ${mobileFiltersOpen ? styles.sidebarMobileOpen : ''}`}>
+          <button
+            onClick={resetAllFilters}
+            style={{
+              width: '100%',
+              padding: '10px',
+              marginBottom: '12px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-glass)',
+              background: 'var(--accent-secondary)',
+              color: '#000',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            Clear All Filters
+          </button>
           <div
             className={`${styles.filterBlock} glass-panel`}
           >
@@ -442,6 +490,28 @@ useEffect(() => {
                 )}
               </div>
             </div>
+            {dbSizes.length > 0 && (
+              <div className={styles.filterBlock}>
+                <div className={styles.filterHeader}><h3>Size</h3></div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {dbSizes.map(sz => (
+                    <button
+                      key={sz}
+                      onClick={() => setSelectedSize(selectedSize === sz ? '' : sz)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: selectedSize === sz ? '2px solid var(--accent-secondary)' : '1px solid var(--border-glass)',
+                        background: selectedSize === sz ? 'var(--accent-secondary)' : 'transparent',
+                        color: selectedSize === sz ? '#000' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem'
+                      }}
+                    >{sz}</button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 

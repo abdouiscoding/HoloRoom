@@ -14,9 +14,22 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const FILTER_ACTIONS = ['search', 'price', 'price_low', 'price_high', 'top_selling', 'most_wished', 'reviews', 'discounts', 'color', 'cancel'];
+const FILTER_ACTIONS = ['search', 'price', 'price_low', 'price_high', 'top_selling', 'most_wished', 'reviews', 'discounts', 'color', 'size', 'cancel'];
 const COOLDOWN_SECONDS = 10;
 const loggedin = localStorage.getItem("loggedin");
+
+let _productMap = null;
+const getProductMap = async () => {
+  if (_productMap) return _productMap;
+  try {
+    const res = await myFetch(`${API}/api/products/get`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+    if (!res.ok) return {};
+    const list = await res.json();
+    _productMap = {};
+    (list || []).forEach(p => { if (p?.pId != null) _productMap[p.pId] = p; });
+    return _productMap;
+  } catch { return {}; }
+};
 
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -91,7 +104,10 @@ const ChatbotWidget = () => {
       if (parsed.type && parsed.type !== 'none') {
         const t = parsed.type.toLowerCase();
         list = list.filter(p =>
-          (p.categories || []).some(c => c?.pCategory?.toLowerCase() === t) ||
+          (p.categories || []).some(c => {
+            const cLow = (c?.pCategory || '').toLowerCase();
+            return cLow === t || cLow.includes(t) || t.includes(cLow);
+          }) ||
           p.pName?.toLowerCase().includes(t)
         );
       }
@@ -101,6 +117,14 @@ const ChatbotWidget = () => {
           (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c)
         );
       }
+
+      if (parsed.size) {
+        const s = parsed.size.toLowerCase();
+        list = list.filter(p =>
+          (p.sizecolorstock || []).some(v => v?.pSize?.toLowerCase() === s)
+        );
+      }
+
       if (parsed.min != null) list = list.filter(p => Number(p.pFinalPrice) >= parsed.min);
       if (parsed.max != null) list = list.filter(p => Number(p.pFinalPrice) <= parsed.max);
 
@@ -132,6 +156,7 @@ const ChatbotWidget = () => {
 
   // ---- ADD TO CART ----
   const handleAddCart = async (parsed) => {
+    window.dispatchEvent(new CustomEvent('ai-search', { detail: { action: 'cancel' } }));
     const hasSpecifiers = parsed.type || parsed.color || parsed.criteria;
     const product = hasSpecifiers ? await findProduct(parsed) : await fetchCurrentProduct();
     if (!product) { botSay("I couldn't find a matching product."); return; }
@@ -176,6 +201,7 @@ const ChatbotWidget = () => {
 
   // ---- ADD TO WISHLIST ----
   const handleAddWishlist = async (parsed) => {
+    window.dispatchEvent(new CustomEvent('ai-search', { detail: { action: 'cancel' } }));
     const hasSpecifiers = parsed.type || parsed.color || parsed.criteria;
     const product = hasSpecifiers ? await findProduct(parsed) : await fetchCurrentProduct();
     if (!product) { botSay("I couldn't find a matching product."); return; }
@@ -201,84 +227,113 @@ const ChatbotWidget = () => {
   };
 
   // ---- SHOW CART ----
-  const handleShowCart = async () => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    if (!token || !userId) { botSay('Log in to see your cart.'); return; }
-    try {
-      const res = await myFetch(`${API}/api/cart/getbyuser/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) { botSay('Could not load your cart.'); return; }
-      const cart = await res.json();
-      const items = cart.cartItems || [];
-      if (!items.length) { botSay('Your cart is empty.'); return; }
-      const lines = items.map(it => `• ${it.pName || 'Product'} × ${it.quantity || 1}`).join('\n');
-      const total = items.reduce((s, it) => s + (Number(it.price) || 0) * (it.quantity || 1), 0);
-      botSay(`You have ${items.length} item${items.length > 1 ? 's' : ''} in your cart:\n${lines}\nTotal: ${total.toLocaleString()} DZD`);
-    } catch { botSay('Something went wrong loading your cart.'); }
-  };
+  const handleShowCart = async () => {  
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+  if (!token || !userId) { botSay('Log in to see your cart.'); return; }
+  try {
+    const res = await myFetch(`${API}/api/cart/getbyuser/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) { botSay('Could not load your cart.'); return; }
+    const cart = await res.json();
+    const items = cart.cartItems || [];
+    if (!items.length) { botSay('Your cart is empty.'); return; }
+    const map = await getProductMap();
+    const lines = items.map(it => {
+      const p = map[it.pId];
+      const name = it.pName || p?.pName || `Product #${it.pId}`;
+      const price = Number(it.price) || Number(p?.pFinalPrice) || 0;
+      return `• ${name} × ${it.quantity || 1}${price ? ` — ${price} DZD` : ''}`;
+    }).join('\n');
+    const total = items.reduce((s, it) => s + (Number(it.price) || Number(map[it.pId]?.pFinalPrice) || 0) * (it.quantity || 1), 0);
+    botSay(`You have ${items.length} item${items.length > 1 ? 's' : ''} in your cart:\n${lines}\nTotal: ${total.toLocaleString()} DZD`);
+  } catch { botSay('Something went wrong loading your cart.'); }
+};
 
   // ---- SHOW WISHLIST ----
-  const handleShowWishlist = async () => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    if (!token || !userId) { botSay('Log in to see your wishlist.'); return; }
-    try {
-      const res = await myFetch(`${API}/api/wishlist/get/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) { botSay('Could not load your wishlist.'); return; }
-      const data = await res.json();
-      const items = data.wishlistItems || [];
-      if (!items.length) { botSay('Your wishlist is empty.'); return; }
-      const lines = items.map(it => `• ${it.pName || 'Product'}`).join('\n');
-      botSay(`Your wishlist (${items.length} item${items.length > 1 ? 's' : ''}):\n${lines}`);
-    } catch { botSay('Something went wrong loading your Wishlist.'); }
-  };
+ const handleShowWishlist = async () => {
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+  if (!token || !userId) { botSay('Log in to see your wishlist.'); return; }
+  try {
+    const res = await myFetch(`${API}/api/wishlist/get/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) { botSay('Could not load your wishlist.'); return; }
+    const data = await res.json();
+    const items = data.wishlistItems || [];
+    if (!items.length) { botSay('Your wishlist is empty.'); return; }
+    const map = await getProductMap();
+    const lines = items.map(it => {
+      const p = map[it.pId];
+      const name = p?.pName || `Product #${it.pId}`;
+      const price = Number(p?.pFinalPrice) || 0;
+      return `• ${name}${price ? ` — ${price} DZD` : ''}`;
+    }).join('\n');
+    botSay(`Your wishlist (${items.length} item${items.length > 1 ? 's' : ''}):\n${lines}`);
+  } catch { botSay('Something went wrong loading your wishlist.'); }
+};
 
-  const handleAIResponse = (reply) => {
-    try {
-      let outer = JSON.parse(reply);
-      let parsed = typeof outer.reply === "string" ? JSON.parse(outer.reply) : outer;
-      const safeMessage = parsed?.message?.trim() ? parsed.message : "I couldn't generate a response.";
+const handleAIResponse = async (reply) => {
+  try {
+    let outer = JSON.parse(reply);
+    let parsed = typeof outer.reply === "string" ? JSON.parse(outer.reply) : outer;
 
-      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: safeMessage }]);
+    // Normalize: support {actions:[...]} OR legacy single {action,...}
+    const actions = Array.isArray(parsed.actions) ? parsed.actions
+                  : parsed.action ? [parsed]
+                  : [];
 
-      if (parsed.action === 'navigate') {
-        handleNavigation(parsed.type);
-        return;
-      }
+    const selfReporting = new Set(['show_cart', 'show_wishlist', 'add_cart', 'add_wishlist']);
+    const allSelf = actions.length > 0 && actions.every(a => selfReporting.has(a.action));
 
-      if (parsed.action === 'help') {
+    const preamble = parsed.message?.trim();
+    // show preamble only if there's a meaningful message AND not all actions self-report
+    // (no more "I couldn't generate a response.")
+    if (preamble && !allSelf) {
+      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: preamble }]);
+    }
+
+    if (!actions.length) {
+      if (!preamble) botSay("I'm not sure what to do with that. Try asking for products, your cart, or support.");
+      return;
+    }
+
+    // Cap at 2 unconnected actions (backend already caps, but enforce client-side too)
+    const toProcess = actions.slice(0, 2);
+
+    for (const a of toProcess) {
+      if (a.action === 'navigate')       { handleNavigation(a.type); continue; }
+      if (a.action === 'help')           {
         setMessages(prev => [...prev, {
-          id: Date.now() + 1,
-          sender: 'bot',
-          text: "Try: 'show cheapest sofas', 'best reviewed', 'biggest discounts', 'open my cart', 'I need support'."
+          id: Date.now() + Math.random(), sender: 'bot',
+          text: "Try: 'show cheapest sofas', 'add the cheapest chair to cart', 'what's in my cart', 'small red rugs', 'I need support'."
         }]);
-        return;
+        continue;
       }
+      if (a.action === 'add_cart')       { await handleAddCart(a); continue; }
+      if (a.action === 'add_wishlist')   { await handleAddWishlist(a); continue; }
+      if (a.action === 'show_cart')      { await handleShowCart(); continue; }
+      if (a.action === 'show_wishlist')  { await handleShowWishlist(); continue; }
 
-      if (parsed.action === 'add_cart')      { handleAddCart(parsed);     return; }
-      if (parsed.action === 'add_wishlist')  { handleAddWishlist(parsed); return; }
-      if (parsed.action === 'show_cart')     { handleShowCart();          return; }
-      if (parsed.action === 'show_wishlist') { handleShowWishlist();      return; }
-
-      if (FILTER_ACTIONS.includes(parsed.action)) {
+      if (FILTER_ACTIONS.includes(a.action)) {
         dispatchFilter({
-          action: parsed.action,
-          type: parsed.type,
-          color: parsed.color,
-          query: parsed.type,
-          min: parsed.min,
-          max: parsed.max
+          action: a.action,
+          type: a.type,
+          color: a.color,
+          size: a.size,
+          query: a.type,
+          min: a.min,
+          max: a.max
         });
       }
-    } catch (err) {
-      console.error("AI parse error:", err);
-      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: "Couldn't process that response." }]);
     }
-  };
+  } catch (err) {
+    console.error("AI parse error:", err);
+    botSay("Couldn't process that response.");
+  }
+};
 
   const handleSend = async (e) => {
     e?.preventDefault();
