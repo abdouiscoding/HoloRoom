@@ -112,16 +112,18 @@ const ChatbotWidget = () => {
         );
       }
       if (parsed.color) {
-        const c = parsed.color.toLowerCase();
         list = list.filter(p =>
-          (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c)
+          (p.sizecolorstock || []).some(v => colorMatches(v?.pColor, parsed.color))
         );
       }
 
       if (parsed.size) {
         const s = parsed.size.toLowerCase();
         list = list.filter(p =>
-          (p.sizecolorstock || []).some(v => v?.pSize?.toLowerCase() === s)
+          (p.sizecolorstock || []).some(v => {
+            const ps = (v?.pSize || '').toLowerCase();
+            return ps === s || ps.includes(s) || s.includes(ps);
+          })
         );
       }
 
@@ -173,7 +175,7 @@ const ChatbotWidget = () => {
       const cart = await cartRes.json();
 
       const variant = (product.sizecolorstock || [])
-        .find(v => !parsed.color || v?.pColor?.toLowerCase() === parsed.color.toLowerCase())
+        .find(v => !parsed.color || colorMatches(v?.pColor, parsed.color))
         || (product.sizecolorstock || [])[0];
       if (!variant) { botSay(`"${product.pName}" has no variants available.`); return; }
 
@@ -227,28 +229,69 @@ const ChatbotWidget = () => {
   };
 
   // ---- SHOW CART ----
-  const handleShowCart = async () => {  
+const handleShowCart = async () => {
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
   if (!token || !userId) { botSay('Log in to see your cart.'); return; }
+
   try {
     const res = await myFetch(`${API}/api/cart/getbyuser/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) { botSay('Could not load your cart.'); return; }
     const cart = await res.json();
-    const items = cart.cartItems || [];
+
+    console.log('[CART DEBUG] getbyuser response:', cart);
+
+    // Try every plausible field name
+    let items = cart.cartItems || cart.items || cart.pCartItems
+             || cart.cart_items || cart.products || [];
+
+    // If still empty but we have a cart ID, try separate item endpoints
+    if (!items.length && cart.pCartId) {
+      const tries = [
+        `${API}/api/cartitem/getbycart/${cart.pCartId}`,
+        `${API}/api/cart/items/${cart.pCartId}`,
+        `${API}/api/cartitems/getbycart/${cart.pCartId}`,
+        `${API}/api/cartitem/get/${cart.pCartId}`,
+      ];
+      for (const url of tries) {
+        try {
+          const r = await myFetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          if (!r.ok) continue;
+          const data = await r.json();
+          const got = Array.isArray(data) ? data : (data.items || data.cartItems || []);
+          if (got.length) {
+            items = got;
+            console.log('[CART DEBUG] items found at:', url);
+            break;
+          }
+        } catch {}
+      }
+    }
+
     if (!items.length) { botSay('Your cart is empty.'); return; }
+
     const map = await getProductMap();
     const lines = items.map(it => {
-      const p = map[it.pId];
-      const name = it.pName || p?.pName || `Product #${it.pId}`;
+      const pid = it.pId || it.productId || it.pIdProduct;
+      const p = map[pid];
+      const name = it.pName || p?.pName || `Product #${pid}`;
+      const qty = it.quantity || it.qty || 1;
       const price = Number(it.price) || Number(p?.pFinalPrice) || 0;
-      return `• ${name} × ${it.quantity || 1}${price ? ` — ${price} DZD` : ''}`;
+      return `• ${name} × ${qty}${price ? ` — ${price} DZD` : ''}`;
     }).join('\n');
-    const total = items.reduce((s, it) => s + (Number(it.price) || Number(map[it.pId]?.pFinalPrice) || 0) * (it.quantity || 1), 0);
+    const total = items.reduce((s, it) => {
+      const pid = it.pId || it.productId || it.pIdProduct;
+      const price = Number(it.price) || Number(map[pid]?.pFinalPrice) || 0;
+      const qty = it.quantity || it.qty || 1;
+      return s + price * qty;
+    }, 0);
     botSay(`You have ${items.length} item${items.length > 1 ? 's' : ''} in your cart:\n${lines}\nTotal: ${total.toLocaleString()} DZD`);
-  } catch { botSay('Something went wrong loading your cart.'); }
+  } catch (e) {
+    console.error(e);
+    botSay('Something went wrong loading your cart.');
+  }
 };
 
   // ---- SHOW WISHLIST ----
@@ -275,22 +318,135 @@ const ChatbotWidget = () => {
   } catch { botSay('Something went wrong loading your wishlist.'); }
 };
 
+const handleSuggest = async (parsed) => {
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+
+  // Collect signals from user's history
+  const categoryFreq = {};
+  const colorFreq = {};
+  let priceSum = 0, priceCount = 0;
+  const ownedIds = new Set();
+
+  const addSignal = (p, weight = 1) => {
+    if (!p) return;
+    ownedIds.add(p.pId);
+    (p.categories || []).forEach(c => {
+      if (c?.pCategory) categoryFreq[c.pCategory.toLowerCase()] = (categoryFreq[c.pCategory.toLowerCase()] || 0) + weight;
+    });
+    (p.sizecolorstock || []).forEach(v => {
+      if (v?.pColor) colorFreq[v.pColor.toLowerCase()] = (colorFreq[v.pColor.toLowerCase()] || 0) + weight;
+    });
+    if (p.pFinalPrice) { priceSum += Number(p.pFinalPrice) * weight; priceCount += weight; }
+  };
+
+  const map = await getProductMap();
+
+  if (token && userId) {
+    try {
+      const r = await myFetch(`${API}/api/wishlist/get/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) (await r.json()).wishlistItems?.forEach(it => addSignal(map[it.pId], 2));
+    } catch {}
+    try {
+      const r = await myFetch(`${API}/api/cart/getbyuser/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        const c = await r.json();
+        (c.cartItems || c.items || []).forEach(it => addSignal(map[it.pId || it.productId], 3));
+      }
+    } catch {}
+    try {
+      const r = await myFetch(`${API}/api/orders/getbyuser/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        (await r.json()).forEach(o => (o.orderItems || o.items || []).forEach(it => addSignal(map[it.pId || it.productId], 4)));
+      }
+    } catch {}
+  }
+
+  const topCats = Object.entries(categoryFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+  const topColors = Object.entries(colorFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+  const avgPrice = priceCount > 0 ? priceSum / priceCount : null;
+
+  // Candidates = all products
+  let candidates = Object.values(map);
+
+  // Filter by explicit user constraints from this turn
+  if (parsed.type) {
+    const t = parsed.type.toLowerCase();
+    candidates = candidates.filter(p =>
+      (p.categories || []).some(c => {
+        const cLow = (c?.pCategory || '').toLowerCase();
+        return cLow === t || cLow.includes(t) || t.includes(cLow);
+      })
+    );
+  }
+  if (parsed.color) {
+    const c = parsed.color.toLowerCase();
+    candidates = candidates.filter(p => (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c));
+  }
+  if (parsed.size) {
+    const s = parsed.size.toLowerCase();
+    candidates = candidates.filter(p => (p.sizecolorstock || []).some(v => v?.pSize?.toLowerCase().includes(s)));
+  }
+  if (parsed.min != null) candidates = candidates.filter(p => Number(p.pFinalPrice) >= parsed.min);
+  if (parsed.max != null) candidates = candidates.filter(p => Number(p.pFinalPrice) <= parsed.max);
+
+  // Exclude things they already own
+  candidates = candidates.filter(p => !ownedIds.has(p.pId));
+
+  if (!candidates.length) {
+    botSay("I couldn't find a good match with those preferences. Want to browse the shop instead?");
+    return;
+  }
+
+  // Score
+  const scored = candidates.map(p => {
+    let score = 0;
+    (p.categories || []).forEach(c => {
+      const idx = topCats.indexOf(c?.pCategory?.toLowerCase());
+      if (idx >= 0) score += (3 - idx) * 5;
+    });
+    (p.sizecolorstock || []).forEach(v => {
+      const idx = topColors.indexOf(v?.pColor?.toLowerCase());
+      if (idx >= 0) score += (3 - idx) * 3;
+    });
+    if (avgPrice && p.pFinalPrice) {
+      const diff = Math.abs(Number(p.pFinalPrice) - avgPrice) / avgPrice;
+      score += Math.max(0, 6 - diff * 6);
+    }
+    score += (p.pRating || 0) * 2;
+    score += Math.log10((p.pSold || 0) + 1) * 3;
+    score += Math.log10((p.pWishes || 0) + 1) * 2;
+    return { p, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored[0]?.p;
+  if (!top) { botSay("I couldn't find a good match. Try browsing the shop!"); return; }
+
+  // Build a why
+  const reasons = [];
+  const topCat = (top.categories || [])[0]?.pCategory;
+  if (topCat && topCats.includes(topCat.toLowerCase())) reasons.push(`you've liked ${topCat.toLowerCase()} before`);
+  if ((top.pRating || 0) >= 4) reasons.push("it's highly rated");
+  if (top.pSold > 10) reasons.push(`${top.pSold} people bought one`);
+  if (!reasons.length) reasons.push("it's one of our top picks");
+
+  botSay(`I'd suggest "${top.pName}" at ${top.pFinalPrice} DZD — ${reasons.join(', ')}. Want me to take you to it?`);
+};
+
 const handleAIResponse = async (reply) => {
   try {
     let outer = JSON.parse(reply);
     let parsed = typeof outer.reply === "string" ? JSON.parse(outer.reply) : outer;
 
-    // Normalize: support {actions:[...]} OR legacy single {action,...}
     const actions = Array.isArray(parsed.actions) ? parsed.actions
                   : parsed.action ? [parsed]
                   : [];
 
-    const selfReporting = new Set(['show_cart', 'show_wishlist', 'add_cart', 'add_wishlist']);
+    const selfReporting = new Set(['show_cart', 'show_wishlist', 'add_cart', 'add_wishlist', 'suggest']);
     const allSelf = actions.length > 0 && actions.every(a => selfReporting.has(a.action));
 
     const preamble = parsed.message?.trim();
-    // show preamble only if there's a meaningful message AND not all actions self-report
-    // (no more "I couldn't generate a response.")
     if (preamble && !allSelf) {
       setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: preamble }]);
     }
@@ -300,22 +456,29 @@ const handleAIResponse = async (reply) => {
       return;
     }
 
-    // Cap at 2 unconnected actions (backend already caps, but enforce client-side too)
-    const toProcess = actions.slice(0, 2);
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    let navigationDone = false;
 
-    for (const a of toProcess) {
-      if (a.action === 'navigate')       { handleNavigation(a.type); continue; }
-      if (a.action === 'help')           {
-        setMessages(prev => [...prev, {
-          id: Date.now() + Math.random(), sender: 'bot',
-          text: "Try: 'show cheapest sofas', 'add the cheapest chair to cart', 'what's in my cart', 'small red rugs', 'I need support'."
-        }]);
+    for (const a of actions) {
+      if (a.action === 'navigate') {
+        if (navigationDone) continue;
+        handleNavigation(a.type);
+        navigationDone = true;
         continue;
       }
-      if (a.action === 'add_cart')       { await handleAddCart(a); continue; }
-      if (a.action === 'add_wishlist')   { await handleAddWishlist(a); continue; }
-      if (a.action === 'show_cart')      { await handleShowCart(); continue; }
-      if (a.action === 'show_wishlist')  { await handleShowWishlist(); continue; }
+      if (a.action === 'ask_support') {
+        // The preamble already prompted them. Nothing to do here; the user's "yes" next turn produces a real navigate.
+        continue;
+      }
+      if (a.action === 'help') {
+        botSay("Try: 'show cheapest sofas', 'add the cheapest chair to cart', 'recommend me something', 'small red rugs', 'I need support'.");
+        continue;
+      }
+      if (a.action === 'add_cart')      { await handleAddCart(a);     await wait(600); continue; }
+      if (a.action === 'add_wishlist')  { await handleAddWishlist(a); await wait(600); continue; }
+      if (a.action === 'show_cart')     { await handleShowCart();     continue; }
+      if (a.action === 'show_wishlist') { await handleShowWishlist(); continue; }
+      if (a.action === 'suggest')       { await handleSuggest(a);     continue; }
 
       if (FILTER_ACTIONS.includes(a.action)) {
         dispatchFilter({

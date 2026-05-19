@@ -12,6 +12,57 @@ import styles from './Shop.module.css';
 import { API, address, myFetch } from "../api";
 
 const Shop = () => {
+  const NAMED_COLORS = {
+    black: '#000000', white: '#ffffff', red: '#ff0000', green: '#008000',
+    blue: '#0000ff', yellow: '#ffff00', orange: '#ffa500', purple: '#800080',
+    pink: '#ffc0cb', brown: '#8b4513', gray: '#808080', grey: '#808080',
+    cyan: '#00ffff', magenta: '#ff00ff', beige: '#f5f5dc', gold: '#ffd700',
+    silver: '#c0c0c0', navy: '#000080', maroon: '#800000', teal: '#008080',
+    olive: '#808000', cream: '#fffdd0', tan: '#d2b48c', ivory: '#fffff0',
+    charcoal: '#36454f', mint: '#98ff98', lavender: '#e6e6fa',
+    turquoise: '#40e0d0', coral: '#ff7f50', salmon: '#fa8072',
+    indigo: '#4b0082', violet: '#ee82ee', khaki: '#f0e68c'
+  };
+
+  const hexToRgb = (hex) => {
+    if (!hex) return null;
+    let h = hex.toString().toLowerCase().replace('#', '').trim();
+    if (h.length === 3) h = h.split('').map(c => c + c).join(''); // expand #f00 → #ff0000
+    if (h.length < 6) h = h.padEnd(6, '0');
+    h = h.slice(0, 6);
+    const n = parseInt(h, 16);
+    if (isNaN(n)) return null;
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  };
+
+  const toHex = (input) => {
+    if (!input) return null;
+    const s = input.toString().toLowerCase().trim();
+    if (s.startsWith('#') || /^[0-9a-f]{3,8}$/.test(s)) return s.startsWith('#') ? s : '#' + s;
+    return NAMED_COLORS[s] || null;
+  };
+
+  const COLOR_THRESHOLD = 150; // RGB euclidean distance 
+
+  const colorMatches = (productColor, queryColor) => {
+    if (!productColor || !queryColor) return false;
+
+    const pHex = toHex(productColor);
+    const qHex = toHex(queryColor);
+
+    // If either side isn't resolvable as a color, fall back to text compare
+    if (!pHex || !qHex) {
+      return productColor.toString().toLowerCase().includes(queryColor.toString().toLowerCase());
+    }
+
+    const a = hexToRgb(pHex);
+    const b = hexToRgb(qHex);
+    if (!a || !b) return false;
+
+    const dist = Math.sqrt((a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2);
+    return dist < COLOR_THRESHOLD;
+  };
+  
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
 
@@ -188,9 +239,12 @@ useEffect(() => {
   if (selectedSize) {
     const s = selectedSize.toLowerCase();
     filtered = filtered.filter(p =>
-      (p.sizecolorstock || []).some(v => v?.pSize?.toLowerCase() === s)
+      (p.sizecolorstock || []).some(v => {
+        const ps = (v?.pSize || '').toLowerCase();
+        return ps === s || ps.includes(s) || s.includes(ps);
+      })
     );
-  } 
+  }
 
   // PRICE
   const min = parseFloat(minPrice);
@@ -290,6 +344,13 @@ useEffect(() => {
 
     if (size !== undefined && size !== null && size !== '') {
       setSelectedSize(size);
+      if (action === "size" && (!type || type.toLowerCase() === "none")) {
+        setActiveCategory('All');
+        setSearch('');
+        setSelectedColor('');
+        setMinPrice('');
+        setMaxPrice('');
+      }
     }
 
     if (action === "size") {
