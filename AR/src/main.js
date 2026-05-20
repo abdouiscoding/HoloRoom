@@ -32,7 +32,7 @@ let micEnabled = true;
 let hintsEnabled = true;
 let forceModeAnnounced = false;
 let surfaceAnnounced = false;
-
+let isSpeakingChat = false;
 let showingchat = false;
 
 let interactionEnabled = false;
@@ -540,9 +540,18 @@ ui.appendChild(chatbotBtn);
 let chatHistory = [];
 let ttsEnabled = true;
 
-function speak(text) {
+function speak(text, opts = {}) {
   if (!ttsEnabled || !("speechSynthesis" in window)) return;
+
+  const isChatReply = opts.chat === true;
+
+  // While a chat reply is talking, drop every non-chat TTS request.
+  if (isSpeakingChat && !isChatReply) return;
+
+  // Cancel anything currently speaking (chat reply cancels lower priority,
+  // a new low-priority message replaces an old low-priority message).
   window.speechSynthesis.cancel();
+
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 1.05;
   u.pitch = 1;
@@ -550,6 +559,13 @@ function speak(text) {
   const voices = window.speechSynthesis.getVoices();
   const en = voices.find(v => v.lang?.startsWith("en"));
   if (en) u.voice = en;
+
+  if (isChatReply) {
+    isSpeakingChat = true;
+    u.onend = () => { isSpeakingChat = false; };
+    u.onerror = () => { isSpeakingChat = false; };
+  }
+
   window.speechSynthesis.speak(u);
 }
 
@@ -586,7 +602,7 @@ async function handleVoiceQuestion(question) {
     const reply = data.reply || "Sorry, I didn't get that.";
     chatHistory.push({ role: "user", text: question });
     chatHistory.push({ role: "assistant", text: reply });
-    speak(reply);
+    speak(reply, { chat: true });
   } catch (e) {
     console.error(e);
   }
@@ -742,6 +758,7 @@ function showChatPopup() {
     ttsBtn.style.color = ttsEnabled ? "#000" : "#fff";
     ttsBtn.textContent = ttsEnabled ? "🔊" : "🔇";
     if (!ttsEnabled) window.speechSynthesis?.cancel();
+    isSpeakingChat = false;
   };
 
   rerenderChatIfOpen();
@@ -770,7 +787,7 @@ function showChatPopup() {
       typing.remove();
       chatHistory.push({ role: "assistant", text: reply });
       rerenderChatIfOpen();
-      speak(reply);
+      speak(reply, { chat: true });
     } catch (e) {
       console.error(e);
       typing.remove();
@@ -879,7 +896,6 @@ function startRecording() {
       }
     }
     accumulatedText = finalText.trim().replace(/\b(\w+)(\s+\1\b)+/gi, '$1');
-    handleVoiceQuestion(accumulatedText);
   };
 
   recordRecognition.onerror = (e) => {
@@ -889,9 +905,10 @@ function startRecording() {
   };
 
   recordRecognition.onend = () => {
-    cleanupRecording();
     const text = accumulatedText.trim();
-    if (text.length > 0) sendVoiceMessage(text);
+    if (text.length > 0) speak(reply, { chat: true });
+    handleVoiceQuestion(accumulatedText);
+    cleanupRecording();
   };
 
   try {
@@ -954,7 +971,7 @@ async function sendVoiceMessage(text) {
     typing?.remove();
     chatHistory.push({ role: "assistant", text: reply });
     rerenderChatIfOpen();
-    speak(reply);
+    speak(reply, { chat: true });
   } catch (e) {
     console.error(e);
     typing?.remove();
@@ -1553,7 +1570,10 @@ function showSettingsPopup() {
       ttsEnabled,
       () => {
         ttsEnabled = !ttsEnabled;
-        if (!ttsEnabled) window.speechSynthesis?.cancel();
+        if (!ttsEnabled) {
+          window.speechSynthesis?.cancel();
+          isSpeakingChat = false;
+        }
       }
     );
 
@@ -2723,20 +2743,13 @@ if (menuScrollDragging && menu.visible) {
     }
   }
 
-  // ============ READY state — one-shot announce ============
+  // ============ READY state — reset search timers ============
   if (placementStatus === "READY") {
-    if (!surfaceAnnounced) {
-      surfaceAnnounced = true;
-      speak("I found a surface — you can drop items on the cursor now.");
-    }
     searchStartedAt = null;
     hintsSpoken = 0;
     forceModeAnnounced = false;
     forcePlaceBtn.style.display = "none";
     addBtn.style.display = "flex";
-  } else {
-    // Back to searching — allow the announce to fire next time a surface is found
-    surfaceAnnounced = false;
   }
 
   const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
