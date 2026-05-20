@@ -31,6 +31,7 @@ let menuScrollDragging = false;
 let micEnabled = true;
 let hintsEnabled = true;
 let forceModeAnnounced = false;
+let surfaceAnnounced = false;
 
 let showingchat = false;
 
@@ -77,9 +78,8 @@ function classifySurface(normal, elapsedMs = 0) {
   const up = new THREE.Vector3(0, 1, 0);
   const dot = normal.dot(up);
 
-  // 0.78 strict at start, easing to 0.5 by 25 seconds of searching
   const elapsedSec = Math.min(25, elapsedMs / 1000);
-  const threshold = 0.78 - (elapsedSec / 16) * 0.28; // 0.78 → 0.50
+  const threshold = 0.80 - (elapsedSec / 25) * 0.10; // 0.80 → 0.70
 
   if (dot > threshold) return "FLOOR";
   if (dot < -threshold) return "CEILING";
@@ -573,7 +573,6 @@ function generateSearchHint(placement, level) {
 }
 
 async function handleVoiceQuestion(question) {
-  popup("🎤 " + question);
   try {
     const res = await myFetch(`${API}/api/chat/ar`, {
       method: "POST",
@@ -880,6 +879,7 @@ function startRecording() {
       }
     }
     accumulatedText = finalText.trim().replace(/\b(\w+)(\s+\1\b)+/gi, '$1');
+    handleVoiceQuestion(accumulatedText);
   };
 
   recordRecognition.onerror = (e) => {
@@ -2450,6 +2450,7 @@ renderer.xr.addEventListener("sessionend", () => {
   searchStartedAt = null;
   hintsSpoken = 0;
   forceModeAnnounced = false;
+  surfaceAnnounced = false;
   forcePlaceBtn.style.display = "none"
 });
 
@@ -2695,59 +2696,61 @@ if (menuScrollDragging && menu.visible) {
   }
 
   // Auto-spoken hints when detection takes too long
-  if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement && hintsEnabled) {
-    if (placementStatus === "SEARCHING" && searchStartedAt) {
-      const elapsed = Date.now() - searchStartedAt;
-      if (elapsed > 25000) {
-        if (!forceModeAnnounced) {
-          forceModeAnnounced = true;
-          speak(
-            "Surface detection is taking longer than usual. You can use the force Place button to drop items at the cursor for now, and I'll keep scanning for a real surface in the background."
-          );
-        }
-        forcePlaceBtn.style.display = "flex";
-        addBtn.style.display = "none";
-      } else {
-        forcePlaceBtn.style.display = "none";
-        addBtn.style.display = "flex";
+  // ============ SEARCHING state — independent of hintsEnabled ============
+  if (placementStatus === "SEARCHING" && interactionEnabled && requiredPlacement) {
+    if (!searchStartedAt) searchStartedAt = Date.now();
+    const elapsed = Date.now() - searchStartedAt;
+
+    // Force-place button after 25s of fruitless searching — always available, regardless of hints toggle
+    if (elapsed > 25000) {
+      if (!forceModeAnnounced) {
+        forceModeAnnounced = true;
+        speak("Surface detection is taking longer than usual. You can use the Place Here button to drop items at the cursor for now, and I'll keep scanning in the background.");
       }
+      forcePlaceBtn.style.display = "flex";
+      addBtn.style.display = "none";
     } else {
       forcePlaceBtn.style.display = "none";
       addBtn.style.display = "flex";
     }
-    if (!searchStartedAt) searchStartedAt = Date.now();
-    const elapsed = Date.now() - searchStartedAt;
-    if (hintsSpoken < HINT_TIMES_MS.length && elapsed > HINT_TIMES_MS[hintsSpoken]) {
+
+    // Spoken hints — only when enabled, only TTS, NOT written to chat (no spam)
+    if (hintsEnabled && hintsSpoken < HINT_TIMES_MS.length && elapsed > HINT_TIMES_MS[hintsSpoken]) {
       const hint = generateSearchHint(requiredPlacement, hintsSpoken + 1);
       hintsSpoken++;
       speak(hint);
-      chatHistory.push({ role: "assistant", text: hint });
-      rerenderChatIfOpen();
+      // intentionally NOT pushing to chatHistory — hints stay TTS-only
     }
   }
 
+  // ============ READY state — one-shot announce ============
   if (placementStatus === "READY") {
+    if (!surfaceAnnounced) {
+      surfaceAnnounced = true;
+      speak("I found a surface — you can drop items on the cursor now.");
+    }
     searchStartedAt = null;
     hintsSpoken = 0;
     forceModeAnnounced = false;
     forcePlaceBtn.style.display = "none";
-    speak("I've finally detected a surface you can drop items on the cursor normally.");
-  } 
+    addBtn.style.display = "flex";
+  } else {
+    // Back to searching — allow the announce to fire next time a surface is found
+    surfaceAnnounced = false;
+  }
 
   const searchElapsed = searchStartedAt ? Date.now() - searchStartedAt : 0;
 
-  // Suppress toast when chat or the settings/exit menu (NOT the products menu) is open
+  // ============ Toast — suppressed when chat or settings/exit popup is open ============
   const chatOrMenuOpen = showingchat
     || !!document.getElementById("mainMenuPopup")
     || !!document.getElementById("settingsPopup");
 
-  // Remove existing toast when surface is found OR a UI overlay covers it
   if ((placementStatus === "READY" || chatOrMenuOpen) && placementToast) {
     placementToast.remove();
     placementToast = null;
   }
 
-  // Only show toast after 20s of continuous searching and when nothing's covering it
   if (placementStatus !== "READY"
       && !placementToast
       && interactionEnabled
