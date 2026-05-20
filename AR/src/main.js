@@ -907,8 +907,7 @@ function startRecording() {
   recordRecognition.onend = () => {
     cleanupRecording();
     const text = accumulatedText.trim();
-    if (text.length > 0) speak(reply, { chat: true });
-    handleVoiceQuestion(accumulatedText);
+    if (text.length > 0) sendVoiceMessage(text);
   };
 
   try {
