@@ -905,17 +905,15 @@ function startRecording() {
   };
 
   recordRecognition.onend = () => {
+    cleanupRecording();
     const text = accumulatedText.trim();
     if (text.length > 0) speak(reply, { chat: true });
     handleVoiceQuestion(accumulatedText);
-    cleanupRecording();
   };
 
   try {
     recordRecognition.start();
     setMicState(true);
-
-    // auto-stop after 2.5s of silence
     silenceTimer = setInterval(() => {
       if (Date.now() - lastSpeechTime > 2500) {
         stopRecording();
