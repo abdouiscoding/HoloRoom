@@ -15,6 +15,72 @@ const INITIAL_MESSAGES = [
 ];
 
 const FILTER_ACTIONS = ['search', 'price', 'price_low', 'price_high', 'top_selling', 'most_wished', 'reviews', 'discounts', 'color', 'size', 'cancel'];
+const NAMED_COLORS = {
+  black: '#000000', white: '#ffffff', red: '#ff0000', green: '#008000',
+  blue: '#0000ff', yellow: '#ffff00', orange: '#ffa500', purple: '#800080',
+  pink: '#ffc0cb', brown: '#8b4513', gray: '#808080', grey: '#808080',
+  cyan: '#00ffff', magenta: '#ff00ff', beige: '#f5f5dc', gold: '#ffd700',
+  silver: '#c0c0c0', navy: '#000080', maroon: '#800000', teal: '#008080',
+  olive: '#808000', cream: '#fffdd0', tan: '#d2b48c', ivory: '#fffff0',
+  charcoal: '#36454f', mint: '#98ff98', lavender: '#e6e6fa',
+  turquoise: '#40e0d0', coral: '#ff7f50', salmon: '#fa8072',
+  indigo: '#4b0082', violet: '#ee82ee', khaki: '#f0e68c'
+};
+
+const COLOR_BUCKETS = {
+  Black: '#000000', White: '#ffffff', Gray: '#808080',
+  Red: '#e63946', Orange: '#ffa500', Yellow: '#ffd60a',
+  Green: '#2a9d3f', Blue: '#1e6fff', Purple: '#7c3aed',
+  Pink: '#ff6fa3', Brown: '#8b4513', Beige: '#e9d8b8',
+  Navy: '#0a2540', Gold: '#d4af37'
+};
+
+const hexToRgb = (hex) => {
+  if (!hex) return null;
+  let h = hex.toString().toLowerCase().replace('#', '').trim();
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  if (h.length < 6) h = h.padEnd(6, '0');
+  h = h.slice(0, 6);
+  const n = parseInt(h, 16);
+  if (isNaN(n)) return null;
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+};
+
+const toHex = (input) => {
+  if (!input) return null;
+  const s = input.toString().toLowerCase().trim();
+  if (s.startsWith('#') || /^[0-9a-f]{3,8}$/.test(s)) return s.startsWith('#') ? s : '#' + s;
+  return NAMED_COLORS[s] || null;
+};
+
+const colorToBucket = (raw) => {
+  if (!raw) return null;
+  const hex = toHex(raw);
+  if (!hex) return null;
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  let closest = null;
+  let minDist = Infinity;
+  for (const [name, bHex] of Object.entries(COLOR_BUCKETS)) {
+    const brgb = hexToRgb(bHex);
+    if (!brgb) continue;
+    const d = (rgb.r - brgb.r) ** 2 + (rgb.g - brgb.g) ** 2 + (rgb.b - brgb.b) ** 2;
+    if (d < minDist) { minDist = d; closest = name; }
+  }
+  return closest;
+};
+
+const sizeToBucket = (raw) => {
+  if (!raw) return null;
+  const s = raw.toString().toLowerCase().trim();
+  if (['s', 'sm', 'xs'].includes(s)) return 'Small';
+  if (['m', 'md', 'med'].includes(s)) return 'Medium';
+  if (['l', 'lg', 'xl', 'xxl'].includes(s)) return 'Large';
+  if (s.includes('small') || s.includes('tiny') || s.includes('mini')) return 'Small';
+  if (s.includes('large') || s.includes('big') || s.includes('huge') || s.includes('xl')) return 'Large';
+  if (s.includes('medium') || s.includes('med') || s.includes('mid') || s.includes('regular') || s.includes('standard')) return 'Medium';
+  return 'Medium';
+};
 const COOLDOWN_SECONDS = 10;
 const loggedin = localStorage.getItem("loggedin");
 
@@ -41,6 +107,7 @@ const ChatbotWidget = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+  const lastSuggestedRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -111,19 +178,25 @@ const ChatbotWidget = () => {
           p.pName?.toLowerCase().includes(t)
         );
       }
+
       if (parsed.color) {
-        list = list.filter(p =>
-          (p.sizecolorstock || []).some(v => colorMatches(v?.pColor, parsed.color))
-        );
+        const targetBucket = colorToBucket(parsed.color);
+        if (targetBucket) {
+          list = list.filter(p =>
+            (p.sizecolorstock || []).some(v => colorToBucket(v?.pColor) === targetBucket)
+          );
+        } else {
+          const c = parsed.color.toLowerCase();
+          list = list.filter(p =>
+            (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase().includes(c))
+          );
+        }
       }
 
       if (parsed.size) {
-        const s = parsed.size.toLowerCase();
+        const targetBucket = sizeToBucket(parsed.size);
         list = list.filter(p =>
-          (p.sizecolorstock || []).some(v => {
-            const ps = (v?.pSize || '').toLowerCase();
-            return ps === s || ps.includes(s) || s.includes(ps);
-          })
+          (p.sizecolorstock || []).some(v => sizeToBucket(v?.pSize) === targetBucket)
         );
       }
 
@@ -140,7 +213,10 @@ const ChatbotWidget = () => {
         case 'best_selling': list.sort((a,b) => (b.pSold||0)   - (a.pSold||0));   break;
       }
       return list[0];
-    } catch { return null; }
+    } catch (e) {
+      console.error('findProduct error:', e);
+      return null;
+    }
   };
 
   // ---- pick current product if on /product/X ----
@@ -175,8 +251,18 @@ const ChatbotWidget = () => {
       const cart = await cartRes.json();
 
       const variant = (product.sizecolorstock || [])
-        .find(v => !parsed.color || colorMatches(v?.pColor, parsed.color))
-        || (product.sizecolorstock || [])[0];
+        .find(v => {
+          if (parsed.color) {
+            const tb = colorToBucket(parsed.color);
+            if (tb && colorToBucket(v?.pColor) !== tb) return false;
+          }
+          if (parsed.size) {
+            const tb = sizeToBucket(parsed.size);
+            if (tb && sizeToBucket(v?.pSize) !== tb) return false;
+          }
+          return true;
+        })
+        || (product.sizecolorstock || [])[0]; 
       if (!variant) { botSay(`"${product.pName}" has no variants available.`); return; }
 
       const imageId = product.images?.[0]?.pImageId?.toString() || '0';
@@ -431,6 +517,8 @@ const handleSuggest = async (parsed) => {
   if (top.pSold > 10) reasons.push(`${top.pSold} people bought one`);
   if (!reasons.length) reasons.push("it's one of our top picks");
 
+  lastSuggestedRef.current = top;
+
   botSay(`I'd suggest "${top.pName}" at ${top.pFinalPrice} DZD — ${reasons.join(', ')}. Want me to take you to it?`);
 };
 
@@ -458,6 +546,17 @@ const handleAIResponse = async (reply) => {
 
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
     let navigationDone = false;
+
+    const SHOP_FILTER_ACTIONS = new Set([
+      'search', 'price', 'price_low', 'price_high',
+      'top_selling', 'most_wished', 'reviews', 'discounts',
+      'color', 'size', 'cancel'
+    ]);
+    const hasFilterAction = actions.some(a => SHOP_FILTER_ACTIONS.has(a.action));
+    if (hasFilterAction) {
+      dispatchFilter({ action: 'cancel' });
+      await wait(120); // let Shop process the reset before new filters land
+    }
 
     for (const a of actions) {
       if (a.action === 'navigate') {
@@ -502,6 +601,28 @@ const handleAIResponse = async (reply) => {
     e?.preventDefault();
     if (!inputText.trim() || cooldown > 0) return;
     const userText = inputText;
+
+    // If we just suggested a product and the user agrees, jump straight to its page.
+    // No backend hit, no AI hallucination room.
+    const affirmative = /^\s*(yes|yeah|yep|yup|sure|ok|okay|please|take me|go|go ahead|navigate|take|show it|show me|do it|sounds good)\b/i;
+    if (lastSuggestedRef.current && affirmative.test(userText)) {
+      const product = lastSuggestedRef.current;
+      lastSuggestedRef.current = null;
+      setMessages(prev => [...prev,
+        { id: Date.now(),     sender: 'user', text: userText },
+        { id: Date.now() + 1, sender: 'bot',  text: `Taking you to "${product.pName}".` }
+      ]);
+      setInputText('');
+      setCooldown(COOLDOWN_SECONDS);
+      logAction("CHATBOT_MESSAGE", userText);
+      localStorage.setItem("selectedProductId", product.pId);
+      navigate(`/product/${encodeURIComponent(product.pName)}`);
+      return;
+    }
+
+    // User didn't follow up on the suggestion — clear the pointer so it doesn't get stale.
+    if (lastSuggestedRef.current) lastSuggestedRef.current = null;
+
     const updated = [...messages, { id: Date.now(), sender: 'user', text: userText }];
     setMessages(updated);
     setInputText('');

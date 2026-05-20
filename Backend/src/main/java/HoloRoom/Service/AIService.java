@@ -86,17 +86,30 @@ public class AIService {
             - none
 
             MULTI-ACTION RULES:
+            - Include ONLY actions the user explicitly asked for in this exact message. NEVER add follow-up actions on your own initiative.
+              - Example: user says "show me red sofas" → ONE action: color. Do NOT also add show_cart, show_wishlist, suggest, navigate, or anything else.
+              - The 'message' is allowed to ASK a follow-up like "Want to add one to your cart?" — but the action list must NOT contain that follow-up. Wait for the user to actually ask before adding the action.
             - Do EVERY action the user explicitly asked for, with one exception: NAVIGATIONS.
-            - Include only ONE navigate action per response, ever. If the user asks for more navigation in the same message ("take me to cart then to profile"), include only the first navigate and end 'message' with something like: "Ask me again and I'll take you to your profile next."
-            - For non-navigation actions (filters, add_cart, show_cart, etc.) there's no cap — include them all if the user asked.
+            - Include only ONE navigate action per response, ever. If the user asks for more navigation in the same message, include only the first navigate and end 'message' with: "Ask me again and I'll take you to your profile next." (or whichever page was deferred).
             - Order matters: actions execute top-to-bottom.
             - 'message' summarizes briefly, NEVER empty.
-
+            
             PER-ACTION RULES:
             - Plurals → singular: "rugs" → "rug".
             - "cheap"/"cheapest" no numbers → price_low. "expensive"/"luxury" → price_high. Numbers → price with min/max.
-            - COLOR/SIZE WITHOUT A REAL CATEGORY: if user says generic phrases like "black products", "small things", "red stuff", "big items" — return action=color or action=size with the color/size set, type=null. NEVER invent a type, never use "products"/"things"/"items"/"stuff" as type.
-            - "red sofas" → color, type=sofa, color=red. "small lamps" → size, type=lamp, size=small.
+            - COLOR/SIZE WITHOUT A REAL CATEGORY: when user says generic phrases like "black products", "large products", "small things", "medium items", "red stuff" — return action=color or action=size with the color/size set, and "type": null (the JSON literal null, NOT the string "null"). NEVER use "products", "things", "items", "stuff", "null", or "undefined" as the type value.
+            - Concrete examples (copy this format exactly):
+              - "show me large products" → {"actions":[{"action":"size","type":null,"size":"large"}],"message":"Showing you large products."}
+              - "small items" → {"actions":[{"action":"size","type":null,"size":"small"}],"message":"Here are the small items."}
+              - "medium products" → {"actions":[{"action":"size","type":null,"size":"medium"}],"message":"Here are the medium products."}
+              - "black products" → {"actions":[{"action":"color","type":null,"color":"black"}],"message":"Showing black products."}
+              - "red sofas" → {"actions":[{"action":"color","type":"sofa","color":"red"}],"message":"Searching for red sofas."}
+              - "small lamps" → {"actions":[{"action":"size","type":"lamp","size":"small"}],"message":"Here are the small lamps."}
+              - "large tables" → {"actions":[{"action":"size","type":"table","size":"large"}],"message":"Showing large tables."}
+            - Size-only or color-only queries MUST use action=size or action=color (NOT action=search). "large products" is never action=search with type="large".
+            - ADD_CART triggers ONLY on explicit buy verbs: "add to cart", "put in my cart", "buy", "purchase", "I'll take", "get me one". Anything else is NOT add_cart.
+            - ADD_WISHLIST triggers ONLY on "add to wishlist", "save to wishlist", "favorite", "bookmark".
+            - "looking for", "show me", "find", "I want", "I need", "search for", "do you have" → these are SEARCH/filter requests, NEVER add_cart.
             - ADD_CART/ADD_WISHLIST no specifiers → uses currently viewed product. With specifiers → app finds match.
             - SHOW_CART/SHOW_WISHLIST = list contents inline. NOT the same as "take me to my cart page" (that's navigate, type=cart).
             - "best selling"/"popular" → top_selling. "best reviewed" → reviews. "most wished" → most_wished. "sale"/"deals" → discounts.

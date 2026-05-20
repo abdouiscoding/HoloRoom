@@ -62,6 +62,46 @@ const Shop = () => {
     const dist = Math.sqrt((a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2);
     return dist < COLOR_THRESHOLD;
   };
+
+  // Canonical color buckets — what shoppers actually think in
+  const COLOR_BUCKETS = {
+    Black: '#000000', White: '#ffffff', Gray: '#808080',
+    Red: '#e63946', Orange: '#ffa500', Yellow: '#ffd60a',
+    Green: '#2a9d3f', Blue: '#1e6fff', Purple: '#7c3aed',
+    Pink: '#ff6fa3', Brown: '#8b4513', Beige: '#e9d8b8',
+    Navy: '#0a2540', Gold: '#d4af37'
+  };
+
+  // Bucket any raw color (hex/name) to the nearest bucket name
+  const colorToBucket = (raw) => {
+    if (!raw) return null;
+    const hex = toHex(raw);
+    if (!hex) return null;
+    const rgb = hexToRgb(hex);
+    if (!rgb) return null;
+    let closest = null;
+    let minDist = Infinity;
+    for (const [name, bHex] of Object.entries(COLOR_BUCKETS)) {
+      const brgb = hexToRgb(bHex);
+      if (!brgb) continue;
+      const d = (rgb.r - brgb.r) ** 2 + (rgb.g - brgb.g) ** 2 + (rgb.b - brgb.b) ** 2;
+      if (d < minDist) { minDist = d; closest = name; }
+    }
+    return closest;
+  };
+
+  // Bucket any size text into Small/Medium/Large
+  const sizeToBucket = (raw) => {
+    if (!raw) return null;
+    const s = raw.toString().toLowerCase().trim();
+    if (['s', 'sm', 'xs'].includes(s)) return 'Small';
+    if (['m', 'md', 'med'].includes(s)) return 'Medium';
+    if (['l', 'lg', 'xl', 'xxl'].includes(s)) return 'Large';
+    if (s.includes('small') || s.includes('tiny') || s.includes('mini')) return 'Small';
+    if (s.includes('large') || s.includes('big') || s.includes('huge') || s.includes('xl')) return 'Large';
+    if (s.includes('medium') || s.includes('med') || s.includes('mid') || s.includes('regular') || s.includes('standard')) return 'Medium';
+    return 'Medium'; // safe default for free-form dimensions
+  };
   
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
@@ -141,17 +181,15 @@ const Shop = () => {
     }
   };
 
-  const dbColors = [
-    ...new Set(
-      allProducts.flatMap(p => (p.sizecolorstock || []).map(v => v?.pColor))
-    )
-  ].filter(Boolean);
+  const colorBuckets = [...new Set(
+    allProducts.flatMap(p => (p.sizecolorstock || []).map(v => colorToBucket(v?.pColor)))
+  )].filter(Boolean);
 
-  const dbSizes = [
-    ...new Set(
-      allProducts.flatMap(p => (p.sizecolorstock || []).map(v => v?.pSize))
-    )
-  ].filter(Boolean);
+  // Force a stable Small/Medium/Large order if those buckets exist
+  const sizeOrder = ['Small', 'Medium', 'Large'];
+  const sizeBuckets = sizeOrder.filter(b =>
+    allProducts.some(p => (p.sizecolorstock || []).some(v => sizeToBucket(v?.pSize) === b))
+  );
 
   // ---------------- CATEGORIES ----------------
   const dbCategories = [
@@ -228,21 +266,15 @@ useEffect(() => {
     filtered = filtered.filter(p => p.pName?.toLowerCase().includes(q));
   }
 
-  // COLOR
   if (selectedColor) {
-    const c = selectedColor.toLowerCase();
     filtered = filtered.filter(p =>
-      (p.sizecolorstock || []).some(v => v?.pColor?.toLowerCase() === c)
+      (p.sizecolorstock || []).some(v => colorToBucket(v?.pColor) === selectedColor)
     );
   }
 
   if (selectedSize) {
-    const s = selectedSize.toLowerCase();
     filtered = filtered.filter(p =>
-      (p.sizecolorstock || []).some(v => {
-        const ps = (v?.pSize || '').toLowerCase();
-        return ps === s || ps.includes(s) || s.includes(ps);
-      })
+      (p.sizecolorstock || []).some(v => sizeToBucket(v?.pSize) === selectedSize)
     );
   }
 
@@ -285,9 +317,18 @@ useEffect(() => {
   const handleAISearch = (e) => {
     const { action, type, color, size, min, max, query } = e.detail || {};
 
-    // helper — type can refine ANY action; fall back to search if no category match
+    const isNoType = (t) => {
+      if (t === null || t === undefined || t === '') return true;
+      const s = t.toString().toLowerCase().trim();
+      return [
+        'none', 'null', 'undefined',
+        'all', 'any', 'everything', 'anything',
+        'products', 'items', 'things', 'stuff'
+      ].includes(s);
+    };
+
     const applyType = (t) => {
-      if (!t || t.toLowerCase() === "none") return;
+      if (isNoType(t)) return;
       const tLow = t.toLowerCase();
       const matchedCat = CATEGORIES.find(c => {
         const cLow = c.toLowerCase();
@@ -335,27 +376,28 @@ useEffect(() => {
     }
 
     if (color !== undefined && color !== null && color !== '') {
-      setSelectedColor(color);
-    }
-
-    if (action === "color") {
-      applyType(type);
-    }
-
-    if (size !== undefined && size !== null && size !== '') {
-      setSelectedSize(size);
-      if (action === "size" && (!type || type.toLowerCase() === "none")) {
-        setActiveCategory('All');
-        setSearch('');
-        setSelectedColor('');
-        setMinPrice('');
-        setMaxPrice('');
+      const bucket = colorToBucket(color) || (color.charAt(0).toUpperCase() + color.slice(1).toLowerCase());
+      setSelectedColor(bucket);
+      if (action === "color" && isNoType(type)) {
+        resetAllFilters();
       }
     }
 
-    if (action === "size") {
-      applyType(type);
+  if (action === "color") {
+    applyType(type);
+  }
+
+  if (size !== undefined && size !== null && size !== '') {
+    const bucket = sizeToBucket(size);
+    if (bucket) setSelectedSize(bucket);
+    if (action === "size" && isNoType(type)) {
+      resetAllFilters();  
     }
+  }
+
+  if (action === "size") {
+    applyType(type);
+  }
   };
 
   window.addEventListener("ai-search", handleAISearch);
@@ -518,19 +560,15 @@ useEffect(() => {
                 <h3>Color</h3>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {dbColors.map(col => (
+                {colorBuckets.map(name => (
                   <button
-                    key={col}
-                    title={col}
-                    onClick={() => setSelectedColor(selectedColor.toLowerCase() === col.toLowerCase() ? '' : col)}
+                    key={name}
+                    title={name}
+                    onClick={() => setSelectedColor(selectedColor === name ? '' : name)}
                     style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '50%',
-                      border: selectedColor.toLowerCase() === col.toLowerCase()
-                        ? '3px solid var(--accent-secondary)'
-                        : '1px solid #ccc',
-                      background: col.toLowerCase(),
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      border: selectedColor === name ? '3px solid var(--accent-secondary)' : '1px solid #ccc',
+                      background: COLOR_BUCKETS[name],
                       cursor: 'pointer'
                     }}
                   />
@@ -547,28 +585,29 @@ useEffect(() => {
                       fontSize: '0.8rem',
                       cursor: 'pointer'
                     }}
-                  >Clear</button>
+                  >Clear {selectedColor}</button>
                 )}
               </div>
             </div>
-            {dbSizes.length > 0 && (
+            {sizeBuckets.length > 0 && (
               <div className={styles.filterBlock}>
                 <div className={styles.filterHeader}><h3>Size</h3></div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {dbSizes.map(sz => (
+                  {sizeBuckets.map(name => (
                     <button
-                      key={sz}
-                      onClick={() => setSelectedSize(selectedSize === sz ? '' : sz)}
+                      key={name}
+                      onClick={() => setSelectedSize(selectedSize === name ? '' : name)}
                       style={{
-                        padding: '6px 12px',
+                        padding: '6px 14px',
                         borderRadius: '8px',
-                        border: selectedSize === sz ? '2px solid var(--accent-secondary)' : '1px solid var(--border-glass)',
-                        background: selectedSize === sz ? 'var(--accent-secondary)' : 'transparent',
-                        color: selectedSize === sz ? '#000' : 'var(--text-secondary)',
+                        border: selectedSize === name ? '2px solid var(--accent-secondary)' : '1px solid var(--border-glass)',
+                        background: selectedSize === name ? 'var(--accent-secondary)' : 'transparent',
+                        color: selectedSize === name ? '#000' : 'var(--text-secondary)',
                         cursor: 'pointer',
-                        fontSize: '0.85rem'
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
                       }}
-                    >{sz}</button>
+                    >{name}</button>
                   ))}
                 </div>
               </div>
