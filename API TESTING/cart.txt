@@ -1,11 +1,11 @@
 get by id:
-http://localhost:8080/api/cart/getbyid/{id}
+https://holoroom.onrender.com/api/cart/getbyid/{id}
 
 get by user or create if doesnt exist:
-http://localhost:8080/api/cart/getbyuser/{id}
+https://holoroom.onrender.com/api/cart/getbyuser/{id}
 
 post:
-http://localhost:8080/api/cart/additem/{cartid}
+https://holoroom.onrender.com/api/cart/additem/{cartid}
 {
   "productId": 123,
   "quantity": 2

@@ -149,7 +149,6 @@ const Shop = () => {
         `${API}/api/products/get`, {
         method: 'GET',
         headers: {
-          'ngrok-skip-browser-warning': 'true', 
           'Content-Type': 'application/json'
         }}
       );

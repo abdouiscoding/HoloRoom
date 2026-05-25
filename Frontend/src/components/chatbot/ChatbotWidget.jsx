@@ -88,7 +88,7 @@ let _productMap = null;
 const getProductMap = async () => {
   if (_productMap) return _productMap;
   try {
-    const res = await myFetch(`${API}/api/products/get`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+    const res = await myFetch(`${API}/api/products/get`);
     if (!res.ok) return {};
     const list = await res.json();
     _productMap = {};
@@ -162,9 +162,7 @@ const ChatbotWidget = () => {
   // ---- AI helper: fetch products, filter, sort, return best match ----
   const findProduct = async (parsed) => {
     try {
-      const res = await myFetch(`${API}/api/products/get`, {
-        headers: { 'ngrok-skip-browser-warning': 'true' }
-      });
+      const res = await myFetch(`${API}/api/products/get`);
       if (!res.ok) return null;
       let list = (await res.json()).filter(p => p && p.pId && p.pName && p.pFinalPrice != null);
 

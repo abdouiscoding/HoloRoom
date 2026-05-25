@@ -1,7 +1,6 @@
 export const myFetch = async (url, options = {}) => {
   // Define the headers you want attached to EVERY request
   const defaultHeaders = {
-    'ngrok-skip-browser-warning': 'true',
     ...options.headers // This ensures you don't overwrite headers passed in specific calls
   };
 

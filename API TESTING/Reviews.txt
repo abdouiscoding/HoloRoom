@@ -1,8 +1,8 @@
 get all:
-http://localhost:8080/api/reviews/all
+https://holoroom.onrender.com/api/reviews/all
 
 get by id:
-http://localhost:8080/api/reviews/{id}
+https://holoroom.onrender.com/api/reviews/{id}
 
 add:
-http://localhost:8080/api/reviews/add/{id}
+https://holoroom.onrender.com/api/reviews/add/{id}

@@ -1,8 +1,8 @@
 get:
-http://localhost:8080/api/wishlist/{userid}
+https://holoroom.onrender.com/api/wishlist/{userid}
 
 add:
-http://localhost:8080/api/wishlist/add/{userid}/{pid}
+https://holoroom.onrender.com/api/wishlist/add/{userid}/{pid}
 
 delete:
-http://localhost:8080/api/wishlist/remove/{userId}/{wItemId}
+https://holoroom.onrender.com/api/wishlist/remove/{userId}/{wItemId}
