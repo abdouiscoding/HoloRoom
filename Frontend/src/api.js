@@ -1,6 +1,6 @@
 export const address = "192.168.1.3";
 
-export const API = import.meta.env.VITE_BACKEND_API_URL;
+export const API = import.meta.env.VITE_BACKEND_API_URL || "https://holoroom.onrender.com";
 
 export const logAction = async (action, details = "") => {
   const userId = localStorage.getItem("userId");
