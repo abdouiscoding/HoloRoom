@@ -6,7 +6,7 @@ import { myFetch } from "./api";
 /* =========================
    CONFIG
 ========================= */
-const API = "https://control-parole-grandkid.ngrok-free.dev";
+const API = "https://holoroom.onrender.com";
 
 /* =========================
    AUTH / URL PARAMS / OTHER VARS
