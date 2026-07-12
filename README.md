@@ -11,6 +11,22 @@ HoloRoom is a collaborative furniture and décor shopping platform that combines
 * 🎤 Voice conversations with the AI assistant in AR mode
 * 👥 User authentication and personalized dashboards
 * 📦 Product browsing and management
+## 🛠️ Technologies
+
+### Frontend
+
+* **React** – Built the user interface and interactive shopping experience.
+* **Three.js** – Rendered and managed the 3D furniture models.
+* **WebXR** – Enabled the augmented reality experience, allowing users to place virtual furniture in their real environment.
+
+### Backend
+
+* **Spring Boot** – Powered the REST API, business logic, and authentication.
+* **MySQL** – Stored user accounts, products, and application data.
+
+### Artificial Intelligence
+
+* **Groq API** – Integrated an AI assistant capable of text and voice conversations, providing real-time assistance throughout the platform and within the AR experience.
 
 ## 🌐 Live Demo
 
