@@ -1,4 +1,4 @@
-# 🛋️ HoloRoom
+# <img width="500" height="500" alt="HR logo design" src="https://github.com/user-attachments/assets/876a9348-87bc-489b-99ba-10f340a29e58" />HoloRoom
 
 HoloRoom is a collaborative furniture and décor shopping platform that combines e-commerce with Augmented Reality (AR), allowing users to visualize furniture in their own space before making a purchase. The platform also features an AI-powered assistant capable of both text and voice conversations, providing an immersive shopping experience directly within AR mode.
 
