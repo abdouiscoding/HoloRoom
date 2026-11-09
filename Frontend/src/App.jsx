@@ -13,6 +13,7 @@ import DashboardLayout from './pages/dashboard/DashboardLayout';
 import Changeemail from './pages/changedata/Changeemail';
 import Changepassword from './pages/changedata/Changepassword';
 import Support from './pages/Support';
+import Sitemap from './pages/sitemap';
 import './App.css';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/sitemap" element={<Sitemap />} />
                 <Route path="/changeemail" element={<Changeemail />} />
                 <Route path="/changepassword" element={<Changepassword />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
