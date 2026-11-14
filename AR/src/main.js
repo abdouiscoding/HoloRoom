@@ -26,12 +26,10 @@ let placementStatus = "SEARCHING"; // SEARCHING | READY
 let requiredPlacement = null; // FLOOR | WALL | CEILING
 let snapped = false;
 let dragOffset = new THREE.Vector3();
-let dragPlaneY = 0;
 let menuScrollDragging = false;
 let micEnabled = true;
 let hintsEnabled = true;
 let forceModeAnnounced = false;
-let surfaceAnnounced = false;
 let isSpeakingChat = false;
 let showingchat = false;
 
@@ -302,7 +300,6 @@ let dragging = false;
 let productCardsVisible = true;
 let productData = null;
 let productModelTemplate = null;
-let currentColorIndex = 0;
 let allProducts = [];
 let menuScroll = 0;
 

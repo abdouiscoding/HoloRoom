@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
@@ -11,6 +11,8 @@ import ARManagerView from './views/ARManagerView';
 import SupportManagerView from './views/SupportManagerView';
 import OrdersManagerView from './views/OrdersManagerView';
 import styles from './DashboardLayout.module.css';
+import { readDashboardSession } from '../../services/dashboardSessionAdapter';
+import { createDashboardAccess, isDashboardRole } from './dashboardAccess';
 
 // ===============================
 // TOKEN CHECK
@@ -31,41 +33,20 @@ const checkTokenExpiration = (onExpire) => {
   }
 };
 
-// ===============================
-// ROLE PERMISSIONS
-// ===============================
 import LogsView from './views/LogsView';
-
-const rolePermissions = {
-  ADMIN: ["overview", "users", "products", "ar", "marketing", "featured", "support", "logs", "orders"],
-  PRODUCT_MANAGER: ["products", "ar"],
-  MARKETING_MANAGER: ["marketing", "featured"],
-  SUPPORT_MANAGER: ["support"],
-  ORDERS_MANAGER: ["orders"],
-  USER: []
-};
 
 const DashboardLayout = () => {
   const [showSessionPopup, setShowSessionPopup] = useState(false);
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 992);
+  const [role, setRole] = useState(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [sessionError, setSessionError] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [role, setRole] = useState(localStorage.getItem("role"));
-  const permissions = rolePermissions[role] || [];
-
-  const changeRole = (newRole) => { 
-    localStorage.setItem("role", newRole);
-    setRole(newRole); 
-
-    if (newRole === "ADMIN") navigate("/dashboard/overview", { replace: true });
-    else if (newRole === "PRODUCT_MANAGER") navigate("/dashboard/products", { replace: true });
-    else if (newRole === "MARKETING_MANAGER") navigate("/dashboard/marketing", { replace: true });
-    else if (newRole === "SUPPORT_MANAGER") navigate("/dashboard/support", { replace: true });
-    else if (newRole === "ORDERS_MANAGER") navigate("/dashboard/orders", { replace: true });
-    else navigate("/login", { replace: true });
-  };
+  const access = useMemo(() => createDashboardAccess(role), [role]);
+  const permissions = access.permissions;
 
   // ===============================
   // SESSION EXPIRE
@@ -78,49 +59,101 @@ const DashboardLayout = () => {
     });
   };
 
-  // ===============================
-  // TOKEN CHECK LOOP
-  // ===============================
   useEffect(() => {
-    if (!localStorage.getItem("loggedin")) return;
-
     checkTokenExpiration(handleExpire);
-
-    const interval = setInterval(() => {
-      checkTokenExpiration(handleExpire);
-    }, 10000);
-
+    const interval = setInterval(() => checkTokenExpiration(handleExpire), 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // ===============================
+  // Behavioral pattern — Observer: re-verify when another tab changes the active token.
+  // ===============================
+  useEffect(() => {
+    let active = true;
+    let verificationId = 0;
+
+    const verifySession = async () => {
+      const currentVerificationId = ++verificationId;
+      setIsSessionLoading(true);
+      setSessionError(false);
+
+      try {
+        const session = await readDashboardSession();
+        if (!active || currentVerificationId !== verificationId) return;
+
+        if (!session || !isDashboardRole(session.role)) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("loggedin");
+          setRole(null);
+          setIsSessionLoading(false);
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        setRole(session.role);
+        setIsSessionLoading(false);
+      } catch (error) {
+        console.error(error);
+        if (!active || currentVerificationId !== verificationId) return;
+        setRole(null);
+        setSessionError(true);
+        setIsSessionLoading(false);
+      }
+    };
+
+    const onStorageChange = (event) => {
+      if (event.key === "token") verifySession();
+    };
+
+    verifySession();
+    window.addEventListener("storage", onStorageChange);
+
+    return () => {
+      active = false;
+      window.removeEventListener("storage", onStorageChange);
+    };
+  }, [navigate]);
 
   // ===============================
   // ROUTE PROTECTION
   // ===============================
   useEffect(() => {
+    if (isSessionLoading || sessionError) return;
+
     if (!role) {
-      navigate('/login');
+      navigate('/login', { replace: true });
       return;
     }
 
     const path = location.pathname.split('/').pop();
 
     if (path === 'dashboard' || path === '') {
-      if (permissions.includes("overview")) navigate('/dashboard/overview', { replace: true });
-      else if (permissions.includes("products")) navigate('/dashboard/products', { replace: true });
-      else if (permissions.includes("marketing")) navigate('/dashboard/marketing', { replace: true });
-      else navigate('/login');
+      if (access.defaultRoute) navigate(access.defaultRoute, { replace: true });
+      else navigate('/login', { replace: true });
       return;
     }
 
-    const isAllowed = permissions.some(p => path.includes(p));
-
-    if (!isAllowed) {
-      if (permissions.includes("overview")) navigate('/dashboard/overview', { replace: true });
-      else if (permissions.includes("products")) navigate('/dashboard/products', { replace: true });
-      else if (permissions.includes("marketing")) navigate('/dashboard/marketing', { replace: true });
-      else navigate('/login');
+    if (!access.canAccess(path)) {
+      if (access.defaultRoute) navigate(access.defaultRoute, { replace: true });
+      else navigate('/login', { replace: true });
     }
-  }, [location.pathname, role]);
+  }, [location.pathname, role, isSessionLoading, sessionError, navigate, access]);
+
+  if (isSessionLoading) {
+    return <div className={styles.pageContent}>Verifying dashboard access...</div>;
+  }
+
+  if (sessionError) {
+    return (
+      <div className={styles.pageContent}>
+        <p>Unable to verify dashboard access. Please try again.</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!role) return null;
 
   return (
     <>
@@ -166,7 +199,6 @@ const DashboardLayout = () => {
         <div className={styles.mainContent}>
           <Header
             role={role}
-            changeRole={changeRole}
             onMenuClick={() => setCollapsed(c => !c)}
           />
 

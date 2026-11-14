@@ -3,7 +3,7 @@ import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
-const Header = ({ role, changeRole, onMenuClick }) => {
+const Header = ({ role, onMenuClick }) => {
   const navigate = useNavigate();
 
   return (
@@ -15,7 +15,7 @@ const Header = ({ role, changeRole, onMenuClick }) => {
       <div className={styles.headerRight}>
         <div className={styles.roleSwitcher}>
           <label>Role:</label>
-          <label>{localStorage.getItem("role")}</label>
+          <label>{role}</label>
         </div>
 
         <div className={styles.profileSection} onClick={() => navigate('/profile')}>

@@ -49,10 +49,21 @@ public class SecurityConfig {
                 // =====================================
                 // PUBLIC
                 // =====================================
+                .requestMatchers("/api/auth/session").authenticated()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/products/get/**").permitAll()
                 .requestMatchers("/api/reviews/all").permitAll()
                 .requestMatchers("/api/uploads/**").permitAll()
+
+                // User administration must never fall through to authenticated-only access.
+                .requestMatchers(
+                    "/api/users/get",
+                    "/api/users/get/**",
+                    "/api/users/create",
+                    "/api/users/patch/**",
+                    "/api/users/delete/**"
+                ).hasRole("ADMIN")
+
                 .requestMatchers("/api/users/getbyinfo/**").permitAll()
                 .requestMatchers("/api/users/passwordcode/**").permitAll()
                 .requestMatchers("/api/users/update/emailcode/**").permitAll()

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import HoloRoom.Model.User;
@@ -17,6 +18,18 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @GetMapping("/session")
+    public ResponseEntity<Map<String, String>> getSession(Authentication authentication) {
+        String role = authentication.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring("ROLE_".length()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Authenticated user has no role"));
+
+        return ResponseEntity.ok(Map.of("userRole", role));
+    }
 
     // REGISTER - STEP 1: START (Send Code)
     @PostMapping("/register/start")
